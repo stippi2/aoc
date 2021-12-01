@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/stippi2/gopart"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -9,41 +10,35 @@ import (
 
 func main() {
 	sweeps := loadSweeps("sweeps.txt")
-	increasingSweeps := countIncreasingSweeps(sweeps, 1)
-	increasingSweepWindows := countIncreasingSweeps(sweeps, 3)
+	increasingSweeps := countIncreasingSweeps(sweeps)
+	increasingSweepWindows := countIncreasingSweeps(sumPartitions(sweeps, 3, 1))
 	fmt.Printf("number of increasing sweeps: %v, windowed: %v\n", increasingSweeps, increasingSweepWindows)
 }
 
-func countIncreasingSweeps(sweeps []int, windowSize int) int {
+func countIncreasingSweeps(sweeps []int) int {
 	increasingSweeps := 0
-
-	start := windowSize/2 + 1
-	end := len(sweeps) - windowSize/2
-
-	for i := start; i < end; i++ {
-		sumCurrent := sumWindow(sweeps, i, windowSize)
-		sumPrevious := sumWindow(sweeps, i-1, windowSize)
-		if sumCurrent > sumPrevious {
+	for i := 1; i < len(sweeps); i++ {
+		if sweeps[i-1] < sweeps[i] {
 			increasingSweeps++
 		}
 	}
 	return increasingSweeps
 }
 
-func sumWindow(sweeps []int, center, windowSize int) int {
-	start := center - windowSize/2
-	if start < 0 {
-		return 0
+func sumPartitions(values []int, partitionSize, step int) []int {
+	var sums []int
+	for idxRange := range gopart.PartitionWithStep(len(values), partitionSize, step) {
+		if idxRange.High-idxRange.Low < partitionSize {
+			// Ignore remainder partition
+			break
+		}
+		sum := 0
+		for i := idxRange.Low; i < idxRange.High; i++ {
+			sum += values[i]
+		}
+		sums = append(sums, sum)
 	}
-	end := start + windowSize
-	if end > len(sweeps) {
-		return 0
-	}
-	sum := 0
-	for i := start; i < end; i++ {
-		sum += sweeps[i]
-	}
-	return sum
+	return sums
 }
 
 func loadSweeps(filename string) []int {
