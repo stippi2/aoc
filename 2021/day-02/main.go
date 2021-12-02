@@ -8,20 +8,24 @@ import (
 )
 
 type Position struct {
+	aim        int
 	horizontal int
 	depth      int
 }
 
+// forward increases your horizontal position by X units.
+// And it increases your depth by your aim multiplied by X.
 func (p *Position) forward(howMuch int) {
 	p.horizontal += howMuch
+	p.depth += p.aim * howMuch
 }
 
 func (p *Position) up(howMuch int) {
-	p.depth -= howMuch
+	p.aim -= howMuch
 }
 
 func (p *Position) down(howMuch int) {
-	p.depth += howMuch
+	p.aim += howMuch
 }
 
 func (p *Position) calc() int {
