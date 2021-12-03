@@ -73,10 +73,58 @@ func getBitCounts(binaryNumbers []string, columnCount int) []BitCounts {
 	return bitCountsByColumns
 }
 
+func filterBy(binaryNumbers []string, most bool, keepBit uint8, column int) string {
+	bitCounts, err := getBitCountsAtColumn(binaryNumbers, column)
+	exitIfError(err)
+
+	var filtered []string
+	for _, number := range binaryNumbers {
+		if number == "" {
+			continue
+		}
+		keep := false
+		if bitCounts.zeros == bitCounts.ones {
+			keep = keepBit == number[column]
+		} else {
+			switch number[column] {
+			case '0':
+				if most {
+					keep = bitCounts.zeros > bitCounts.ones
+				} else {
+					keep = bitCounts.zeros < bitCounts.ones
+				}
+			case '1':
+				if most {
+					keep = bitCounts.ones > bitCounts.zeros
+				} else {
+					keep = bitCounts.ones < bitCounts.zeros
+				}
+			}
+		}
+		if keep {
+			filtered = append(filtered, number)
+		}
+	}
+
+	if len(filtered) == 1 {
+		return filtered[0]
+	}
+	if len(filtered) == 0 {
+		return ""
+	}
+	return filterBy(filtered, most, keepBit, column+1)
+}
+
 func getGammaAndEpsilon(binaryNumbers []string, columnCount int) (gamma, epsilon string) {
 	bitCounts := getBitCounts(binaryNumbers, columnCount)
 	gamma = getUsedBits(bitCounts, true)
 	epsilon = getUsedBits(bitCounts, false)
+	return
+}
+
+func getOxygenAndCo2Scrubber(binaryNumbers []string) (oxygen, co2scrubber string) {
+	oxygen = filterBy(binaryNumbers, true, '1', 0)
+	co2scrubber = filterBy(binaryNumbers, false, '0', 0)
 	return
 }
 
@@ -98,6 +146,12 @@ func main() {
 	epsilonDecimal := toDecimal(epsilon)
 	fmt.Printf("gamma: %s (%v), epsilon: %s (%v)\n", gamma, gammaDecimal, epsilon, epsilonDecimal)
 	fmt.Printf("power: %v\n", gammaDecimal*epsilonDecimal)
+
+	oxygen, co2scrubber := getOxygenAndCo2Scrubber(binaryNumbers)
+	oxygenDecimal := toDecimal(oxygen)
+	co2scrubberDecimal := toDecimal(co2scrubber)
+	fmt.Printf("oxygen: %s (%v), co2 scrubber: %s (%v)\n", oxygen, oxygenDecimal, co2scrubber, co2scrubberDecimal)
+	fmt.Printf("life support: %v\n", oxygenDecimal*co2scrubberDecimal)
 }
 
 func loadInput(filename string) []string {
