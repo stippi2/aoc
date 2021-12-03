@@ -24,10 +24,6 @@ func getBitCountsAtColumn(binaryNumbers []string, column int) (BitCounts, error)
 		return result, indexOutOfRangeErr
 	}
 	for _, binaryNumber := range binaryNumbers {
-		if binaryNumber == "" {
-			continue
-		}
-
 		switch binaryNumber[column] {
 		case '0':
 			result.zeros++
@@ -79,9 +75,6 @@ func filterBy(binaryNumbers []string, column int, condition func(uint8, BitCount
 
 	var filtered []string
 	for _, number := range binaryNumbers {
-		if number == "" {
-			continue
-		}
 		if condition(number[column], bitCounts) {
 			filtered = append(filtered, number)
 		}
@@ -89,9 +82,6 @@ func filterBy(binaryNumbers []string, column int, condition func(uint8, BitCount
 
 	if len(filtered) == 1 {
 		return filtered[0]
-	}
-	if len(filtered) == 0 {
-		return ""
 	}
 	return filterBy(filtered, column+1, condition)
 }
@@ -162,7 +152,8 @@ func loadInput(filename string) []string {
 	fileContents, err := ioutil.ReadFile(filename)
 	exitIfError(err)
 
-	return strings.Split(string(fileContents), "\n")
+	trimmed := strings.Trim(string(fileContents), "\n")
+	return strings.Split(trimmed, "\n")
 }
 
 func exitIfError(err error) {
