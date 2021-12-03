@@ -73,7 +73,7 @@ func getBitCounts(binaryNumbers []string, columnCount int) []BitCounts {
 	return bitCountsByColumns
 }
 
-func filterBy(binaryNumbers []string, most bool, keepBit uint8, column int) string {
+func filterBy(binaryNumbers []string, column int, condition func(uint8, BitCounts) bool) string {
 	bitCounts, err := getBitCountsAtColumn(binaryNumbers, column)
 	exitIfError(err)
 
@@ -82,26 +82,7 @@ func filterBy(binaryNumbers []string, most bool, keepBit uint8, column int) stri
 		if number == "" {
 			continue
 		}
-		keep := false
-		if bitCounts.zeros == bitCounts.ones {
-			keep = keepBit == number[column]
-		} else {
-			switch number[column] {
-			case '0':
-				if most {
-					keep = bitCounts.zeros > bitCounts.ones
-				} else {
-					keep = bitCounts.zeros < bitCounts.ones
-				}
-			case '1':
-				if most {
-					keep = bitCounts.ones > bitCounts.zeros
-				} else {
-					keep = bitCounts.ones < bitCounts.zeros
-				}
-			}
-		}
-		if keep {
+		if condition(number[column], bitCounts) {
 			filtered = append(filtered, number)
 		}
 	}
@@ -112,7 +93,35 @@ func filterBy(binaryNumbers []string, most bool, keepBit uint8, column int) stri
 	if len(filtered) == 0 {
 		return ""
 	}
-	return filterBy(filtered, most, keepBit, column+1)
+	return filterBy(filtered, column+1, condition)
+}
+
+func oxygenCondition(bit uint8, counts BitCounts) bool {
+	if counts.zeros == counts.ones {
+		return '1' == bit
+	} else {
+		switch bit {
+		case '0':
+			return counts.zeros > counts.ones
+		case '1':
+			return counts.ones > counts.zeros
+		}
+	}
+	return false
+}
+
+func co2ScrubberCondition(bit uint8, counts BitCounts) bool {
+	if counts.zeros == counts.ones {
+		return '0' == bit
+	} else {
+		switch bit {
+		case '0':
+			return counts.zeros < counts.ones
+		case '1':
+			return counts.ones < counts.zeros
+		}
+	}
+	return false
 }
 
 func getGammaAndEpsilon(binaryNumbers []string, columnCount int) (gamma, epsilon string) {
@@ -123,8 +132,8 @@ func getGammaAndEpsilon(binaryNumbers []string, columnCount int) (gamma, epsilon
 }
 
 func getOxygenAndCo2Scrubber(binaryNumbers []string) (oxygen, co2scrubber string) {
-	oxygen = filterBy(binaryNumbers, true, '1', 0)
-	co2scrubber = filterBy(binaryNumbers, false, '0', 0)
+	oxygen = filterBy(binaryNumbers, 0, oxygenCondition)
+	co2scrubber = filterBy(binaryNumbers, 0, co2ScrubberCondition)
 	return
 }
 

@@ -31,10 +31,8 @@ func Test_toDecimal(t *testing.T) {
 	assert.Equal(t, 9, toDecimal("01001"))
 }
 
-func Test_filterBy(t *testing.T) {
-	oxygen := filterBy(exampleInput, true, '1', 0)
+func Test_getOxygenAndCo2Scrubber(t *testing.T) {
+	oxygen, co2scrubber := getOxygenAndCo2Scrubber(exampleInput)
 	assert.Equal(t, "10111", oxygen)
-
-	co2scrubber := filterBy(exampleInput, false, '0', 0)
 	assert.Equal(t, "01010", co2scrubber)
 }
