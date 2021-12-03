@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math"
+	"strconv"
 	"strings"
 )
 
@@ -138,14 +138,9 @@ func getOxygenAndCo2Scrubber(binaryNumbers []string) (oxygen, co2scrubber string
 }
 
 func toDecimal(binary string) int {
-	result := 0
-	for index := 1; index <= len(binary); index++ {
-		bit := binary[len(binary)-index]
-		if bit == '1' {
-			result += int(math.Pow(2, float64(index-1)))
-		}
-	}
-	return result
+	result, err := strconv.ParseInt(binary, 2, 64)
+	exitIfError(err)
+	return int(result)
 }
 
 func main() {
