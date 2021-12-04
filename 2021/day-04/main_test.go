@@ -33,3 +33,10 @@ func Test_parseBingoInput(t *testing.T) {
 	assert.Equal(t, 23, boards[0].numberAt(2, 1))
 	assert.Equal(t, 7, boards[2].numberAt(4, 4))
 }
+
+func Test_playBingo(t *testing.T) {
+	turn, boardIndex, score := playBingo(parseBingoInput(exampleInput))
+	assert.Equal(t, 11, turn)
+	assert.Equal(t, 2, boardIndex)
+	assert.Equal(t, 4512, score)
+}

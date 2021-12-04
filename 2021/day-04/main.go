@@ -98,8 +98,25 @@ func (b *Board) setRow(y int, numberRow string) {
 	}
 }
 
+func playBingo(numberSequence []int, boards []Board) (turn, boardIndex, score int) {
+	for t, number := range numberSequence {
+		for i := 0; i < len(boards); i++ {
+			if boards[i].markFieldsWithNumber(number) {
+				if boards[i].testCompletedRows() {
+					turn = t
+					boardIndex = i
+					score = boards[i].sumOfUnmarkedFields() * number
+					return
+				}
+			}
+		}
+	}
+	return
+}
+
 func main() {
-	//bingoInput := loadInput("bingo-input.txt")
+	turn, boardIndex, score := playBingo(parseBingoInput(loadInput("bingo-input.txt")))
+	fmt.Printf("winning board: %v (at turn %v), score: %v\n", boardIndex, turn, score)
 }
 
 func parseBingoInput(input string) (numberSequence []int, boards []Board) {

@@ -1,4 +1,4 @@
-module github.tools.sap/I531928/day-03
+module github.tools.sap/I531928/day-04
 
 go 1.16
 
