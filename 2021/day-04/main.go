@@ -114,9 +114,52 @@ func playBingo(numberSequence []int, boards []Board) (turn, boardIndex, score in
 	return
 }
 
+func remove(numbers []int, number int) []int {
+	for i := 0; i < len(numbers); i++ {
+		if numbers[i] == number {
+			numbers = append(numbers[:i], numbers[i+1:]...)
+		}
+	}
+	return numbers
+}
+
+func lastBoardToComplete(numberSequence []int, boards []Board) (turn, boardIndex, score int) {
+	remainingBoards := make([]int, len(boards))
+	for i := 0; i < len(boards); i++ {
+		remainingBoards[i] = i
+	}
+
+	for t, number := range numberSequence {
+		var completedBoards []int
+		for i := 0; i < len(remainingBoards); i++ {
+			board := remainingBoards[i]
+			if boards[board].markFieldsWithNumber(number) {
+				if boards[board].testCompletedRows() {
+					completedBoards = append(completedBoards, board)
+				}
+			}
+		}
+		for _, board := range completedBoards {
+			remainingBoards = remove(remainingBoards, board)
+			if len(remainingBoards) == 0 {
+				turn = t
+				boardIndex = board
+				score = boards[board].sumOfUnmarkedFields() * number
+				return
+			}
+		}
+	}
+	return
+}
+
 func main() {
-	turn, boardIndex, score := playBingo(parseBingoInput(loadInput("bingo-input.txt")))
+	seq, boards := parseBingoInput(loadInput("bingo-input.txt"))
+
+	turn, boardIndex, score := playBingo(seq, boards)
 	fmt.Printf("winning board: %v (at turn %v), score: %v\n", boardIndex, turn, score)
+
+	turn, boardIndex, score = lastBoardToComplete(seq, boards)
+	fmt.Printf("last board: %v (at turn %v), score: %v\n", boardIndex, turn, score)
 }
 
 func parseBingoInput(input string) (numberSequence []int, boards []Board) {

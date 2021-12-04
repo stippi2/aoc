@@ -40,3 +40,10 @@ func Test_playBingo(t *testing.T) {
 	assert.Equal(t, 2, boardIndex)
 	assert.Equal(t, 4512, score)
 }
+
+func Test_lastBoardToComplete(t *testing.T) {
+	turn, boardIndex, score := lastBoardToComplete(parseBingoInput(exampleInput))
+	assert.Equal(t, 14, turn)
+	assert.Equal(t, 1, boardIndex)
+	assert.Equal(t, 1924, score)
+}
