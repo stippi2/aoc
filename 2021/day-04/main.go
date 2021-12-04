@@ -41,10 +41,13 @@ func (b *Board) markFieldsWithNumber(number int) bool {
 			}
 		}
 	}
-	return changed
+	if changed {
+		return b.isCompleted()
+	}
+	return false
 }
 
-func (b *Board) testCompletedRows() bool {
+func (b *Board) isCompleted() bool {
 	for y := 0; y < b.size; y++ {
 		hitsPerRow := 0
 		for x := 0; x < b.size; x++ {
@@ -102,12 +105,10 @@ func playBingo(numberSequence []int, boards []Board) (turn, boardIndex, score in
 	for t, number := range numberSequence {
 		for i := 0; i < len(boards); i++ {
 			if boards[i].markFieldsWithNumber(number) {
-				if boards[i].testCompletedRows() {
-					turn = t
-					boardIndex = i
-					score = boards[i].sumOfUnmarkedFields() * number
-					return
-				}
+				turn = t
+				boardIndex = i
+				score = boards[i].sumOfUnmarkedFields() * number
+				return
 			}
 		}
 	}
@@ -134,9 +135,7 @@ func lastBoardToComplete(numberSequence []int, boards []Board) (turn, boardIndex
 		for i := 0; i < len(remainingBoards); i++ {
 			board := remainingBoards[i]
 			if boards[board].markFieldsWithNumber(number) {
-				if boards[board].testCompletedRows() {
-					completedBoards = append(completedBoards, board)
-				}
+				completedBoards = append(completedBoards, board)
 			}
 		}
 		for _, board := range completedBoards {
