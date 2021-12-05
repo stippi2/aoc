@@ -42,8 +42,11 @@ func (d *DangerMap) markVentLine(l Line) {
 	// assumes abs(diffX) == abs(diffY) or one diff == 0
 	diffX := b.x - a.x
 	diffY := b.y - a.y
-	d.increaseDanger(a)
 	for {
+		d.increaseDanger(a)
+		if a == b {
+			break
+		}
 		if diffX > 0 {
 			a.x++
 		} else if diffX < 0 {
@@ -53,10 +56,6 @@ func (d *DangerMap) markVentLine(l Line) {
 			a.y++
 		} else if diffY < 0 {
 			a.y--
-		}
-		d.increaseDanger(a)
-		if a == b {
-			break
 		}
 	}
 }
