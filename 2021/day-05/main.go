@@ -28,54 +28,35 @@ func (d *DangerMap) init(maxX, maxY int) {
 	d.danger = make([]int, d.height*d.width)
 }
 
-func (d *DangerMap) offset(x, y int) int {
-	return d.width*y + x
+func (d *DangerMap) offset(p Point) int {
+	return d.width*p.y + p.x
 }
 
-func (d *DangerMap) increaseDanger(x, y int) {
-	d.danger[d.offset(x, y)]++
+func (d *DangerMap) increaseDanger(p Point) {
+	d.danger[d.offset(p)]++
 }
 
-func order(a, b int) (int, int) {
-	if b >= a {
-		return a, b
-	} else {
-		return b, a
-	}
-}
-
-func (d *DangerMap) track(l Line) {
+func (d *DangerMap) markVentLine(l Line) {
 	a := l.points[0]
 	b := l.points[1]
-	if a.x == b.x {
-		y1, y2 := order(a.y, b.y)
-		for y := y1; y <= y2; y++ {
-			d.increaseDanger(a.x, y)
+	// assumes abs(diffX) == abs(diffY) or one diff == 0
+	diffX := b.x - a.x
+	diffY := b.y - a.y
+	d.increaseDanger(a)
+	for {
+		if diffX > 0 {
+			a.x++
+		} else if diffX < 0 {
+			a.x--
 		}
-	} else if a.y == b.y {
-		x1, x2 := order(a.x, b.x)
-		for x := x1; x <= x2; x++ {
-			d.increaseDanger(x, a.y)
+		if diffY > 0 {
+			a.y++
+		} else if diffY < 0 {
+			a.y--
 		}
-	} else {
-		diffX := b.x - a.x
-		diffY := b.y - a.y
-		d.increaseDanger(a.x, a.y)
-		for {
-			if diffX > 0 {
-				a.x++
-			} else {
-				a.x--
-			}
-			if diffY > 0 {
-				a.y++
-			} else {
-				a.y--
-			}
-			d.increaseDanger(a.x, a.y)
-			if a == b {
-				break
-			}
+		d.increaseDanger(a)
+		if a == b {
+			break
 		}
 	}
 }
@@ -84,7 +65,7 @@ func buildDangerMap(lines []Line, maxX, maxY int) *DangerMap {
 	dangerMap := DangerMap{}
 	dangerMap.init(maxX, maxY)
 	for _, line := range lines {
-		dangerMap.track(line)
+		dangerMap.markVentLine(line)
 	}
 	return &dangerMap
 }
