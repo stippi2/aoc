@@ -17,8 +17,10 @@ var exampleInput = `0,9 -> 5,9
 5,5 -> 8,2`
 
 func Test_parseVentInput(t *testing.T) {
-	lines := parseLines(exampleInput)
+	lines, maxX, maxY := parseLines(exampleInput)
 	assert.Len(t, lines, 10)
 	assert.Equal(t, Point{0, 9}, lines[0].points[0])
 	assert.Equal(t, Point{8, 2}, lines[9].points[1])
+	assert.Equal(t, 9, maxX)
+	assert.Equal(t, 9, maxY)
 }

@@ -19,9 +19,9 @@ func main() {
 	//lines := parseLines(loadInput("vents-input.txt"))
 }
 
-func parseLines(input string) []Line {
+func parseLines(input string) (lines []Line, maxX, maxY int) {
 	lineStrings := strings.Split(input, "\n")
-	lines := make([]Line, len(lineStrings))
+	lines = make([]Line, len(lineStrings))
 	for i, lineString := range lineStrings {
 		points := strings.Split(lineString, " -> ")
 		for _, point := range points {
@@ -29,9 +29,15 @@ func parseLines(input string) []Line {
 			x, _ := strconv.Atoi(coords[0])
 			y, _ := strconv.Atoi(coords[1])
 			lines[i].points = append(lines[i].points, Point{x, y})
+			if x > maxX {
+				maxX = x
+			}
+			if y > maxY {
+				maxY = y
+			}
 		}
 	}
-	return lines
+	return
 }
 
 func loadInput(filename string) string {
