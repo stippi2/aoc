@@ -107,13 +107,6 @@ func parseLines(input string) (lines []Line, maxX, maxY int) {
 }
 
 func loadInput(filename string) string {
-	fileContents, err := ioutil.ReadFile(filename)
-	exitIfError(err)
+	fileContents, _ := ioutil.ReadFile(filename)
 	return strings.TrimSpace(string(fileContents))
-}
-
-func exitIfError(err error) {
-	if err != nil {
-		panic(err)
-	}
 }
