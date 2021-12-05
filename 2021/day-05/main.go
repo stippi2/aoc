@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -15,8 +16,72 @@ type Line struct {
 	points []Point
 }
 
+type DangerMap struct {
+	danger []int
+	width  int
+	height int
+}
+
+func (d *DangerMap) init(maxX, maxY int) {
+	d.width = maxX + 1
+	d.height = maxY + 1
+	d.danger = make([]int, d.height*d.width)
+}
+
+func (d *DangerMap) offset(x, y int) int {
+	return d.width*y + x
+}
+
+func (d *DangerMap) increaseDanger(x, y int) {
+	d.danger[d.offset(x, y)]++
+}
+
+func order(a, b int) (int, int) {
+	if b >= a {
+		return a, b
+	} else {
+		return b, a
+	}
+}
+
+func (d *DangerMap) track(l Line) {
+	a := l.points[0]
+	b := l.points[1]
+	if a.x == b.x {
+		y1, y2 := order(a.y, b.y)
+		for y := y1; y <= y2; y++ {
+			d.increaseDanger(a.x, y)
+		}
+	} else if a.y == b.y {
+		x1, x2 := order(a.x, b.x)
+		for x := x1; x <= x2; x++ {
+			d.increaseDanger(x, a.y)
+		}
+	}
+}
+
+func buildDangerMap(lines []Line, maxX, maxY int) *DangerMap {
+	dangerMap := DangerMap{}
+	dangerMap.init(maxX, maxY)
+	for _, line := range lines {
+		dangerMap.track(line)
+	}
+	return &dangerMap
+}
+
+func (d *DangerMap) countPoints(minDanger int) (count int) {
+	for i := 0; i < len(d.danger); i++ {
+		if d.danger[i] >= minDanger {
+			count++
+		}
+	}
+	return
+}
+
 func main() {
-	//lines := parseLines(loadInput("vents-input.txt"))
+	dangerMap := buildDangerMap(parseLines(loadInput("vents-input.txt")))
+	dangerPoints := dangerMap.countPoints(2)
+	fmt.Printf("points with danger greater 2: %v\n", dangerPoints)
 }
 
 func parseLines(input string) (lines []Line, maxX, maxY int) {

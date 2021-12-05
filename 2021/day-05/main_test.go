@@ -24,3 +24,8 @@ func Test_parseVentInput(t *testing.T) {
 	assert.Equal(t, 9, maxX)
 	assert.Equal(t, 9, maxY)
 }
+
+func Test_countPoints(t *testing.T) {
+	dangerMap := buildDangerMap(parseLines(exampleInput))
+	assert.Equal(t, 5, dangerMap.countPoints(2))
+}
