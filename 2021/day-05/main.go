@@ -57,6 +57,26 @@ func (d *DangerMap) track(l Line) {
 		for x := x1; x <= x2; x++ {
 			d.increaseDanger(x, a.y)
 		}
+	} else {
+		diffX := b.x - a.x
+		diffY := b.y - a.y
+		d.increaseDanger(a.x, a.y)
+		for {
+			if diffX > 0 {
+				a.x++
+			} else {
+				a.x--
+			}
+			if diffY > 0 {
+				a.y++
+			} else {
+				a.y--
+			}
+			d.increaseDanger(a.x, a.y)
+			if a == b {
+				break
+			}
+		}
 	}
 }
 

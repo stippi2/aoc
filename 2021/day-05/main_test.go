@@ -27,5 +27,5 @@ func Test_parseVentInput(t *testing.T) {
 
 func Test_countPoints(t *testing.T) {
 	dangerMap := buildDangerMap(parseLines(exampleInput))
-	assert.Equal(t, 5, dangerMap.countPoints(2))
+	assert.Equal(t, 12, dangerMap.countPoints(2))
 }
