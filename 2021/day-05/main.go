@@ -61,6 +61,29 @@ func (d *DangerMap) markVentLine(l Line) {
 	}
 }
 
+func (d *DangerMap) String() string {
+	result := make([]byte, (d.width+1)*d.height-1)
+	offsetDanger := 0
+	offsetResult := 0
+	for y := 0; y < d.height; y++ {
+		for x := 0; x < d.width; x++ {
+			danger := d.danger[offsetDanger]
+			if danger == 0 {
+				result[offsetResult] = '.'
+			} else {
+				result[offsetResult] = strconv.Itoa(danger)[0]
+			}
+			offsetDanger++
+			offsetResult++
+		}
+		if y < d.height-1 {
+			result[offsetResult] = '\n'
+			offsetResult++
+		}
+	}
+	return string(result)
+}
+
 func buildDangerMap(lines []Line, maxX, maxY int) *DangerMap {
 	dangerMap := DangerMap{}
 	dangerMap.init(maxX, maxY)
@@ -82,6 +105,7 @@ func (d *DangerMap) countPoints(minDanger int) (count int) {
 func main() {
 	dangerMap := buildDangerMap(parseLines(loadInput("vents-input.txt")))
 	dangerPoints := dangerMap.countPoints(2)
+	fmt.Printf("map of danger:\n%s\n", dangerMap)
 	fmt.Printf("points with danger greater 2: %v\n", dangerPoints)
 }
 

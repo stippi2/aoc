@@ -16,6 +16,17 @@ var exampleInput = `0,9 -> 5,9
 0,0 -> 8,8
 5,5 -> 8,2`
 
+var expectedMap = `1.1....11.
+.111...2..
+..2.1.111.
+...1.2.2..
+.112313211
+...1.2....
+..1...1...
+.1.....1..
+1.......1.
+222111....`
+
 func Test_parseVentInput(t *testing.T) {
 	lines, maxX, maxY := parseLines(exampleInput)
 	assert.Len(t, lines, 10)
@@ -23,6 +34,11 @@ func Test_parseVentInput(t *testing.T) {
 	assert.Equal(t, Point{8, 2}, lines[9].points[1])
 	assert.Equal(t, 9, maxX)
 	assert.Equal(t, 9, maxY)
+}
+
+func Test_buildDangerMap(t *testing.T) {
+	dangerMap := buildDangerMap(parseLines(exampleInput))
+	assert.Equal(t, expectedMap, dangerMap.String())
 }
 
 func Test_countPoints(t *testing.T) {
