@@ -23,7 +23,7 @@ func Test_parseLanternFishAges(t *testing.T) {
 }
 
 func Test_initAgeCounts(t *testing.T) {
-	assert.Equal(t, []int{0, 1, 1, 2, 1, 0, 0, 0, 0}, initAgeCounts(parseLanternFishAges(exampleInput)))
+	assert.Equal(t, []int64{0, 1, 1, 2, 1, 0, 0, 0, 0}, initAgeCounts(parseLanternFishAges(exampleInput)))
 }
 
 func Test_simulateAgingAndReproduction(t *testing.T) {
