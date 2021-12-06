@@ -7,16 +7,16 @@ import (
 	"strings"
 )
 
-func countLanternFish(countsPerAge []int) int {
-	count := 0
+func countLanternFish(countsPerAge []int64) int64 {
+	count := int64(0)
 	for i := 0; i < 9; i++ {
 		count += countsPerAge[i]
 	}
 	return count
 }
 
-func simulateAgingAndReproduction(countsPerAge []int) (newCountsPerAge []int) {
-	newCountsPerAge = make([]int, 9)
+func simulateAgingAndReproduction(countsPerAge []int64) (newCountsPerAge []int64) {
+	newCountsPerAge = make([]int64, 9)
 	// simulate aging by shifting the array
 	// (number of fish at index 1 (age = 1) are placed at index 0 (age = 0)
 	// ... and so forth
@@ -30,8 +30,8 @@ func simulateAgingAndReproduction(countsPerAge []int) (newCountsPerAge []int) {
 	return
 }
 
-func initAgeCounts(individualAges []int) (countsPerAge []int) {
-	countsPerAge = make([]int, 9)
+func initAgeCounts(individualAges []int) (countsPerAge []int64) {
+	countsPerAge = make([]int64, 9)
 	for _, individualAge := range individualAges {
 		if individualAge >= 0 && individualAge < len(countsPerAge) {
 			countsPerAge[individualAge]++
@@ -42,10 +42,10 @@ func initAgeCounts(individualAges []int) (countsPerAge []int) {
 
 func main() {
 	countsPerAge := initAgeCounts(parseLanternFishAges(loadInput("lanternfish-ages.txt")))
-	for i := 0; i < 80; i++ {
+	for i := 0; i < 256; i++ {
 		countsPerAge = simulateAgingAndReproduction(countsPerAge)
 	}
-	fmt.Printf("Number of lantern fish after 80 days: %v\n", countLanternFish(countsPerAge))
+	fmt.Printf("Number of lantern fish after 256 days: %v\n", countLanternFish(countsPerAge))
 }
 
 func parseLanternFishAges(input string) (individualAges []int) {
