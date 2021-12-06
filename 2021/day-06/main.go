@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func countLanternFish(countsPerAge []int64) int64 {
@@ -15,19 +16,18 @@ func countLanternFish(countsPerAge []int64) int64 {
 	return count
 }
 
-func simulateAgingAndReproduction(countsPerAge []int64) (newCountsPerAge []int64) {
-	newCountsPerAge = make([]int64, 9)
+func simulateAgingAndReproduction(countsPerAge []int64) {
+	reproductionCount := countsPerAge[0]
 	// simulate aging by shifting the array
 	// (number of fish at index 1 (age = 1) are placed at index 0 (age = 0)
 	// ... and so forth
 	for i := 1; i < 9; i++ {
-		newCountsPerAge[i-1] = countsPerAge[i]
+		countsPerAge[i-1] = countsPerAge[i]
 	}
 	// simulate the reproduction by adding the number of fish with (age == 0) to age == 8
-	newCountsPerAge[8] = countsPerAge[0]
+	countsPerAge[8] = reproductionCount
 	// rotate the fish with day == 0 back to day == 6
-	newCountsPerAge[6] += countsPerAge[0]
-	return
+	countsPerAge[6] += reproductionCount
 }
 
 func initAgeCounts(individualAges []int) (countsPerAge []int64) {
@@ -42,10 +42,12 @@ func initAgeCounts(individualAges []int) (countsPerAge []int64) {
 
 func main() {
 	countsPerAge := initAgeCounts(parseLanternFishAges(loadInput("lanternfish-ages.txt")))
+	startTime := time.Now()
 	for i := 0; i < 256; i++ {
-		countsPerAge = simulateAgingAndReproduction(countsPerAge)
+		simulateAgingAndReproduction(countsPerAge)
 	}
-	fmt.Printf("Number of lantern fish after 256 days: %v\n", countLanternFish(countsPerAge))
+	duration := time.Since(startTime)
+	fmt.Printf("Number of lantern fish after 256 days: %v (took %v)\n", countLanternFish(countsPerAge), duration)
 }
 
 func parseLanternFishAges(input string) (individualAges []int) {

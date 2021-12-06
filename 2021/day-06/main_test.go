@@ -29,8 +29,8 @@ func Test_initAgeCounts(t *testing.T) {
 func Test_simulateAgingAndReproduction(t *testing.T) {
 	countsPerAge := initAgeCounts(parseLanternFishAges(exampleInput))
 	for i := 0; i < 18; i++ {
-		countsPerAge = simulateAgingAndReproduction(countsPerAge)
+		simulateAgingAndReproduction(countsPerAge)
 	}
 	assert.Equal(t, initAgeCounts(parseLanternFishAges(agesAfter18Days)), countsPerAge)
-	assert.Equal(t, 26, countLanternFish(countsPerAge))
+	assert.Equal(t, int64(26), countLanternFish(countsPerAge))
 }
