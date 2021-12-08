@@ -1,24 +1,50 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
-	"strconv"
 	"strings"
 )
 
-func main() {
+func countDigits(digits [][]string, condition func(digit string) bool) int {
+	sum := 0
+	for _, display := range digits {
+		for _, digit := range display {
+			if condition(digit) {
+				sum++
+			}
+		}
+	}
+	return sum
 }
 
-func parseSequence(input string) (numbers []int) {
-	numberStrings := strings.Split(input, ",")
-	numbers = make([]int, len(numberStrings))
-	for i, numberString := range numberStrings {
-		numbers[i], _ = strconv.Atoi(numberString)
+func conditionOnesFoursSevensAndEights(digit string) bool {
+	switch len(digit) {
+	case 2, 4, 3, 7:
+		return true
+	}
+	return false
+}
+
+func main() {
+	_, digits := parseInput(loadInput("puzzle-input.txt"))
+	count := countDigits(digits, conditionOnesFoursSevensAndEights)
+	fmt.Printf("number of 1, 4, 7, and 8: %v\n", count)
+}
+
+func parseInput(input string) (signals, digits [][]string) {
+	lines := strings.Split(input, "\n")
+	signals = make([][]string, len(lines))
+	digits = make([][]string, len(lines))
+	for i, line := range lines {
+		signalsDigits := strings.Split(line, " | ")
+		signals[i] = strings.Split(signalsDigits[0], " ")
+		digits[i] = strings.Split(signalsDigits[1], " ")
 	}
 	return
 }
 
 func loadInput(filename string) string {
 	fileContents, _ := ioutil.ReadFile(filename)
-	return strings.Trim(string(fileContents), "\n")
+	return strings.TrimSpace(string(fileContents))
 }
