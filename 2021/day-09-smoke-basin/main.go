@@ -121,8 +121,7 @@ func (m *Map) findLargestBasins(count int) int {
 
 func main() {
 	m := parseInput(loadInput("puzzle-input.txt"))
-	riskLevelSum := m.sumRiskLevels()
-	fmt.Printf("sum of risk levels: %v\n", riskLevelSum)
+	fmt.Printf("sum of risk levels: %v\n", m.sumRiskLevels())
 	fmt.Printf("product of largest 3 basins: %v\n", m.findLargestBasins(3))
 }
 
