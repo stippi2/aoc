@@ -19,3 +19,8 @@ func Test_parseInput(t *testing.T) {
 	assert.Equal(t, 9, m.get(1, 1))
 	assert.Equal(t, 8, m.get(9, 4))
 }
+
+func Test_sumRiskLevels(t *testing.T) {
+	m := parseInput(exampleInput)
+	assert.Equal(t, 15, m.sumRiskLevels())
+}
