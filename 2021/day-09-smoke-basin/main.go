@@ -23,6 +23,7 @@ func (m *Map) init(width, height int) {
 	m.width = width
 	m.height = height
 	m.data = make([]int, width*height)
+	m.visited = make(map[Point]bool)
 }
 
 func (m *Map) offset(x, y int) int {
@@ -49,10 +50,9 @@ func (m *Map) isLowPoint(x, y int) bool {
 }
 
 func (m *Map) floodBasin(x, y int) (size int) {
-	visited := make(map[Point]bool)
 	var queue []Point
 	queue = append(queue, Point{x, y})
-	visited[Point{x, y}] = true
+	m.visited[Point{x, y}] = true
 
 	for len(queue) > 0 {
 		p := queue[0]
@@ -66,9 +66,9 @@ func (m *Map) floodBasin(x, y int) (size int) {
 		}
 
 		for _, neighbor := range neighbors {
-			if !visited[neighbor] && m.get(neighbor.x, neighbor.y) < 9 {
+			if !m.visited[neighbor] && m.get(neighbor.x, neighbor.y) < 9 {
 				queue = append(queue, neighbor)
-				visited[neighbor] = true
+				m.visited[neighbor] = true
 			}
 		}
 
@@ -89,10 +89,41 @@ func (m *Map) sumRiskLevels() int {
 	return sum
 }
 
+func (m *Map) findLargestBasins(count int) int {
+	var basinSizes []int
+	for y := 0; y < m.height; y++ {
+		for x := 0; x < m.width; x++ {
+			if m.isLowPoint(x, y) && !m.visited[Point{x, y}] {
+				basinSizes = append(basinSizes, m.floodBasin(x, y))
+			}
+		}
+	}
+
+	for len(basinSizes) > count {
+		// Remove smaller basins
+		smallest := math.MaxInt32
+		index := -1
+		for i, basinSize := range basinSizes {
+			if basinSize < smallest {
+				smallest = basinSize
+				index = i
+			}
+		}
+		basinSizes = append(basinSizes[:index], basinSizes[index+1:]...)
+	}
+
+	product := 1
+	for _, basinSize := range basinSizes {
+		product *= basinSize
+	}
+	return product
+}
+
 func main() {
 	m := parseInput(loadInput("puzzle-input.txt"))
 	riskLevelSum := m.sumRiskLevels()
 	fmt.Printf("sum of risk levels: %v\n", riskLevelSum)
+	fmt.Printf("product of largest 3 basins: %v\n", m.findLargestBasins(3))
 }
 
 func parseInput(input string) Map {

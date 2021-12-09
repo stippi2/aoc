@@ -32,3 +32,8 @@ func Test_floodBasin(t *testing.T) {
 	assert.Equal(t, 14, m.floodBasin(2, 2))
 	assert.Equal(t, 9, m.floodBasin(6, 4))
 }
+
+func Test_findLargestBasins(t *testing.T) {
+	m := parseInput(exampleInput)
+	assert.Equal(t, 1134, m.findLargestBasins(3))
+}
