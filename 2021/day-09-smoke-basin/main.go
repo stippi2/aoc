@@ -52,12 +52,11 @@ func (m *Map) floodBasin(x, y int) (size int) {
 	visited := make(map[Point]bool)
 	var queue []Point
 	queue = append(queue, Point{x, y})
+	visited[Point{x, y}] = true
 
 	for len(queue) > 0 {
 		p := queue[0]
 		size += 1
-		visited[p] = true
-		fmt.Printf("visiting %v, queue: %v\n", p, queue)
 
 		neighbors := []Point{
 			{p.x - 1, p.y},
@@ -69,6 +68,7 @@ func (m *Map) floodBasin(x, y int) (size int) {
 		for _, neighbor := range neighbors {
 			if !visited[neighbor] && m.get(neighbor.x, neighbor.y) < 9 {
 				queue = append(queue, neighbor)
+				visited[neighbor] = true
 			}
 		}
 
