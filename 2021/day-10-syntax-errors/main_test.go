@@ -16,6 +16,7 @@ var exampleInput = `[({(<(())[]>[[{[]{<()<>>
 <{([([[(<>()){}]>(<<{{
 <{([{{}}[<[[[<>{}]]]>[]]`
 
-func Test_parseInput(t *testing.T) {
-	assert.True(t, true)
+func Test_parseLines(t *testing.T) {
+	totalScore := parseLines(parseInput(exampleInput))
+	assert.Equal(t, 26397, totalScore)
 }
