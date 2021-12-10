@@ -7,11 +7,6 @@ import (
 	"strings"
 )
 
-type Chunk struct {
-	opening, closing string
-	score            int
-}
-
 func closing(opening string) string {
 	switch opening {
 	case "(":
