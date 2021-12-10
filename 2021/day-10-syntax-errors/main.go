@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"strings"
 )
 
@@ -25,7 +26,7 @@ func closing(opening string) string {
 	return ""
 }
 
-func score(char string) int {
+func syntaxScore(char string) int {
 	switch char {
 	case ")":
 		return 3
@@ -39,46 +40,73 @@ func score(char string) int {
 	return 0
 }
 
-func isClosing(char string) bool {
-	return score(char) > 0
+func autocompleteScore(char string) int {
+	switch char {
+	case ")":
+		return 1
+	case "]":
+		return 2
+	case "}":
+		return 3
+	case ">":
+		return 4
+	}
+	return 0
 }
 
-func parseLine(line string) int {
+func isClosing(char string) bool {
+	return syntaxScore(char) > 0
+}
+
+func parseLine(line string) (int, []string) {
 	var expectedClosings []string
-	for i, char := range strings.Split(line, "") {
+	for _, char := range strings.Split(line, "") {
 		if isClosing(char) {
 			expected := expectedClosings[len(expectedClosings)-1]
 			if char != expected {
-				fmt.Printf("  syntax error at %v, expected: %s\n", i, expected)
-				return score(char)
+				return syntaxScore(char), expectedClosings
 			}
 			expectedClosings = expectedClosings[:len(expectedClosings)-1]
 		} else {
 			expectedClosings = append(expectedClosings, closing(char))
 		}
 	}
-	if len(expectedClosings) > 0 {
-		fmt.Printf("  incomplete line\n")
-	}
-	return 0
+	return 0, expectedClosings
 }
 
-func parseLines(lines []string) int {
+func totalSyntaxErrorScore(lines []string) int {
 	totalScore := 0
-	for i, line := range lines {
-		lineScore := parseLine(line)
-		if lineScore > 0 {
-			totalScore += lineScore
-			fmt.Printf("syntax error on line %v\n", i)
-		}
+	for _, line := range lines {
+		score, _ := parseLine(line)
+		totalScore += score
 	}
 	return totalScore
 }
 
+func computeAutocompleteScore(completions []string) int {
+	score := 0
+	for i := len(completions) - 1; i >= 0; i-- {
+		score = 5*score + autocompleteScore(completions[i])
+	}
+	return score
+}
+
+func totalAutocompleteScore(lines []string) int {
+	var scores []int
+	for _, line := range lines {
+		score, expectedCompletions := parseLine(line)
+		if score == 0 {
+			scores = append(scores, computeAutocompleteScore(expectedCompletions))
+		}
+	}
+	sort.Ints(scores)
+	return scores[len(scores)/2]
+}
+
 func main() {
 	lines := parseInput(loadInput("puzzle-input.txt"))
-	totalScore := parseLines(lines)
-	fmt.Printf("total syntax score: %v\n", totalScore)
+	fmt.Printf("total syntax score: %v\n", totalSyntaxErrorScore(lines))
+	fmt.Printf("total autocompletion score: %v\n", totalAutocompleteScore(lines))
 }
 
 func parseInput(input string) (lines []string) {
