@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -23,14 +24,87 @@ func (m *Map) offset(x, y int) int {
 }
 
 func (m *Map) set(x, y, value int) {
-	m.data[m.offset(x, y)] = value
+	offset := m.offset(x, y)
+	if offset >= 0 && offset < len(m.data) {
+		m.data[offset] = value
+	}
+}
+
+func (m *Map) absorbEnergy(x, y int) {
+	if x < 0 || x >= m.width || y < 0 || y >= m.height {
+		return
+	}
+	offset := m.offset(x, y)
+	if m.data[offset] > 0 {
+		m.data[offset] += 1
+	}
 }
 
 func (m *Map) get(x, y int) int {
 	return m.data[m.offset(x, y)]
 }
 
+func (m *Map) flash(x, y int) {
+	m.set(x, y, 0)
+	m.absorbEnergy(x-1, y-1)
+	m.absorbEnergy(x, y-1)
+	m.absorbEnergy(x+1, y-1)
+
+	m.absorbEnergy(x-1, y)
+	m.absorbEnergy(x+1, y)
+
+	m.absorbEnergy(x-1, y+1)
+	m.absorbEnergy(x, y+1)
+	m.absorbEnergy(x+1, y+1)
+}
+
+func (m *Map) processFlashes() int {
+	flashed := 0
+	for y := 0; y < m.height; y++ {
+		for x := 0; x < m.width; x++ {
+			v := m.get(x, y)
+			if v > 9 {
+				m.flash(x, y)
+				flashed++
+			}
+		}
+	}
+	return flashed
+}
+
+func (m *Map) step() int {
+	for i := 0; i < len(m.data); i++ {
+		m.data[i]++
+	}
+	flashes := 0
+	for {
+		flashed := m.processFlashes()
+		if flashed == 0 {
+			break
+		}
+		flashes += flashed
+	}
+	return flashes
+}
+
+func (m *Map) String() string {
+	result := ""
+	for y := 0; y < m.height; y++ {
+		for x := 0; x < m.width-1; x++ {
+			result += fmt.Sprintf("%2d ", m.get(x, y))
+		}
+		result += fmt.Sprintf("%2d\n", m.get(m.width-1, y))
+	}
+	return result
+}
+
 func main() {
+	m := parseInput(loadInput("puzzle-input.txt"))
+	flashes := 0
+	for step := 0; step < 100; step++ {
+		flashes += m.step()
+	}
+	fmt.Printf("total flashes after 100 steps: %v\n", flashes)
 }
 
 func parseInput(input string) *Map {
