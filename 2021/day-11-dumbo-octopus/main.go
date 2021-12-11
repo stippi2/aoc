@@ -72,7 +72,7 @@ func (m *Map) processFlashes() int {
 	return flashed
 }
 
-func (m *Map) step() int {
+func (m *Map) step() (int, bool) {
 	for i := 0; i < len(m.data); i++ {
 		m.data[i]++
 	}
@@ -84,7 +84,14 @@ func (m *Map) step() int {
 		}
 		flashes += flashed
 	}
-	return flashes
+	synchronized := true
+	for i := 0; i < len(m.data); i++ {
+		if m.data[i] != 0 {
+			synchronized = false
+			break
+		}
+	}
+	return flashes, synchronized
 }
 
 func (m *Map) String() string {
@@ -101,10 +108,18 @@ func (m *Map) String() string {
 func main() {
 	m := parseInput(loadInput("puzzle-input.txt"))
 	flashes := 0
-	for step := 0; step < 100; step++ {
-		flashes += m.step()
+	steps := 0
+	for {
+		flashed, synchronized := m.step()
+		steps++
+		if steps <= 100 {
+			flashes += flashed
+		}
+		if synchronized {
+			break
+		}
 	}
-	fmt.Printf("total flashes after 100 steps: %v\n", flashes)
+	fmt.Printf("total flashes after 100 steps: %v, synchronizes after: %v\n", flashes, steps)
 }
 
 func parseInput(input string) *Map {

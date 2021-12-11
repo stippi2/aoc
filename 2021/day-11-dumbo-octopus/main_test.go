@@ -17,7 +17,7 @@ func Test_parseInput(t *testing.T) {
 func Test_stepSimple(t *testing.T) {
 	m := parseInput("11111\n19991\n19191\n19991\n11111")
 	expected := parseInput("34543\n40004\n50005\n40004\n34543")
-	flashes := m.step()
+	flashes, _ := m.step()
 	assert.Equal(t, expected, m)
 	assert.Equal(t, 9, flashes)
 }
@@ -40,9 +40,23 @@ func Test_step100(t *testing.T) {
 	m := parseInput(exampleInput[0])
 	flashes := 0
 	for step := 0; step < 100; step++ {
-		flashes += m.step()
+		flashed, _ := m.step()
+		flashes += flashed
 	}
 	assert.Equal(t, 1656, flashes)
+}
+
+func Test_findSynchronize(t *testing.T) {
+	m := parseInput(exampleInput[0])
+	steps := 0
+	for {
+		steps++
+		_, synchronized := m.step()
+		if synchronized {
+			break
+		}
+	}
+	assert.Equal(t, 195, steps)
 }
 
 var exampleInput = []string{
