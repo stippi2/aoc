@@ -83,8 +83,9 @@ func (o *Origami) applyFolds() {
 
 func main() {
 	o := parseInput(loadInput("puzzle-input.txt"))
-	o.applyFolds()
-	fmt.Printf("dots visible after folding: %v\n", len(o.dots))
+//	o.applyFolds()
+	o.fold(o.folds[0])
+	fmt.Printf("dots visible after first fold: %v\n", len(o.dots))
 }
 
 func parseInput(input string) Origami {
