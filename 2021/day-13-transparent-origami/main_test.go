@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
+	"sort"
 	"testing"
 )
 
@@ -33,10 +34,46 @@ func Test_parseInput(t *testing.T) {
 		assert.Equal(t, o.dots[0], Point{6, 10})
 		assert.Equal(t, o.dots[17], Point{9, 0})
 	}
-	if assert.Len(t, o.foldsY, 1) {
-		assert.Equal(t, o.foldsY[0], 7)
-	}
-	if assert.Len(t, o.foldsX, 1) {
-		assert.Equal(t, o.foldsX[0], 5)
-	}
+	assert.Len(t, o.folds, 2)
+}
+
+func Test_applyFolds(t *testing.T) {
+	o := parseInput(exampleInput)
+	o.applyFolds()
+	assert.Len(t, o.dots, 16)
+}
+
+func (o *Origami) sortDots() []Point {
+	sort.Slice(o.dots, func(i, j int) bool {
+		if o.dots[i].y < o.dots[j].y {
+			return true
+		}
+		if o.dots[i].y == o.dots[j].y {
+			return o.dots[i].x < o.dots[j].x
+		}
+		return false
+	})
+	return o.dots
+}
+
+func Test_applyFirstFold(t *testing.T) {
+	o := parseInput(exampleInput)
+
+	o.fold(o.folds[0])
+	assert.Equal(t, []Point{
+		{0, 0},
+		{2, 0},
+		{3, 0},
+		{6, 0},
+		{9, 0},
+	}, o.sortDots()[0:5])
+
+	o.fold(o.folds[1])
+	assert.Equal(t, []Point{
+		{0, 0},
+		{1, 0},
+		{2, 0},
+		{3, 0},
+		{4, 0},
+	}, o.sortDots()[0:5])
 }
