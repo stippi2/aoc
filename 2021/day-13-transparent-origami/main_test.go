@@ -43,19 +43,6 @@ func Test_applyFolds(t *testing.T) {
 	assert.Len(t, o.dots, 16)
 }
 
-func (o *Origami) sortDots() []Point {
-	sort.Slice(o.dots, func(i, j int) bool {
-		if o.dots[i].y < o.dots[j].y {
-			return true
-		}
-		if o.dots[i].y == o.dots[j].y {
-			return o.dots[i].x < o.dots[j].x
-		}
-		return false
-	})
-	return o.dots
-}
-
 func Test_applyFirstFold(t *testing.T) {
 	o := parseInput(exampleInput)
 

@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -81,11 +83,54 @@ func (o *Origami) applyFolds() {
 	}
 }
 
+func (o *Origami) sortDots() []Point {
+	sort.Slice(o.dots, func(i, j int) bool {
+		if o.dots[i].y < o.dots[j].y {
+			return true
+		}
+		if o.dots[i].y == o.dots[j].y {
+			return o.dots[i].x < o.dots[j].x
+		}
+		return false
+	})
+	return o.dots
+}
+
+func (o *Origami) String() string {
+	o.sortDots()
+	maxX := math.MinInt32
+	maxY := math.MinInt32
+	for _, dot := range o.dots {
+		if dot.x > maxX {
+			maxX = dot.x
+		}
+		if dot.y > maxY {
+			maxY = dot.y
+		}
+	}
+	result := ""
+	for y := 0; y <= maxY; y++ {
+		for x := 0; x <= maxX; x++ {
+			if contains(o.dots, Point{x, y}) {
+				result += "#"
+			} else {
+				result += " "
+			}
+		}
+		result += "\n"
+	}
+	return result
+}
+
 func main() {
 	o := parseInput(loadInput("puzzle-input.txt"))
-//	o.applyFolds()
+	// Part 1
 	o.fold(o.folds[0])
 	fmt.Printf("dots visible after first fold: %v\n", len(o.dots))
+	// Part 2
+	o.folds = o.folds[1:]
+	o.applyFolds()
+	fmt.Printf("transparent origami:\n%s\n", &o)
 }
 
 func parseInput(input string) Origami {
