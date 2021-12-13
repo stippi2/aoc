@@ -39,9 +39,9 @@ func (f *FolderX) Fold(p Point) Point {
 	}
 }
 
-func (f *FolderX) String() string {
-	return fmt.Sprintf("fold along x at %v", f.line)
-}
+//func (f *FolderX) String() string {
+//	return fmt.Sprintf("fold along x at %v", f.line)
+//}
 
 func (f *FolderY) Fold(p Point) Point {
 	if p.y > f.line {
@@ -52,9 +52,9 @@ func (f *FolderY) Fold(p Point) Point {
 	}
 }
 
-func (f *FolderY) String() string {
-	return fmt.Sprintf("fold along y at %v", f.line)
-}
+//func (f *FolderY) String() string {
+//	return fmt.Sprintf("fold along y at %v", f.line)
+//}
 
 func contains(points []Point, point Point) bool {
 	for _, p := range points {
@@ -78,7 +78,7 @@ func (o *Origami) fold(f Folder) {
 
 func (o *Origami) applyFolds() {
 	for _, folder := range o.folds {
-		fmt.Printf("%v\n", folder)
+//		fmt.Printf("%v\n", folder)
 		o.fold(folder)
 	}
 }
