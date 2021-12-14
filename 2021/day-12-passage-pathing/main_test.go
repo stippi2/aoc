@@ -6,7 +6,7 @@ import (
 )
 
 func Test_parseInput(t *testing.T) {
-	n := parseInput(examples[0])
+	n := parseInput(examples[0]).start
 	assert.Equal(t, "start", n.name)
 	if assert.Equal(t, 2, len(n.next)) {
 		assert.Equal(t, "A", n.next[0].name)
@@ -14,10 +14,16 @@ func Test_parseInput(t *testing.T) {
 	}
 }
 
-func Test_findEnd(t *testing.T) {
-	assert.Equal(t, 10, findEnd(parseInput(examples[0]), ""))
-	assert.Equal(t, 19, findEnd(parseInput(examples[1]), ""))
-	assert.Equal(t, 226, findEnd(parseInput(examples[2]), ""))
+func Test_findPathsPart1(t *testing.T) {
+	assert.Len(t, findPathsPart1(parseInput(examples[0])), 10)
+	assert.Len(t, findPathsPart1(parseInput(examples[1])), 19)
+	assert.Len(t, findPathsPart1(parseInput(examples[2])), 226)
+}
+
+func Test_findPathsPart2(t *testing.T) {
+	assert.Len(t, findPathsPart2(parseInput(examples[0])), 36)
+	assert.Len(t, findPathsPart2(parseInput(examples[1])), 103)
+	assert.Len(t, findPathsPart2(parseInput(examples[2])), 3509)
 }
 
 var examples = []string{
