@@ -55,8 +55,8 @@ func (p *PolymerProcess) applyRules() {
 		comboLeft := combination[:1] + insertion
 		comboRight := insertion + combination[1:]
 
-		p.combinations[comboLeft] = p.combinations[comboLeft] + count
-		p.combinations[comboRight] = p.combinations[comboRight] + count
+		p.combinations[comboLeft] += count
+		p.combinations[comboRight] += count
 
 		newCount := p.combinations[combination] - count
 		if newCount > 0 {
@@ -65,7 +65,7 @@ func (p *PolymerProcess) applyRules() {
 			delete(p.combinations, combination)
 		}
 
-		p.elementCounts[insertion] = p.elementCounts[insertion] + count
+		p.elementCounts[insertion] += count
 	}
 }
 
