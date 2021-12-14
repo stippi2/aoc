@@ -30,3 +30,27 @@ func Test_parseInput(t *testing.T) {
 	assert.Len(t, p.insertionRules, 16)
 	assert.Equal(t, p.insertionRules["HC"], "B")
 }
+
+func Test_applyRules(t *testing.T) {
+	p := parseInput(exampleInput)
+	expected := []string{
+		"NCNBCHB",
+		"NBCCNBBBCBHCB",
+		"NBBBCNCCNBBNBNBBCHBHHBCHB",
+		"NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB",
+	}
+	for step := 0; step < len(expected); step++ {
+		p.applyRules()
+		assert.Equal(t, expected[step], p.polymer)
+	}
+}
+
+func Test_minMax(t *testing.T) {
+	p := parseInput(exampleInput)
+	for step := 0; step < 10; step++ {
+		p.applyRules()
+	}
+	min, max := occurrences(p.getElementCounts())
+	assert.Equal(t, 1749, max)
+	assert.Equal(t, 161, min)
+}
