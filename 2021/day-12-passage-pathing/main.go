@@ -114,9 +114,7 @@ func parseInput(input string) CaveSystem {
 		a := getNode(allNodes, nodeNames[0])
 		b := getNode(allNodes, nodeNames[1])
 		a.next = append(a.next, b)
-		if nodeNames[0] != "start" && nodeNames[1] != "end" {
-			b.next = append(b.next, a)
-		}
+		b.next = append(b.next, a)
 	}
 	return CaveSystem{start: allNodes["start"], allNodes: allNodes}
 }
