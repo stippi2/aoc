@@ -26,10 +26,10 @@ func (p *PolymerProcess) init(polymer string) {
 	for i := 0; i < len(polymer); i++ {
 		if i < len(polymer) - 1 {
 			combination := p.polymer[i : i+2]
-			p.combinations[combination] = p.combinations[combination] + 1
+			p.combinations[combination] += 1
 		}
 		element := polymer[i : i+1]
-		p.elementCounts[element] = p.elementCounts[element] + 1
+		p.elementCounts[element] += 1
 	}
 }
 
