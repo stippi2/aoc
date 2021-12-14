@@ -42,6 +42,12 @@ func Test_applyRules(t *testing.T) {
 	for step := 0; step < len(expected); step++ {
 		p.applyRules()
 		assert.Equal(t, expected[step], p.polymer)
+		temp := PolymerProcess{}
+		temp.init(expected[step])
+		assert.Equal(t, temp.elementCounts, p.elementCounts)
+		if !assert.Equal(t, temp.combinations, p.combinations) {
+			break
+		}
 	}
 }
 
@@ -50,7 +56,30 @@ func Test_minMax(t *testing.T) {
 	for step := 0; step < 10; step++ {
 		p.applyRules()
 	}
-	min, max := occurrences(p.getElementCounts())
-	assert.Equal(t, 1749, max)
-	assert.Equal(t, 161, min)
+	min, max, _, _ := occurrences(p.getElementCounts())
+	assert.Equal(t, int64(1749), max)
+	assert.Equal(t, int64(161), min)
 }
+
+/*
+Template:     NNCB
+After step 2: NBCCNBBBCBHCB
+After step 3: NBBBCNCCNBBNBNBBCHBHHBCHB
+After step 4: NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB
+
+NN 1 -> NN--, NC++, CN++
+NC 1 -> NC--, NB++, BC++
+CB 1 -> CB--, CH++, HB++
+
+-> NCNBCHB
+
+NC 1
+CN 1
+NB 1
+BC 1
+CH 1
+HB 1
+
+
+*/
+
