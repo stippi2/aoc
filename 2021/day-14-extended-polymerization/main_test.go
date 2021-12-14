@@ -25,5 +25,8 @@ CC -> N
 CN -> C`
 
 func Test_parseInput(t *testing.T) {
-	assert.True(t, true)
+	p := parseInput(exampleInput)
+	assert.Equal(t, "NNCB", p.polymer)
+	assert.Len(t, p.insertionRules, 16)
+	assert.Equal(t, p.insertionRules["HC"], "B")
 }
