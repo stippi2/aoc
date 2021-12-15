@@ -17,5 +17,9 @@ var exampleInput = `1163751742
 2311944581`
 
 func Test_parseInput(t *testing.T) {
-	assert.True(t, true)
+	m := parseInput(exampleInput)
+	assert.Equal(t, 10, m.width)
+	assert.Equal(t, 10, m.height)
+	assert.Equal(t, 1, m.get(0, 0))
+	assert.Equal(t, 8, m.get(8, 9))
 }
