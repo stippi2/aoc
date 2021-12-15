@@ -68,6 +68,23 @@ func (p *Path) tip() Point {
 	return p.points[len(p.points) - 1]
 }
 
+func (m *Map) neighbors(tip Point) []Point {
+	var next []Point
+	if tip.x < m.width - 1 {
+		next = append(next, Point{tip.x + 1, tip.y})
+	}
+	if tip.y < m.height - 1 {
+		next = append(next, Point{tip.x, tip.y + 1})
+	}
+	if tip.x > 0 {
+		next = append(next, Point{tip.x - 1, tip.y})
+	}
+	if tip.y > 0 {
+		next = append(next, Point{tip.x, tip.y - 1})
+	}
+	return next
+}
+
 func (p *Path) String() string {
 	result := ""
 	for _, point := range p.points {
@@ -109,24 +126,12 @@ func (m *Map) findPath() int {
 			newBestPaths[tip] = path
 		}
 		for tip, path := range bestPaths {
-			var next []Point
-			if tip.x < m.width - 1 {
-				next = append(next, Point{tip.x + 1, tip.y})
-			}
-			if tip.y < m.height - 1 {
-				next = append(next, Point{tip.x, tip.y + 1})
-			}
-			if tip.x > 0 {
-				next = append(next, Point{tip.x - 1, tip.y})
-			}
-			if tip.y > 0 {
-				next = append(next, Point{tip.x, tip.y - 1})
-			}
+			neighbors := m.neighbors(tip)
 
 			// For each of the possible directions, create a new path that includes the point taken
 			// If that path is better than the path already stored to reach the new point, replace it
-			for _, n := range next {
-				// Never backtrack
+			for _, n := range neighbors {
+				// Never enter a cycle
 				if path.contains(n) {
 					continue
 				}
