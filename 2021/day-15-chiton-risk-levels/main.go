@@ -94,6 +94,26 @@ func (p *Path) String() string {
 	return result[1:]
 }
 
+func (m *Map) extend(count int) *Map {
+	newMap := Map{}
+	newMap.init(m.width * count, m.height * count)
+	for y := 0; y < m.height; y++ {
+		for x := 0; x < m.width; x++ {
+			risk := m.get(x, y)
+			for ry := 0; ry < count; ry++ {
+				for rx := 0; rx < count; rx++ {
+					newRisk := risk + rx + ry
+					if newRisk > 9 {
+						newRisk -= 9
+					}
+					newMap.set(x+(rx * m.width), y+(ry * m.height), newRisk)
+				}
+			}
+		}
+	}
+	return &newMap
+}
+
 func (m *Map) findPath() int {
 	start := Point{0, 0}
 	end := Point{m.width - 1, m.height - 1}
@@ -160,6 +180,7 @@ func (m *Map) findPath() int {
 
 func main() {
 	m := parseInput(loadInput("puzzle-input.txt"))
+	m = m.extend(5)
 	start := time.Now()
 	leastRisk := m.findPath()
 	fmt.Printf("least risk: %v, found in %v\n", leastRisk, time.Since(start))
