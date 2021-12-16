@@ -114,10 +114,19 @@ func (m *Map) extend(count int) *Map {
 	return &newMap
 }
 
+func copyMap(m map[Point]*Path) map[Point]*Path {
+	c := make(map[Point]*Path)
+	for point, path := range m {
+		c[point] = path
+	}
+	return c
+}
+
 func (m *Map) findPath() int {
 	start := Point{0, 0}
 	end := Point{m.width - 1, m.height - 1}
 
+	// bestPaths stores for each Point the lowest risk Path currently known to reach that point
 	bestPaths := make(map[Point]*Path)
 	bestPaths[start] = &Path{
 		points: []Point{{0, 0}},
@@ -125,26 +134,36 @@ func (m *Map) findPath() int {
 	}
 	iteration := 0
 
+	// TODO: optimization idea 1: reach the end diagonally, any path needs to be better than that
+	// TODO: Use another data structure to hold the "in-flight" paths. If it is ordered for the
+	// TODO: lowest risk path first, anytime we reach a new point means we have reached it via the
+	// TODO: cheapest path. This means we do not need to reach this point via any other path, and
+	// TODO: so we can maintain a simple "visited" map of points. We don't need to check from any
+	// TODO: Path whether we already visited a new neighbor.
+
 	for {
+		// Make a copy of bestPaths map, so that we can iterate a stable map
+		// and modify the copy. See https://go.dev/ref/spec#For_range
+		newBestPaths := copyMap(bestPaths)
+
 		currentWinner := bestPaths[end]
 		if currentWinner != nil {
-			// remove any paths with worse risk than the current winner
+			// Remove any paths with worse risk than the current winner
 			for tip, path := range bestPaths {
 				if path != currentWinner && path.risk >= currentWinner.risk {
-					delete(bestPaths, tip)
+					delete(newBestPaths, tip)
 				}
 			}
-			if len(bestPaths) == 1 {
+			if len(newBestPaths) == 1 {
 				return currentWinner.risk
 			}
+			// Sync the maps again after having updated the copy
+			bestPaths = copyMap(newBestPaths)
 		}
+
 		iteration++
 		fmt.Printf("iteration: %v, paths: %v\n", iteration, len(bestPaths))
-		newBestPaths := make(map[Point]*Path)
-		for tip, path := range bestPaths {
-			//fmt.Printf("path: %v\n", path)
-			newBestPaths[tip] = path
-		}
+
 		for tip, path := range bestPaths {
 			neighbors := m.neighbors(tip)
 
