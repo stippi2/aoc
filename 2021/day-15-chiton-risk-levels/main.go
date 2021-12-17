@@ -214,10 +214,10 @@ func (m *Map) findPathQueue() int {
 	}
 	end := Point{m.width - 1, m.height - 1}
 
-	pathMap := make(map[Point]*Path)
+	pathMap := make([]*Path, m.width*m.height)
 	visited := make(map[Point]bool)
 
-	pathMap[startPath.tip] = startPath
+	pathMap[m.offset(0, 0)] = startPath
 	queue := &PathQueue{startPath}
 	heap.Init(queue)
 
@@ -247,18 +247,18 @@ func (m *Map) findPathQueue() int {
 				continue
 			}
 			risk := path.risk + m.get(n.x, n.y)
-			pathToNext := pathMap[n]
+			pathMapOffset := m.offset(n.x, n.y)
+			pathToNext := pathMap[pathMapOffset]
 			if pathToNext == nil {
 				pathToNext = &Path{
 					risk: risk,
 					tip:  n,
 				}
-				pathMap[n] = pathToNext
-				queue.Push(pathToNext)
+				pathMap[pathMapOffset] = pathToNext
 			} else if risk < pathToNext.risk {
 				pathToNext.risk = risk
-				queue.Push(pathToNext)
 			}
+			queue.Push(pathToNext)
 		}
 	}
 	return -1
