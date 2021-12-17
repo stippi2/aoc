@@ -192,26 +192,31 @@ func (q PathQueue) Less(i, j int) bool { return q[i].risk < q[j].risk }
 func (q PathQueue) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }
 
 func (q *PathQueue) Push(x interface{}) {
-	*q = append(*q, x.(*Path))
+	path := x.(*Path)
+	*q = append(*q, path)
 }
 
 func (q *PathQueue) Pop() interface{} {
 	old := *q
 	n := len(old)
-	x := old[n-1]
+	path := old[n-1]
+	old[n-1] = nil  // avoid memory leak
 	*q = old[0 : n-1]
-	return x
+	return path
 }
 
 func (m *Map) findPathQueue() int {
-	end := Point{m.width - 1, m.height - 1}
-
-	visited := make(map[Point]bool)
-
-	queue := &PathQueue{&Path{
+	startPath := &Path{
 		risk: 0,
 		tip:  Point{0, 0},
-	}}
+	}
+	end := Point{m.width - 1, m.height - 1}
+
+	pathMap := make(map[Point]*Path)
+	visited := make(map[Point]bool)
+
+	pathMap[startPath.tip] = startPath
+	queue := &PathQueue{startPath}
 	heap.Init(queue)
 
 	iteration := 0
@@ -222,8 +227,8 @@ func (m *Map) findPathQueue() int {
 			return path.risk
 		}
 		visited[path.tip] = true
-		fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), risk: %v\n", iteration, queue.Len(),
-			path.tip.x, path.tip.y, path.risk)
+		//fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), risk: %v\n", iteration, queue.Len(),
+		//	path.tip.x, path.tip.y, path.risk)
 
 		neighbors := m.neighbors(path.tip)
 
@@ -234,11 +239,20 @@ func (m *Map) findPathQueue() int {
 			if visited[n] {
 				continue
 			}
-			pathToNext := &Path{
-				tip:    n,
-				risk:   path.risk + m.get(n.x, n.y),
+			risk := path.risk + m.get(n.x, n.y)
+			pathToNext := pathMap[n]
+			if pathToNext == nil {
+				pathToNext = &Path{
+					risk: risk,
+					tip:  n,
+				}
+				pathMap[n] = pathToNext
+				queue.Push(pathToNext)
+			} else if risk < pathToNext.risk {
+				pathToNext.risk = risk
+				queue.Push(pathToNext)
+				//queue.updatePath(pathToNext, n, risk)
 			}
-			queue.Push(pathToNext)
 		}
 	}
 	return -1
@@ -248,7 +262,7 @@ func main() {
 	m := parseInput(loadInput("puzzle-input.txt"))
 	m = m.extend(5)
 	start := time.Now()
-	leastRisk := m.findPath()
+	leastRisk := m.findPathQueue()
 	fmt.Printf("least risk: %v, found in %v\n", leastRisk, time.Since(start))
 }
 
