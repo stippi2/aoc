@@ -151,10 +151,10 @@ func (m *Map) findPath() int {
 			bestPaths = copyMap(newBestPaths)
 		}
 
-		iteration++
-
 		for tip, path := range bestPaths {
 			neighbors := m.neighbors(tip)
+
+			iteration++
 
 			// For each of the possible directions, create a new path that includes the point taken
 			// If that path is better than the path already stored to reach the new point, replace it
