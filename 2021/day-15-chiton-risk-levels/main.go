@@ -251,7 +251,6 @@ func (m *Map) findPathQueue() int {
 			} else if risk < pathToNext.risk {
 				pathToNext.risk = risk
 				queue.Push(pathToNext)
-				//queue.updatePath(pathToNext, n, risk)
 			}
 		}
 	}
