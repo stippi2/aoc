@@ -8,6 +8,7 @@ import (
 var exampleInput = []string{
 	"D2FE28",
 	"38006F45291200",
+	"EE00D40C823060",
 	"8A004A801A8002F478",
 	"620080001611562C8802118E34",
 	"C0015000016115A2E0802F182340",
@@ -18,10 +19,11 @@ func Test_parseInput(t *testing.T) {
 	assert.Equal(t, []uint8{255, 15}, parseInput("FF0F").stream.data)
 }
 
-func Test_getHeader(t *testing.T) {
+func Test_getLiteral(t *testing.T) {
 	p := parseInput(exampleInput[0])
 	assert.Equal(t, 6, p.getVersion())
 	assert.Equal(t, TypeLiteral, p.getType())
+	assert.Equal(t, uint64(2021), p.getLiteral())
 }
 
 func Test_mostSignificantBits(t *testing.T) {

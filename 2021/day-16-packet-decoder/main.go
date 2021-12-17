@@ -69,6 +69,20 @@ func (p *Packet) getType() int {
 	return int(p.stream.readAt(3, 3))
 }
 
+func (p *Packet) getLiteral() uint64 {
+	p.stream.bitOffset = 6
+	var value uint64
+	for {
+		bits := p.stream.read(5)
+		value |= bits & 0xf
+		if (bits & 0x10) == 0 {
+			break
+		}
+		value <<= 4
+	}
+	return value
+}
+
 func main() {
 }
 
