@@ -120,6 +120,7 @@ func (m *Map) findPath() int {
 		risk:   0,
 	}
 	iteration := 0
+	startTime := time.Now()
 
 	// TODO: optimization idea 1: reach the end diagonally, any path needs to be better than that
 	// TODO: Use another data structure to hold the "in-flight" paths. If it is ordered for the
@@ -142,6 +143,8 @@ func (m *Map) findPath() int {
 				}
 			}
 			if len(newBestPaths) == 1 {
+				fmt.Printf("found end after %v / %v iterations, paths in map: %v\n", time.Since(startTime),
+					iteration, len(newBestPaths))
 				return currentWinner.risk
 			}
 			// Sync the maps again after having updated the copy
@@ -149,7 +152,6 @@ func (m *Map) findPath() int {
 		}
 
 		iteration++
-		fmt.Printf("iteration: %v, paths: %v\n", iteration, len(bestPaths))
 
 		for tip, path := range bestPaths {
 			neighbors := m.neighbors(tip)
@@ -219,11 +221,16 @@ func (m *Map) findPathQueue() int {
 	queue := &PathQueue{startPath}
 	heap.Init(queue)
 
+	startTime := time.Now()
 	iteration := 0
+
 	for queue.Len() > 0 {
 		iteration++
 		path := heap.Pop(queue).(*Path)
 		if path.tip == end {
+			fmt.Printf("found end after %v iterations, paths in queue: %v\n", iteration, queue.Len())
+			fmt.Printf("found end after %v / %v iterations, paths in map: %v\n", time.Since(startTime),
+				iteration, queue.Len())
 			return path.risk
 		}
 		visited[path.tip] = true
@@ -260,9 +267,8 @@ func (m *Map) findPathQueue() int {
 func main() {
 	m := parseInput(loadInput("puzzle-input.txt"))
 	m = m.extend(5)
-	start := time.Now()
 	leastRisk := m.findPathQueue()
-	fmt.Printf("least risk: %v, found in %v\n", leastRisk, time.Since(start))
+	fmt.Printf("least risk: %v\n", leastRisk)
 }
 
 func parseInput(input string) *Map {

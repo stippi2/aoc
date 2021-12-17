@@ -103,9 +103,21 @@ func Test_findPathReplicatedMap(t *testing.T) {
 	m1 = m1.extend(5)
 	assert.Equal(t, m2.data, m1.data)
 	assert.Equal(t, 315, m1.findPath())
+	assert.Equal(t, 315, m1.findPathQueue())
 }
 
 func Test_findPathSmall(t *testing.T) {
 	m := parseInput(smallExample)
 	assert.Equal(t, 10, m.findPath())
+}
+
+func Test_copyMap(t *testing.T) {
+	path := &Path{risk: 42}
+	a := make(map[Point]*Path)
+	a[path.tip] = path
+	b := a
+	c := copyMap(a)
+	delete(a, path.tip)
+	assert.Nil(t, b[path.tip])
+	assert.Equal(t, path, c[path.tip])
 }
