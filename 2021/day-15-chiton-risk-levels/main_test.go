@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -87,6 +88,8 @@ func Test_parseInput(t *testing.T) {
 func Test_findPath(t *testing.T) {
 	m := parseInput(exampleInput)
 	assert.Equal(t, 40, m.findPath())
+	fmt.Println("---")
+	assert.Equal(t, 40, m.findPathQueue())
 }
 
 func Test_findPathReplicatedMap(t *testing.T) {

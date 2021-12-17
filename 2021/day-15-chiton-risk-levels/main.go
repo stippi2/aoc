@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/heap"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -16,6 +17,21 @@ type Map struct {
 	width  int
 	height int
 	data   []int
+}
+
+type Path struct {
+	points []Point
+	tip    Point
+	risk   int
+}
+
+func (p *Path) contains(point Point) bool {
+	for _, i := range p.points {
+		if i == point {
+			return true
+		}
+	}
+	return false
 }
 
 func (m *Map) init(width, height int) {
@@ -39,50 +55,21 @@ func (m *Map) get(x, y int) int {
 	return m.data[m.offset(x, y)]
 }
 
-func (m *Map) String() string {
-	result := ""
-	for y := 0; y < m.height; y++ {
-		for x := 0; x < m.width-1; x++ {
-			result += fmt.Sprintf("%2d ", m.get(x, y))
-		}
-		result += fmt.Sprintf("%2d\n", m.get(m.width-1, y))
+func (m *Map) neighbors(p Point) []Point {
+	var neighbors []Point
+	if p.x < m.width-1 {
+		neighbors = append(neighbors, Point{p.x + 1, p.y})
 	}
-	return result
-}
-
-type Path struct {
-	points []Point
-	risk int
-}
-
-func (p *Path) contains(point Point) bool {
-	for _, i := range p.points {
-		if i == point {
-			return true
-		}
+	if p.y < m.height-1 {
+		neighbors = append(neighbors, Point{p.x, p.y + 1})
 	}
-	return false
-}
-
-func (p *Path) tip() Point {
-	return p.points[len(p.points) - 1]
-}
-
-func (m *Map) neighbors(tip Point) []Point {
-	var next []Point
-	if tip.x < m.width - 1 {
-		next = append(next, Point{tip.x + 1, tip.y})
+	if p.x > 0 {
+		neighbors = append(neighbors, Point{p.x - 1, p.y})
 	}
-	if tip.y < m.height - 1 {
-		next = append(next, Point{tip.x, tip.y + 1})
+	if p.y > 0 {
+		neighbors = append(neighbors, Point{p.x, p.y - 1})
 	}
-	if tip.x > 0 {
-		next = append(next, Point{tip.x - 1, tip.y})
-	}
-	if tip.y > 0 {
-		next = append(next, Point{tip.x, tip.y - 1})
-	}
-	return next
+	return neighbors
 }
 
 func (p *Path) String() string {
@@ -96,7 +83,7 @@ func (p *Path) String() string {
 
 func (m *Map) extend(count int) *Map {
 	newMap := Map{}
-	newMap.init(m.width * count, m.height * count)
+	newMap.init(m.width*count, m.height*count)
 	for y := 0; y < m.height; y++ {
 		for x := 0; x < m.width; x++ {
 			risk := m.get(x, y)
@@ -106,7 +93,7 @@ func (m *Map) extend(count int) *Map {
 					if newRisk > 9 {
 						newRisk -= 9
 					}
-					newMap.set(x+(rx * m.width), y+(ry * m.height), newRisk)
+					newMap.set(x+(rx*m.width), y+(ry*m.height), newRisk)
 				}
 			}
 		}
@@ -176,11 +163,11 @@ func (m *Map) findPath() int {
 				}
 				// Compare the current best path to reach the next point
 				bestPath := newBestPaths[n]
-				if bestPath != nil && bestPath.risk < path.risk + m.get(n.x, n.y) {
+				if bestPath != nil && bestPath.risk < path.risk+m.get(n.x, n.y) {
 					// Ok, there is a better path to reach this point
 					continue
 				}
-				pathCopy := make([]Point, len(path.points) + 1)
+				pathCopy := make([]Point, len(path.points)+1)
 				copy(pathCopy, path.points)
 				pathCopy[len(path.points)] = n
 				pathToNext := &Path{
@@ -195,6 +182,66 @@ func (m *Map) findPath() int {
 		}
 		bestPaths = newBestPaths
 	}
+}
+
+// PathQueue implements a priority queue, see https://pkg.go.dev/container/heap
+type PathQueue []*Path
+
+func (q PathQueue) Len() int           { return len(q) }
+func (q PathQueue) Less(i, j int) bool { return q[i].risk < q[j].risk }
+func (q PathQueue) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }
+
+func (q *PathQueue) Push(x interface{}) {
+	*q = append(*q, x.(*Path))
+}
+
+func (q *PathQueue) Pop() interface{} {
+	old := *q
+	n := len(old)
+	x := old[n-1]
+	*q = old[0 : n-1]
+	return x
+}
+
+func (m *Map) findPathQueue() int {
+	end := Point{m.width - 1, m.height - 1}
+
+	visited := make(map[Point]bool)
+
+	queue := &PathQueue{&Path{
+		risk: 0,
+		tip:  Point{0, 0},
+	}}
+	heap.Init(queue)
+
+	iteration := 0
+	for queue.Len() > 0 {
+		iteration++
+		path := heap.Pop(queue).(*Path)
+		if path.tip == end {
+			return path.risk
+		}
+		visited[path.tip] = true
+		fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), risk: %v\n", iteration, queue.Len(),
+			path.tip.x, path.tip.y, path.risk)
+
+		neighbors := m.neighbors(path.tip)
+
+		// For each of the possible directions, create a new path that includes the point taken
+		// If that path is better than the path already stored to reach the new point, replace it
+		for _, n := range neighbors {
+			// If we visited this position already, it means we did so via a cheaper path
+			if visited[n] {
+				continue
+			}
+			pathToNext := &Path{
+				tip:    n,
+				risk:   path.risk + m.get(n.x, n.y),
+			}
+			queue.Push(pathToNext)
+		}
+	}
+	return -1
 }
 
 func main() {
