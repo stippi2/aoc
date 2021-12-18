@@ -32,10 +32,6 @@ func Test_mostSignificantBits(t *testing.T) {
 	assert.Equal(t, uint8(0xe0), mostSignificantBits(3))
 }
 
-func Test_leastSignificantBits(t *testing.T) {
-	assert.Equal(t, uint8(0x07), leastSignificantBits(3))
-}
-
 func Test_readBits(t *testing.T) {
 	p := parseInput(exampleInput[0])
 	assert.Equal(t, uint64(0x17), p.stream.readAt(6, 5))
@@ -77,6 +73,6 @@ func TestCalculatingVisitor(t *testing.T) {
 		c := &CalculatingVisitor{}
 		p := parseInput(test.input)
 		p.visit(c)
-		assert.Equal(t, test.expectedValue, c.current.Evaluate())
+		assert.Equal(t, test.expectedValue, c.finalValue)
 	}
 }
