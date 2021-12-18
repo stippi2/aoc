@@ -3,11 +3,19 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
 	"strconv"
 	"strings"
 )
 
+const TypeSum = 0
+const TypeProduct = 1
+const TypeMinimum = 2
+const TypeMaximum = 3
 const TypeLiteral = 4
+const TypeGreater = 5
+const TypeLess = 6
+const TypeEqual = 7
 
 type BitStream struct {
 	data      []uint8
@@ -96,11 +104,13 @@ func (p *Packet) getLiteral() (value, length uint64) {
 }
 
 type PacketVisitor interface {
-	Visit(p *Packet)
+	Enter(p *Packet)
+	Leave(p *Packet)
 }
 
 func (p *Packet) visit(visitor PacketVisitor) uint64 {
-	visitor.Visit(p)
+	visitor.Enter(p)
+	defer visitor.Leave(p)
 	t := p.getType()
 	if t == TypeLiteral {
 		_, length := p.getLiteral()
@@ -140,16 +150,154 @@ type VersionAddingVisitor struct {
 	versionSum int
 }
 
-func (v *VersionAddingVisitor) Visit(p *Packet) {
+func (v *VersionAddingVisitor) Enter(p *Packet) {
 	v.versionSum += p.getVersion()
 }
 
+func (v *VersionAddingVisitor) Leave(_ *Packet) {
+}
+
+type Value interface {
+	Evaluate() int
+}
+
+type Operation struct {
+	op       int
+	operands []int
+}
+
+func (o *Operation) Evaluate() int {
+	switch o.op {
+	case TypeSum:
+		v := 0
+		for _, operand := range o.operands {
+			v += operand
+		}
+		return v
+	case TypeProduct:
+		v := 1
+		for _, operand := range o.operands {
+			v *= operand
+		}
+		return v
+	case TypeMinimum:
+		min := math.MaxInt32
+		for _, operand := range o.operands {
+			v := operand
+			if v < min {
+				min = v
+			}
+		}
+		return min
+	case TypeMaximum:
+		max := math.MinInt32
+		for _, operand := range o.operands {
+			v := operand
+			if v > max {
+				max = v
+			}
+		}
+		return max
+	case TypeGreater:
+		if o.operands[0] > o.operands[1] {
+			return 1
+		}
+		return 0
+	case TypeLess:
+		if o.operands[0] < o.operands[1] {
+			return 1
+		}
+		return 0
+	case TypeEqual:
+		if o.operands[0] == o.operands[1] {
+			return 1
+		}
+		return 0
+	}
+	return 0
+}
+
+type Literal struct {
+	value int
+}
+
+func (l *Literal) Evaluate() int {
+	return l.value
+}
+
+type CalculatingVisitor struct {
+	indentation int
+	operationStack []*Operation
+	current Value
+}
+
+func (v *CalculatingVisitor) Enter(p *Packet) {
+	if p.getType() == TypeLiteral {
+		value, _ := p.getLiteral()
+		v.current = &Literal{int(value)}
+	} else {
+		operation := &Operation{op: p.getType()}
+		v.current = operation
+		v.operationStack = append(v.operationStack, operation)
+	}
+
+	for i := 0; i < v.indentation; i++ {
+		fmt.Printf(" ")
+	}
+	switch p.getType() {
+	case TypeSum:
+		fmt.Printf("sum {\n")
+	case TypeProduct:
+		fmt.Printf("product {\n")
+	case TypeMinimum:
+		fmt.Printf("min {\n")
+	case TypeMaximum:
+		fmt.Printf("max {\n")
+	case TypeGreater:
+		fmt.Printf("greater {\n")
+	case TypeLess:
+		fmt.Printf("less {\n")
+	case TypeEqual:
+		fmt.Printf("equal {\n")
+	case TypeLiteral:
+		value, _ := p.getLiteral()
+		fmt.Printf("%v\n", value)
+	}
+	v.indentation += 2
+}
+
+func (v *CalculatingVisitor) Leave(p *Packet) {
+	v.indentation -= 2
+
+	value := v.current.Evaluate()
+	last := len(v.operationStack) - 1
+	if last >= 0 {
+		operation := v.operationStack[last]
+		if v.current != operation {
+			operation.operands = append(operation.operands, value)
+		}
+		if p.getType() != TypeLiteral {
+			v.operationStack = v.operationStack[:last]
+		}
+		v.current = operation
+	}
+
+	if p.getType() != TypeLiteral {
+		for i := 0; i < v.indentation; i++ {
+			fmt.Printf(" ")
+		}
+		fmt.Printf("}\n")
+	}
+}
 
 func main() {
-	v := &VersionAddingVisitor{}
 	p := parseInput(loadInput("puzzle-input.txt"))
+	v := &VersionAddingVisitor{}
 	p.visit(v)
 	fmt.Printf("sum of packet versions: %v\n", v.versionSum)
+	c := &CalculatingVisitor{}
+	p.visit(c)
+	fmt.Printf("evaluation: %v\n", c.current.Evaluate())
 }
 
 func parseInput(input string) Packet {

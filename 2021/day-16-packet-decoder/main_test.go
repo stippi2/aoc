@@ -41,7 +41,7 @@ func Test_readBits(t *testing.T) {
 	assert.Equal(t, uint64(0x17), p.stream.readAt(6, 5))
 }
 
-func TestVersionAddingVisitor_Visit(t *testing.T) {
+func TestVersionAddingVisitor(t *testing.T) {
 	tests := []struct {
 		input string
 		expectedVersionSum int
@@ -56,5 +56,27 @@ func TestVersionAddingVisitor_Visit(t *testing.T) {
 		p := parseInput(test.input)
 		p.visit(v)
 		assert.Equal(t, test.expectedVersionSum, v.versionSum)
+	}
+}
+
+func TestCalculatingVisitor(t *testing.T) {
+	tests := []struct {
+		input string
+		expectedValue int
+	}{
+		{"C200B40A82", 3},
+		{"04005AC33890", 54},
+		{"880086C3E88112",7},
+		{"CE00C43D881120", 9},
+		{"D8005AC2A8F0", 1},
+		{"F600BC2D8F", 0},
+		{"9C005AC2F8F0", 0},
+		{"9C0141080250320F1802104A08", 1},
+	}
+	for _, test := range tests {
+		c := &CalculatingVisitor{}
+		p := parseInput(test.input)
+		p.visit(c)
+		assert.Equal(t, test.expectedValue, c.current.Evaluate())
 	}
 }
