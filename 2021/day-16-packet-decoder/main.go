@@ -11,7 +11,7 @@ const TypeLiteral = 4
 
 type BitStream struct {
 	data      []uint8
-	bitOffset int64
+	bitOffset uint64
 }
 
 func mostSignificantBits(bits int) uint8 {
@@ -34,22 +34,29 @@ func leastSignificantBits(bits int) uint8 {
 	return mask
 }
 
-func (s *BitStream) readAt(offset, bitCount int64) uint64 {
+func (s *BitStream) readAt(offset, bitCount uint64) uint64 {
 	s.bitOffset = offset
 	return s.read(bitCount)
 }
 
-func (s *BitStream) read(bitCount int64) uint64 {
+func (s *BitStream) readByte(dataOffset uint64) uint8 {
+	if uint64(len(s.data)) <= dataOffset {
+		return 0
+	}
+	return s.data[dataOffset]
+}
+
+func (s *BitStream) read(bitCount uint64) uint64 {
 	dataOffset := s.bitOffset / 8
 	skipBits := int(s.bitOffset - dataOffset * 8)
-	remainder := int64(8 - skipBits) - bitCount
+	remainder := int64(8) - int64(skipBits) - int64(bitCount)
 	mask := mostSignificantBits(skipBits)
 	var value uint64
-	value = uint64(s.data[dataOffset] & (^mask))
+	value = uint64(s.readByte(dataOffset) & (^mask))
 	for remainder < 0 {
 		value <<= 8
 		dataOffset++
-		value |= uint64(s.data[dataOffset])
+		value |= uint64(s.readByte(dataOffset))
 		remainder += 8
 	}
 	value >>= remainder
@@ -59,18 +66,22 @@ func (s *BitStream) read(bitCount int64) uint64 {
 
 type Packet struct {
 	stream BitStream
-	bitOffset int64
+	bitOffset uint64
+}
+
+func (p *Packet) readAt(bitOffset, bitCount uint64) uint64 {
+	return p.stream.readAt(p.bitOffset + bitOffset, bitCount)
 }
 
 func (p *Packet) getVersion() int {
-	return int(p.stream.readAt(p.bitOffset, 3))
+	return int(p.readAt(0, 3))
 }
 
 func (p *Packet) getType() int {
-	return int(p.stream.readAt(p.bitOffset + 3, 3))
+	return int(p.readAt(3, 3))
 }
 
-func (p *Packet) getLiteral() (value uint64, length int64) {
+func (p *Packet) getLiteral() (value, length uint64) {
 	p.stream.bitOffset = p.bitOffset + 6
 	for {
 		bits := p.stream.read(5)
@@ -84,12 +95,61 @@ func (p *Packet) getLiteral() (value uint64, length int64) {
 	return
 }
 
-func (p *Packet) getLength() int64 {
-	_, length := p.getLiteral()
-	return length
+type PacketVisitor interface {
+	Visit(p *Packet)
 }
 
+func (p *Packet) visit(visitor PacketVisitor) uint64 {
+	visitor.Visit(p)
+	t := p.getType()
+	if t == TypeLiteral {
+		_, length := p.getLiteral()
+		return 6 + length
+	} else {
+		lengthType := p.readAt(6, 1)
+		offset := uint64(7)
+		if lengthType == 0 {
+			remaining := p.readAt(offset, 15)
+			offset += 15
+			for remaining > 0 {
+				packet := Packet{
+					stream:    p.stream,
+					bitOffset: p.bitOffset + offset,
+				}
+				length := packet.visit(visitor)
+				remaining -= length
+				offset += length
+			}
+		} else {
+			packetCount := p.readAt(offset, 11)
+			offset += 11
+			for packetCount > 0 {
+				packet := Packet{
+					stream:    p.stream,
+					bitOffset: p.bitOffset + offset,
+				}
+				offset += packet.visit(visitor)
+				packetCount--
+			}
+		}
+		return offset
+	}
+}
+
+type VersionAddingVisitor struct {
+	versionSum int
+}
+
+func (v *VersionAddingVisitor) Visit(p *Packet) {
+	v.versionSum += p.getVersion()
+}
+
+
 func main() {
+	v := &VersionAddingVisitor{}
+	p := parseInput(loadInput("puzzle-input.txt"))
+	p.visit(v)
+	fmt.Printf("sum of packet versions: %v\n", v.versionSum)
 }
 
 func parseInput(input string) Packet {
