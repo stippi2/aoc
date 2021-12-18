@@ -59,28 +59,34 @@ func (s *BitStream) read(bitCount int64) uint64 {
 
 type Packet struct {
 	stream BitStream
+	bitOffset int64
 }
 
 func (p *Packet) getVersion() int {
-	return int(p.stream.readAt(0, 3))
+	return int(p.stream.readAt(p.bitOffset, 3))
 }
 
 func (p *Packet) getType() int {
-	return int(p.stream.readAt(3, 3))
+	return int(p.stream.readAt(p.bitOffset + 3, 3))
 }
 
-func (p *Packet) getLiteral() uint64 {
-	p.stream.bitOffset = 6
-	var value uint64
+func (p *Packet) getLiteral() (value uint64, length int64) {
+	p.stream.bitOffset = p.bitOffset + 6
 	for {
 		bits := p.stream.read(5)
 		value |= bits & 0xf
+		length += 5
 		if (bits & 0x10) == 0 {
 			break
 		}
 		value <<= 4
 	}
-	return value
+	return
+}
+
+func (p *Packet) getLength() int64 {
+	_, length := p.getLiteral()
+	return length
 }
 
 func main() {

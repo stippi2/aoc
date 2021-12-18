@@ -23,7 +23,9 @@ func Test_getLiteral(t *testing.T) {
 	p := parseInput(exampleInput[0])
 	assert.Equal(t, 6, p.getVersion())
 	assert.Equal(t, TypeLiteral, p.getType())
-	assert.Equal(t, uint64(2021), p.getLiteral())
+	value, length := p.getLiteral()
+	assert.Equal(t, uint64(2021), value)
+	assert.Equal(t, int64(15), length)
 }
 
 func Test_mostSignificantBits(t *testing.T) {
