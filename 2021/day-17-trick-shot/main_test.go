@@ -1,10 +1,15 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestCalculatingVisitor(t *testing.T) {
-	assert.True(t, true)
+func Test_aim(t *testing.T) {
+	target := Target{
+		minX: 20,
+		maxX: 30,
+		minY: -10,
+		maxY: -5,
+	}
+	aim(target)
 }
