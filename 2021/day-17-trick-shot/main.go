@@ -30,14 +30,8 @@ func (p *Probe) step() {
 }
 
 func (p* Probe) onTrackTo(t Target) bool {
-	if p.x < t.minX && p.velocityX <= 0 {
-		return false
-	}
-	if p.x > t.maxX && p.velocityX >= 0 {
-		return false
-	}
-	// TODO: not yet smart
-	if p.y > t.maxY && p.velocityY >= 0 {
+	// TODO: Implement properly, currently checks if we are past the target already
+	if p.x > t.maxX || p.y < t.minY {
 		return false
 	}
 	return true
@@ -72,7 +66,6 @@ func solveDistY(dist int) (velocity, steps int) {
 	return
 }
 
-
 func aim(t Target) (vX int, vY int) {
 	minVelocityX, minSteps := solveDistX(t.minX)
 	maxVelocityX, maxSteps := solveDistX(t.maxX)
@@ -87,8 +80,6 @@ func aim(t Target) (vX int, vY int) {
 	fmt.Printf("max velocity Y: %v, steps: %v\n", maxVelocityY, maxStepsY)
 
 	p := Probe{
-		x: 0,
-		y: 0,
 		velocityX: (minVelocityX + maxVelocityX) / 2,
 		velocityY: maxVelocityY,
 	}
@@ -103,6 +94,45 @@ func aim(t Target) (vX int, vY int) {
 	return
 }
 
+type Vector struct {
+	x, y int
+}
+
+func possibleVectors(t Target) map[Vector]bool {
+	vectorMap := map[Vector]bool{}
+
+	minVelocityX, minSteps := solveDistX(t.minX)
+	maxVelocityX := t.maxX
+
+	fmt.Printf("min velocity X: %v, steps: %v\n", minVelocityX, minSteps)
+	fmt.Printf("max velocity X: %v\n", maxVelocityX)
+
+	minVelocityY := t.minY
+	maxVelocityY, _ := solveDistY(t.minY)
+
+	fmt.Printf("min velocity Y: %v\n", minVelocityY)
+	fmt.Printf("max velocity Y: %v\n", maxVelocityY)
+
+	// Brute-forcing the solutions space is really lame...
+	for x := minVelocityX; x <= maxVelocityX; x++ {
+		for y := minVelocityY; y <= maxVelocityY; y++ {
+			probe := Probe{
+				velocityX: x,
+				velocityY: y,
+			}
+			for probe.onTrackTo(t) {
+				probe.step()
+				if probe.isWithin(t) {
+					vectorMap[Vector{x, y}] = true
+					break
+				}
+			}
+		}
+	}
+
+	return vectorMap
+}
+
 func main() {
 	// target area: x=137..171, y=-98..-73
 	target := Target{
@@ -112,4 +142,7 @@ func main() {
 		maxY: -73,
 	}
 	aim(target)
+
+	vectors := possibleVectors(target)
+	fmt.Printf("possible vectors: %v\n", len(vectors))
 }
