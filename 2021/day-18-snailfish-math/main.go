@@ -140,17 +140,24 @@ func (p *Pair) String() string {
 func main() {
 }
 
+func reduceOnce(node Node) (Node, bool) {
+	_, anyExploded := node.Explode(0)
+	if anyExploded {
+		return node, true
+	}
+	_, anySplit := node.Split()
+	if anySplit {
+		return node, true
+	}
+	return node, false
+}
+
 func reduce(node Node) Node {
 	for {
-		_, anyExploded := node.Explode(0)
-		if anyExploded {
-			continue
+		_, reduced := reduceOnce(node)
+		if !reduced {
+			break
 		}
-		_, anySplit := node.Split()
-		if anySplit {
-			continue
-		}
-		break
 	}
 	return node
 }

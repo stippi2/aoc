@@ -59,6 +59,25 @@ func Test_explode(t *testing.T) {
 	}
 }
 
+func Test_split(t *testing.T) {
+	type test struct {
+		example  string
+		expected string
+	}
+
+	var explodeExamples = []test{
+		{"[9,4]", "[9,4]"},
+		{"[11,4]", "[[5,6],4]"},
+		{"[4,12]", "[4,[6,6]]"},
+	}
+
+	for _, e := range explodeExamples {
+		p := parseSnailfishNumber(e.example).(*Pair)
+		p.Split()
+		assert.Equal(t, e.expected, fmt.Sprintf("%s", p))
+	}
+}
+
 func Test_magnitude(t *testing.T) {
 	type test struct {
 		example  string
@@ -86,13 +105,50 @@ func Test_reduce(t *testing.T) {
 		expected string
 	}
 
-	var explodeExamples = []test{
+	var examples = []test{
 		{"[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]", "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"},
 	}
 
-	for _, e := range explodeExamples {
+	for _, e := range examples {
 		p := parseSnailfishNumber(e.example)
 		assert.Equal(t, e.expected, fmt.Sprintf("%s", reduce(p)))
+	}
+}
+
+func Test_reduceOnce(t *testing.T) {
+	type test struct {
+		example  string
+		expected []string
+	}
+
+	var examples = []test{
+		{
+			example: "[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]",
+			expected: []string{
+				"[[[[0,7],4],[7,[[8,4],9]]],[1,1]]",
+				"[[[[0,7],4],[15,[0,13]]],[1,1]]",
+				"[[[[0,7],4],[[7,8],[0,13]]],[1,1]]",
+				"[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]",
+				"[[[[0,7],4],[[7,8],[6,0]]],[8,1]]",
+			},
+		},
+		{
+			example: "[[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]],[[[[0,7],4],[[7,8],[6,0]]],[8,1]]]",
+			expected: []string{
+				"[[[[4,0],[5,0]],[[[4,5],[2,6]],[9,5]]],[[[[0,7],4],[[7,8],[6,0]]],[8,1]]]",
+				"[[[[4,0],[5,4]],[[0,[7,6]],[9,5]]],[[[[0,7],4],[[7,8],[6,0]]],[8,1]]]",
+			},
+		},
+	}
+
+	for _, e := range examples {
+		p := parseSnailfishNumber(e.example)
+		for _, expected := range e.expected {
+			p, _ = reduceOnce(p)
+			if !assert.Equal(t, expected, fmt.Sprintf("%s", p)) {
+				break
+			}
+		}
 	}
 }
 
@@ -125,7 +181,7 @@ func Test_addingTwo(t *testing.T) {
 	}
 }
 
-/*func Test_adding(t *testing.T) {
+func Test_adding(t *testing.T) {
 	input := `[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]
 [7,[[[3,7],[4,3]],[[6,3],[8,8]]]]
 [[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]
@@ -143,5 +199,5 @@ func Test_addingTwo(t *testing.T) {
 		number = reduce(number)
 	}
 	assert.Equal(t, "[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]", fmt.Sprintf("%s", number))
-}*/
+}
 
