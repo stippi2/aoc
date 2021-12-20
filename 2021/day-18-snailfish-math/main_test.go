@@ -6,6 +6,10 @@ import (
 	"testing"
 )
 
+func numberPair(left, right int) Node {
+	return &Pair{ nil,&RegularNumber{left}, &RegularNumber{right}}
+}
+
 func Test_parseInput(t *testing.T) {
 	type test struct {
 		example      string
@@ -13,20 +17,16 @@ func Test_parseInput(t *testing.T) {
 	}
 
 	var examples = []test{
-		{"[1,2]", &Pair{ nil,&RegularNumber{1}, &RegularNumber{2}}},
-		{"[[1,2],3]", add(&Pair{ nil, &RegularNumber{1}, &RegularNumber{2}}, &RegularNumber{3})},
-		{"[9,[8,7]]", add(&RegularNumber{9}, &Pair{ nil, &RegularNumber{8}, &RegularNumber{7}}) },
-		{"[[1,9],[8,5]]", add(&Pair{nil, &RegularNumber{1}, &RegularNumber{9}}, &Pair{nil, &RegularNumber{8}, &RegularNumber{5}}) },
+		{"[1,2]", numberPair(1, 2)},
+		{"[[1,2],3]", add(numberPair(1, 2), &RegularNumber{3})},
+		{"[9,[8,7]]", add(&RegularNumber{9}, numberPair(8, 7)) },
+		{"[[1,9],[8,5]]", add(numberPair(1, 9), numberPair(8, 5)) },
 		{
 			example: "[[[[1,2],[3,4]],[[5,6],[7,8]]],9]",
 			expectedPair: add(
 				add(
-					add(
-						&Pair{nil, &RegularNumber{1}, &RegularNumber{2}},
-						&Pair{nil, &RegularNumber{3}, &RegularNumber{4}}),
-					add(
-						&Pair{nil, &RegularNumber{5}, &RegularNumber{6}},
-						&Pair{nil, &RegularNumber{7}, &RegularNumber{8}}),
+					add(numberPair(1, 2), numberPair(3, 4)),
+					add(numberPair(5, 6), numberPair(7, 8)),
 				),
 				&RegularNumber{9},
 			),
@@ -58,3 +58,25 @@ func Test_explode(t *testing.T) {
 		assert.Equal(t, e.expected, fmt.Sprintf("%s", p))
 	}
 }
+
+func Test_magnitude(t *testing.T) {
+	type test struct {
+		example  string
+		expected int
+	}
+
+	var explodeExamples = []test{
+		{"[[1,2],[[3,4],5]]", 143},
+		{"[[[[0,7],4],[[7,8],[6,0]]],[8,1]]", 1384},
+		{"[[[[1,1],[2,2]],[3,3]],[4,4]]", 445},
+		{"[[[[3,0],[5,3]],[4,4]],[5,5]]", 791},
+		{"[[[[5,0],[7,4]],[5,5]],[6,6]]", 1137},
+		{"[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]", 3488},
+	}
+
+	for _, e := range explodeExamples {
+		p := parseSnailfishNumber(e.example).(*Pair)
+		assert.Equal(t, e.expected, p.Magnitude())
+	}
+}
+
