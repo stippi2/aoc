@@ -12,6 +12,7 @@ type Node interface {
 	AddRight(number int, previous Node) bool
 	Magnitude() int
 	Explode(level int) (Node, bool)
+	Split() (Node, bool)
 }
 
 type RegularNumber struct {
@@ -33,6 +34,17 @@ func (n *RegularNumber) Magnitude() int {
 }
 
 func (n *RegularNumber) Explode(_ int) (Node, bool) {
+	return n, false
+}
+
+func (n *RegularNumber) Split() (Node, bool) {
+	if n.value > 9 {
+		return &Pair{
+			parent: nil,
+			left:   &RegularNumber{n.value / 2},
+			right:  &RegularNumber{(n.value + 1) / 2},
+		}, true
+	}
 	return n, false
 }
 
@@ -107,11 +119,40 @@ func (p *Pair) Explode(level int) (Node, bool) {
 	return p, false
 }
 
+func (p *Pair) Split() (Node, bool) {
+	if newLeft, split := p.left.Split(); split {
+		newLeft.(*Pair).parent = p
+		p.left = newLeft
+		return p, true
+	}
+	if newRight, split := p.right.Split(); split {
+		newRight.(*Pair).parent = p
+		p.right = newRight
+		return p, true
+	}
+	return p, false
+}
+
 func (p *Pair) String() string {
 	return fmt.Sprintf("[%v,%v]", p.left, p.right)
 }
 
 func main() {
+}
+
+func reduce(node Node) Node {
+	for {
+		_, anyExploded := node.Explode(0)
+		if anyExploded {
+			continue
+		}
+		_, anySplit := node.Split()
+		if anySplit {
+			continue
+		}
+		break
+	}
+	return node
 }
 
 func add(left, right Node) Node {
@@ -153,7 +194,7 @@ func parseSnailfishNumber(line string) Node {
 	return &RegularNumber{number}
 }
 
-func parseInput(input string) (numbers []interface{}) {
+func parseInput(input string) (numbers []Node) {
 	for _, line := range strings.Split(input, "\n") {
 		numbers = append(numbers, parseSnailfishNumber(line))
 	}

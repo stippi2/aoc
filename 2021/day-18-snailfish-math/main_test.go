@@ -10,7 +10,7 @@ func numberPair(left, right int) Node {
 	return &Pair{ nil,&RegularNumber{left}, &RegularNumber{right}}
 }
 
-func Test_parseInput(t *testing.T) {
+func Test_parseSnailfishNumber(t *testing.T) {
 	type test struct {
 		example      string
 		expectedPair Node
@@ -79,4 +79,69 @@ func Test_magnitude(t *testing.T) {
 		assert.Equal(t, e.expected, p.Magnitude())
 	}
 }
+
+func Test_reduce(t *testing.T) {
+	type test struct {
+		example  string
+		expected string
+	}
+
+	var explodeExamples = []test{
+		{"[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]", "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"},
+	}
+
+	for _, e := range explodeExamples {
+		p := parseSnailfishNumber(e.example)
+		assert.Equal(t, e.expected, fmt.Sprintf("%s", reduce(p)))
+	}
+}
+
+func Test_addingTwo(t *testing.T) {
+	type test struct {
+		left  string
+		right  string
+		expected string
+	}
+
+	var explodeExamples = []test{
+		{
+			left:     "[[[[4,3],4],4],[7,[[8,4],9]]]",
+			right:    "[1,1]",
+			expected: "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]",
+		},
+		{
+			left:     "[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]",
+			right:    "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]",
+			expected: "[[[[4,0],[5,4]],[[7,7],[6,0]]],[[8,[7,7]],[[7,9],[5,0]]]]",
+		},
+	}
+
+	for _, e := range explodeExamples {
+		left := parseSnailfishNumber(e.left)
+		right := parseSnailfishNumber(e.right)
+		sum := add(left, right)
+		fmt.Printf("before reduce: %s\n", sum)
+		assert.Equal(t, e.expected, fmt.Sprintf("%s", reduce(sum)))
+	}
+}
+
+/*func Test_adding(t *testing.T) {
+	input := `[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]
+[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]
+[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]
+[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]
+[7,[5,[[3,8],[1,4]]]]
+[[2,[2,2]],[8,[8,1]]]
+[2,9]
+[1,[[[9,3],9],[[9,0],[0,7]]]]
+[[[5,[7,4]],7],1]
+[[[[4,2],2],6],[8,7]]`
+	numbers := parseInput(input)
+	number := numbers[0]
+	for i := 1; i < len(numbers); i++ {
+		number = add(number, numbers[i])
+		number = reduce(number)
+	}
+	assert.Equal(t, "[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]", fmt.Sprintf("%s", number))
+}*/
 
