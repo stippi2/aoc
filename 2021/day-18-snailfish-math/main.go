@@ -137,6 +137,29 @@ func (p *Pair) String() string {
 	return fmt.Sprintf("[%v,%v]", p.left, p.right)
 }
 
+func maxMagnitudeOfAnyTwo(numbers []Node) int {
+	maxMagnitude := 0
+	for i, numberA := range numbers {
+		for j, numberB := range numbers {
+			if i == j {
+				continue
+			}
+			// Make copies, since reducing changes the existing nodes
+			aCopy := parseSnailfishNumber(fmt.Sprintf("%s", numberA))
+			bCopy := parseSnailfishNumber(fmt.Sprintf("%s", numberB))
+
+			number := add(aCopy, bCopy)
+			number = reduce(number)
+			magnitude := number.Magnitude()
+			fmt.Printf("%s + %s = %s (magnitude: %v)\n", numberA, numberB, number, magnitude)
+			if magnitude > maxMagnitude {
+				maxMagnitude = magnitude
+			}
+		}
+	}
+	return maxMagnitude
+}
+
 func main() {
 	numbers := parseInput(loadInput("puzzle-input.txt"))
 	// Part 1
@@ -147,19 +170,9 @@ func main() {
 	}
 	fmt.Printf("sum: %s, mangitude: %v\n", sum, sum.Magnitude())
 	// Part 2
-	maxMagnitude := 0
-	for i, numberA := range numbers {
-		for j, numberB := range numbers {
-			if i == j {
-				continue
-			}
-			number := add(numberA, numberB)
-			magnitude := reduce(number).Magnitude()
-			if magnitude > maxMagnitude {
-				maxMagnitude = magnitude
-			}
-		}
-	}
+	// Need to parse again, since the nodes were modified by summing
+	numbers = parseInput(loadInput("puzzle-input.txt"))
+	maxMagnitude := maxMagnitudeOfAnyTwo(numbers)
 	fmt.Printf("largest magnitude of any two numbers: %v\n", maxMagnitude)
 }
 
