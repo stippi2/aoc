@@ -142,8 +142,7 @@ func main() {
 	// Part 1
 	sum := numbers[0]
 	for i := 1; i < len(numbers); i++ {
-		sum = add(sum, numbers[i])
-		reduce(sum)
+		sum = reduce(add(sum, numbers[i]))
 	}
 	fmt.Printf("sum: %s, mangitude: %v\n", sum, sum.Magnitude())
 	// Part 2
@@ -160,12 +159,7 @@ func maxMagnitudeOfAnyTwo(numbers []Node) int {
 			if i == j {
 				continue
 			}
-			// Make copies, since reducing changes the existing nodes
-			aCopy := parseSnailfishNumber(fmt.Sprintf("%s", numberA))
-			bCopy := parseSnailfishNumber(fmt.Sprintf("%s", numberB))
-
-			number := add(aCopy, bCopy)
-			reduce(number)
+			number := reduce(add(numberA, numberB))
 			magnitude := number.Magnitude()
 			fmt.Printf("%s + %s = %s (magnitude: %v)\n", numberA, numberB, number, magnitude)
 			if magnitude > maxMagnitude {
@@ -188,8 +182,10 @@ func reduceOnce(node Node) bool {
 	return false
 }
 
-func reduce(node Node) {
-	for reduceOnce(node) {}
+func reduce(node Node) Node {
+	clone := parseSnailfishNumber(fmt.Sprintf("%s", node))
+	for reduceOnce(clone) {}
+	return clone
 }
 
 func add(left, right Node) Node {

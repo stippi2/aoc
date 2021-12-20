@@ -112,7 +112,7 @@ func Test_reduce(t *testing.T) {
 
 	for _, e := range examples {
 		p := parseSnailfishNumber(e.example)
-		reduce(p)
+		p = reduce(p)
 		assert.Equal(t, e.expected, fmt.Sprintf("%s", p))
 	}
 }
@@ -210,7 +210,7 @@ func Test_addingTwo(t *testing.T) {
 		right := parseSnailfishNumber(e.right)
 		sum := add(left, right)
 		fmt.Printf("before reduce: %s\n", sum)
-		reduce(sum)
+		sum = reduce(sum)
 		assert.Equal(t, e.expected, fmt.Sprintf("%s", sum))
 	}
 }
@@ -229,8 +229,7 @@ func Test_adding(t *testing.T) {
 	numbers := parseInput(input)
 	number := numbers[0]
 	for i := 1; i < len(numbers); i++ {
-		number = add(number, numbers[i])
-		reduce(number)
+		number = reduce(add(number, numbers[i]))
 	}
 	assert.Equal(t, "[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]", fmt.Sprintf("%s", number))
 }
