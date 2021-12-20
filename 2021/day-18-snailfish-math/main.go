@@ -63,7 +63,7 @@ func (p *Pair) AddLeft(number int, previous Node) bool {
 		return p.left.AddLeft(number, p)
 	}
 	if previous == p.parent {
-		return p.left.AddLeft(number, p)
+		return p.right.AddLeft(number, p)
 	}
 	if p.parent == nil {
 		return false
@@ -138,6 +138,13 @@ func (p *Pair) String() string {
 }
 
 func main() {
+	numbers := parseInput(loadInput("puzzle-input.txt"))
+	number := numbers[0]
+	for i := 1; i < len(numbers); i++ {
+		number = add(number, numbers[i])
+		number = reduce(number)
+	}
+	fmt.Printf("sum: %s, mangitude: %v\n", number, number.Magnitude())
 }
 
 func reduceOnce(node Node) (Node, bool) {
