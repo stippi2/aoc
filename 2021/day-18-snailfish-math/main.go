@@ -149,7 +149,7 @@ func maxMagnitudeOfAnyTwo(numbers []Node) int {
 			bCopy := parseSnailfishNumber(fmt.Sprintf("%s", numberB))
 
 			number := add(aCopy, bCopy)
-			number = reduce(number)
+			reduce(number)
 			magnitude := number.Magnitude()
 			fmt.Printf("%s + %s = %s (magnitude: %v)\n", numberA, numberB, number, magnitude)
 			if magnitude > maxMagnitude {
@@ -166,7 +166,7 @@ func main() {
 	sum := numbers[0]
 	for i := 1; i < len(numbers); i++ {
 		sum = add(sum, numbers[i])
-		sum = reduce(sum)
+		reduce(sum)
 	}
 	fmt.Printf("sum: %s, mangitude: %v\n", sum, sum.Magnitude())
 	// Part 2
@@ -176,26 +176,20 @@ func main() {
 	fmt.Printf("largest magnitude of any two numbers: %v\n", maxMagnitude)
 }
 
-func reduceOnce(node Node) (Node, bool) {
+func reduceOnce(node Node) bool {
 	_, anyExploded := node.Explode(0)
 	if anyExploded {
-		return node, true
+		return true
 	}
 	_, anySplit := node.Split()
 	if anySplit {
-		return node, true
+		return true
 	}
-	return node, false
+	return false
 }
 
-func reduce(node Node) Node {
-	for {
-		_, reduced := reduceOnce(node)
-		if !reduced {
-			break
-		}
-	}
-	return node
+func reduce(node Node) {
+	for reduceOnce(node) {}
 }
 
 func add(left, right Node) Node {
