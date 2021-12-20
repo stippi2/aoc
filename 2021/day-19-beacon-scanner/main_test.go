@@ -21,7 +21,7 @@ var example = `--- scanner 0 ---
 -5,4,-6
 -8,-7,0`
 
-var expected = []Scanner {
+var expected = []*Scanner {
 	{
 		beacons: []Beacon{
 			{position: Position{-1,-1,1}},

@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"strconv"
 	"strings"
 )
 
@@ -26,8 +27,28 @@ type Scanner struct {
 func main() {
 }
 
-func parseInput(input string) []Scanner {
-	return nil
+func parseInput(input string) []*Scanner {
+	var scanners []*Scanner
+	var currentScanner *Scanner
+	for _, line := range strings.Split(input, "\n") {
+		if line == "" {
+			continue
+		}
+		if strings.HasPrefix(line, "---") {
+			currentScanner = &Scanner{}
+			scanners = append(scanners, currentScanner)
+		} else if currentScanner != nil {
+			coords := strings.Split(line, ",")
+			if len(coords) != 3 {
+				panic("invalid coords")
+			}
+			x, _ := strconv.Atoi(coords[0])
+			y, _ := strconv.Atoi(coords[1])
+			z, _ := strconv.Atoi(coords[2])
+			currentScanner.beacons = append(currentScanner.beacons, Beacon{position: Position{x, y, z}})
+		}
+	}
+	return scanners
 }
 
 func loadInput(filename string) string {
