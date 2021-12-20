@@ -137,6 +137,22 @@ func (p *Pair) String() string {
 	return fmt.Sprintf("[%v,%v]", p.left, p.right)
 }
 
+func main() {
+	numbers := parseInput(loadInput("puzzle-input.txt"))
+	// Part 1
+	sum := numbers[0]
+	for i := 1; i < len(numbers); i++ {
+		sum = add(sum, numbers[i])
+		reduce(sum)
+	}
+	fmt.Printf("sum: %s, mangitude: %v\n", sum, sum.Magnitude())
+	// Part 2
+	// Need to parse again, since the nodes were modified by summing
+	numbers = parseInput(loadInput("puzzle-input.txt"))
+	maxMagnitude := maxMagnitudeOfAnyTwo(numbers)
+	fmt.Printf("largest magnitude of any two numbers: %v\n", maxMagnitude)
+}
+
 func maxMagnitudeOfAnyTwo(numbers []Node) int {
 	maxMagnitude := 0
 	for i, numberA := range numbers {
@@ -158,22 +174,6 @@ func maxMagnitudeOfAnyTwo(numbers []Node) int {
 		}
 	}
 	return maxMagnitude
-}
-
-func main() {
-	numbers := parseInput(loadInput("puzzle-input.txt"))
-	// Part 1
-	sum := numbers[0]
-	for i := 1; i < len(numbers); i++ {
-		sum = add(sum, numbers[i])
-		reduce(sum)
-	}
-	fmt.Printf("sum: %s, mangitude: %v\n", sum, sum.Magnitude())
-	// Part 2
-	// Need to parse again, since the nodes were modified by summing
-	numbers = parseInput(loadInput("puzzle-input.txt"))
-	maxMagnitude := maxMagnitudeOfAnyTwo(numbers)
-	fmt.Printf("largest magnitude of any two numbers: %v\n", maxMagnitude)
 }
 
 func reduceOnce(node Node) bool {
