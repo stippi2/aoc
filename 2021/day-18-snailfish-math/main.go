@@ -139,12 +139,28 @@ func (p *Pair) String() string {
 
 func main() {
 	numbers := parseInput(loadInput("puzzle-input.txt"))
-	number := numbers[0]
+	// Part 1
+	sum := numbers[0]
 	for i := 1; i < len(numbers); i++ {
-		number = add(number, numbers[i])
-		number = reduce(number)
+		sum = add(sum, numbers[i])
+		sum = reduce(sum)
 	}
-	fmt.Printf("sum: %s, mangitude: %v\n", number, number.Magnitude())
+	fmt.Printf("sum: %s, mangitude: %v\n", sum, sum.Magnitude())
+	// Part 2
+	maxMagnitude := 0
+	for i, numberA := range numbers {
+		for j, numberB := range numbers {
+			if i == j {
+				continue
+			}
+			number := add(numberA, numberB)
+			magnitude := reduce(number).Magnitude()
+			if magnitude > maxMagnitude {
+				maxMagnitude = magnitude
+			}
+		}
+	}
+	fmt.Printf("largest magnitude of any two numbers: %v\n", maxMagnitude)
 }
 
 func reduceOnce(node Node) (Node, bool) {
