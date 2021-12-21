@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,21 +13,21 @@ type Position struct {
 	x, y, z int
 }
 
-func (p *Position) distance(to Position) int {
+func (p *Position) distance(to Position) float64 {
 	dx := to.x - p.x
 	dy := to.y - p.y
 	dz := to.z - p.z
-	d1 := dx * dx + dy * dy
-	return d1 * d1 + dz * dz
+	d1 := math.Sqrt(float64(dx * dx + dy * dy))
+	return math.Sqrt(d1 * d1 + float64(dz * dz))
 }
 
 type Beacon struct {
 	// position is relative to the owning Scanner
 	position Position
-	// distancesTo12NearestBeacons is formed by computing the distance to every other beacon of the same scanner,
-	// sorting the resulting distances list, then using the 12 smallest distance values.
+	// distancesToNearest is formed by computing the distance to every other beacon of the same scanner,
+	// sorting the resulting distances list, then using the 2 smallest distance values.
 	// The result should be independent of the owning Scanner's location and rotation,
-	// and can be used to find the same beacon in a different scanner.
+	// and can be used to find "same-looking" beacons in a different scanner.
 	distancesToNearest string
 }
 
@@ -39,7 +41,7 @@ func (s *Scanner) appendBeacon(x, y, z int) {
 
 func (s *Scanner) setBeaconDistances() {
 	for i := 0; i < len(s.beacons); i++ {
-		var distances []int
+		var distances []float64
 		a := &s.beacons[i]
 		for j := 0; j < len(s.beacons); j++ {
 			if i == j {
@@ -48,10 +50,11 @@ func (s *Scanner) setBeaconDistances() {
 			b := &s.beacons[j]
 			distances = append(distances, a.position.distance(b.position))
 		}
-		sort.Ints(distances)
-		for d := 0; d < 12 && d < len(distances); d++ {
-			a.distancesToNearest += ","+strconv.Itoa(d)
+		sort.Float64s(distances)
+		for d := 0; d < 2 && d < len(distances); d++ {
+			a.distancesToNearest += fmt.Sprintf(",%2.3f", distances[d])
 		}
+		fmt.Printf("distances: %s\n", a.distancesToNearest)
 	}
 }
 
