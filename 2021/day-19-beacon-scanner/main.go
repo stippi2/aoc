@@ -52,6 +52,44 @@ func (p *Position) rotations() []Position {
 	}
 }
 
+func (p *Position) max(other Position) Position {
+	return Position{
+		x: max(p.x, other.x),
+		y: max(p.y, other.y),
+		z: max(p.z, other.z),
+	}
+}
+
+func (p *Position) min(other Position) Position {
+	return Position{
+		x: min(p.x, other.x),
+		y: min(p.y, other.y),
+		z: min(p.z, other.z),
+	}
+}
+
+type Volume struct {
+	min, max Position
+}
+
+func (v Volume) isValid() bool {
+	return v.min.x <= v.max.x && v.min.y <= v.max.y && v.min.z <= v.max.z
+}
+
+func (v Volume) intersect(other Volume) (Volume, bool) {
+	result := Volume{
+		min: v.min.max(other.min),
+		max: v.max.min(other.max),
+	}
+	return result, result.isValid()
+}
+
+func (v Volume) contains(p Position) bool {
+	return v.min.x <= p.x && v.max.x >= p.x &&
+		v.min.y <= p.y && v.max.y >= p.y &&
+		v.min.z <= p.z && v.max.z >= p.z
+}
+
 type Beacon struct {
 	// position is relative to the owning Scanner
 	position Position
@@ -97,40 +135,34 @@ func (s *Scanner) translateBy(x, y, z int) Scanner {
 	return scanner
 }
 
-// volume returns the minimum volume which contains all beacons of the Scanner
-func (s *Scanner) volume() (min, max Position) {
-	min.x = math.MaxInt32
-	min.y = math.MaxInt32
-	min.z = math.MaxInt32
-
-	max.x = math.MinInt32
-	max.y = math.MinInt32
-	max.z = math.MinInt32
+// volume returns the minimum Volume which contains all beacons of the Scanner
+func (s *Scanner) volume() Volume {
+	v := Volume{
+		min: Position{math.MaxInt32, math.MaxInt32, math.MaxInt32},
+		max: Position{math.MinInt32, math.MinInt32, math.MinInt32},
+	}
 
 	for i := 0; i < len(s.beacons); i++ {
 		p := s.beacons[i].position
-		if p.x < min.x {
-			min.x = p.x
-		}
-		if p.y < min.y {
-			min.y = p.y
-		}
-		if p.z < min.z {
-			min.z = p.z
-		}
-		if p.x > max.x {
-			max.x = p.x
-		}
-		if p.y > max.y {
-			max.y = p.y
-		}
-		if p.z > max.z {
-			max.z = p.z
-		}
+		v.min.x = min(p.x, v.min.x)
+		v.min.y = min(p.y, v.min.y)
+		v.min.z = min(p.z, v.min.z)
+		v.max.x = max(p.x, v.max.x)
+		v.max.y = max(p.y, v.max.y)
+		v.max.z = max(p.z, v.max.z)
 	}
-	return
+	return v
 }
 
+func (s *Scanner) getBeaconsInVolume(v Volume) []Beacon {
+	var beacons []Beacon
+	for i := 0; i < len(s.beacons); i++ {
+		if v.contains(s.beacons[i].position) {
+			beacons = append(beacons, s.beacons[i])
+		}
+	}
+	return beacons
+}
 
 /*
 func (s *Scanner) rotations() []Scanner {
@@ -150,6 +182,20 @@ func rotate90(a, b int) (int, int) {
 }
 
 func main() {
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func parseInput(input string) []Scanner {

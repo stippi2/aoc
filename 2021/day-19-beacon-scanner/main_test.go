@@ -209,3 +209,52 @@ func Test_compareBeacons(t *testing.T) {
 		}
 	}
 }
+
+func Test_beaconsInVolume(t *testing.T) {
+	scanner := Scanner{}
+	scanner.appendBeacon(1, 1, 1)
+	scanner.appendBeacon(-1, -1, -1)
+	beacons := scanner.getBeaconsInVolume(Volume{
+		min: Position{0, 0, 0},
+		max: Position{2, 2, 2},
+	})
+	if assert.Len(t, beacons, 1) {
+		assert.Equal(t, Position{1, 1, 1}, beacons[0].position)
+	}
+}
+
+func Test_volumeIntersect(t *testing.T) {
+	a := Volume{
+		min: Position{-1, -2, -3},
+		max: Position{3, 4, 5},
+	}
+	b := Volume{
+		min: Position{0, 1, 2},
+		max: Position{6, 7, 8},
+	}
+	i1, valid1 := a.intersect(b)
+	i2, valid2 := b.intersect(a)
+
+	assert.True(t, valid1)
+	assert.True(t, valid2)
+
+	assert.Equal(t, i1, i2)
+	assert.Equal(t, i1, Volume{
+		min: Position{0, 1, 2},
+		max: Position{3, 4, 5},
+	})
+}
+
+func Test_volumeIntersectInvalid(t *testing.T) {
+	a := Volume{
+		min: Position{-1, -2, -3},
+		max: Position{0, 1, 2},
+	}
+	b := Volume{
+		min: Position{3, 4, 5},
+		max: Position{6, 7, 8},
+	}
+	_, valid := a.intersect(b)
+
+	assert.False(t, valid)
+}
