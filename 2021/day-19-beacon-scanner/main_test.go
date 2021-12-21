@@ -191,16 +191,21 @@ func Test_compareBeacons(t *testing.T) {
 	for _, s := range scanners {
 		s.setBeaconDistances()
 	}
-	s0 := &scanners[0]
-	for i := 1; i < len(scanners); i++ {
-		matchingBeacons := 0
-		for _, b0 := range s0.beacons {
-			for _, bx := range scanners[i].beacons {
-				if b0.distancesToNearest == bx.distancesToNearest {
-					matchingBeacons++
+	for i := 0; i < len(scanners); i++ {
+		referenceScanner := &scanners[i]
+		for j := 0; j < len(scanners); j++ {
+			if i == j {
+				continue
+			}
+			matchingBeacons := 0
+			for _, refBeacon := range referenceScanner.beacons {
+				for _, otherBeacon := range scanners[j].beacons {
+					if refBeacon.distancesToNearest == otherBeacon.distancesToNearest {
+						matchingBeacons++
+					}
 				}
 			}
+			fmt.Printf("common beacons scanner %v and scanner %v: %v of %v\n", i, j, matchingBeacons, len(scanners[j].beacons))
 		}
-		fmt.Printf("common beacons scanner 0 and scanner %v: %v of %v\n", i, matchingBeacons, len(scanners[i].beacons))
 	}
 }

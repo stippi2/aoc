@@ -21,6 +21,37 @@ func (p *Position) distance(to Position) float64 {
 	return math.Sqrt(d1 * d1 + float64(dz * dz))
 }
 
+func (p *Position) rotations() []Position {
+	return []Position{
+		{p.x, p.y, p.z},
+		{p.x, -p.y, -p.z},
+		{p.x, p.z, -p.y},
+		{p.x, -p.z, p.y},
+		{-p.x, p.y, p.z},
+		{-p.x, -p.y, -p.z},
+		{-p.x, p.z, -p.y},
+		{-p.x, -p.z, p.y},
+
+		{p.x, p.y, p.z},
+		{-p.x, p.y, -p.z},
+		{p.z, p.y, -p.x},
+		{-p.z, p.y, p.x},
+		{p.x, -p.y, p.z},
+		{-p.x, -p.y, -p.z},
+		{p.z, -p.y, -p.x},
+		{-p.z, -p.y, p.x},
+
+		{p.x, p.y, p.z},
+		{-p.x, -p.y, p.z},
+		{p.y, -p.x, p.z},
+		{-p.y, p.x, p.z},
+		{p.x, p.y, -p.z},
+		{-p.x, -p.y, -p.z},
+		{p.y, -p.x, -p.z},
+		{-p.y, p.x, -p.z},
+	}
+}
+
 type Beacon struct {
 	// position is relative to the owning Scanner
 	position Position
@@ -52,11 +83,54 @@ func (s *Scanner) setBeaconDistances() {
 		}
 		sort.Float64s(distances)
 		for d := 0; d < 2 && d < len(distances); d++ {
-			a.distancesToNearest += fmt.Sprintf(",%2.3f", distances[d])
+			a.distancesToNearest += fmt.Sprintf(",%.3f", distances[d])
 		}
-		fmt.Printf("distances: %s\n", a.distancesToNearest)
 	}
 }
+
+func (s *Scanner) translateBy(x, y, z int) Scanner {
+	scanner := Scanner{}
+	for i := 0; i < len(s.beacons); i++ {
+		p := s.beacons[i].position
+		scanner.appendBeacon(p.x - x, p.y - y, p.z - z)
+	}
+	return scanner
+}
+
+// volume returns the minimum volume which contains all beacons of the Scanner
+func (s *Scanner) volume() (min, max Position) {
+	min.x = math.MaxInt32
+	min.y = math.MaxInt32
+	min.z = math.MaxInt32
+
+	max.x = math.MinInt32
+	max.y = math.MinInt32
+	max.z = math.MinInt32
+
+	for i := 0; i < len(s.beacons); i++ {
+		p := s.beacons[i].position
+		if p.x < min.x {
+			min.x = p.x
+		}
+		if p.y < min.y {
+			min.y = p.y
+		}
+		if p.z < min.z {
+			min.z = p.z
+		}
+		if p.x > max.x {
+			max.x = p.x
+		}
+		if p.y > max.y {
+			max.y = p.y
+		}
+		if p.z > max.z {
+			max.z = p.z
+		}
+	}
+	return
+}
+
 
 /*
 func (s *Scanner) rotations() []Scanner {
@@ -70,6 +144,10 @@ func (s *Scanner) rotations() []Scanner {
 	return rotations
 }
 */
+
+func rotate90(a, b int) (int, int) {
+	return -b, a
+}
 
 func main() {
 }
