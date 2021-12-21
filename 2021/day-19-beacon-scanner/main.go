@@ -164,24 +164,54 @@ func (s *Scanner) getBeaconsInVolume(v Volume) []Beacon {
 	return beacons
 }
 
-/*
 func (s *Scanner) rotations() []Scanner {
-	rotations := make([]Scanner, 24)
+	rotatedScanners := make([]Scanner, 24)
 	for _, beacon := range s.beacons {
-		p := beacon.position
+		rotatedPositions := beacon.position.rotations()
 		for r := 0; r < 24; r++ {
-			rotations[r].appendBeacon(???)
+			p := rotatedPositions[r]
+			rotatedScanners[r].appendBeacon(p.x, p.y, p.z)
 		}
 	}
-	return rotations
-}
-*/
-
-func rotate90(a, b int) (int, int) {
-	return -b, a
+	return rotatedScanners
 }
 
 func main() {
+}
+
+func sortBeacons(a []Beacon) {
+	sort.Slice(a, func (i, j int) bool {
+		if a[i].position.x < a[j].position.x {
+			return true
+		}
+		if a[i].position.x == a[j].position.x {
+			if a[i].position.y < a[j].position.y {
+				return true
+			}
+			if a[i].position.y == a[j].position.y {
+				if a[i].position.z < a[j].position.z {
+					return true
+				}
+				return false
+			}
+			return false
+		}
+		return false
+	})
+}
+
+func containsSameBeacons(a, b []Beacon) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	sortBeacons(a)
+	sortBeacons(b)
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func min(a, b int) int {
