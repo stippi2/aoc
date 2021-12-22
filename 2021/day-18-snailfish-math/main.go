@@ -146,8 +146,6 @@ func main() {
 	}
 	fmt.Printf("sum: %s, mangitude: %v\n", sum, sum.Magnitude())
 	// Part 2
-	// Need to parse again, since the nodes were modified by summing
-	numbers = parseInput(loadInput("puzzle-input.txt"))
 	maxMagnitude := maxMagnitudeOfAnyTwo(numbers)
 	fmt.Printf("largest magnitude of any two numbers: %v\n", maxMagnitude)
 }
@@ -201,28 +199,28 @@ func add(left, right Node) Node {
 	return result
 }
 
-func parseSnailfishNumber(line string) Node {
+func parseSnailfishNumber(n string) Node {
 	// trim the outer brackets (if any)
-	line = strings.TrimPrefix(line, "[")
-	line = strings.TrimSuffix(line, "]")
+	n = strings.TrimPrefix(n, "[")
+	n = strings.TrimSuffix(n, "]")
 
 	level := 0
-	for i := 0; i < len(line); i++ {
-		char := line[i:i+1]
-		if char == "[" {
+	for i := 0; i < len(n); i++ {
+		switch n[i:i+1] {
+		case "[":
 			level++
-		} else if char == "]" {
+		case "]":
 			level--
-		} else if char == "," {
+		case ",":
 			if level == 0 {
 				// This is a pair, and we found the "," on the pair's level
-				return add(parseSnailfishNumber(line[:i]), parseSnailfishNumber(line[i+1:]))
+				return add(parseSnailfishNumber(n[:i]), parseSnailfishNumber(n[i+1:]))
 			}
 		}
 	}
-	number, err := strconv.Atoi(line)
+	number, err := strconv.Atoi(n)
 	if err != nil {
-		panic(fmt.Sprintf("failed to parse '%s': %s", line, err))
+		panic(fmt.Sprintf("failed to parse '%s': %s", n, err))
 	}
 	return &RegularNumber{number}
 }
