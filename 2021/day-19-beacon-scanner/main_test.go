@@ -274,7 +274,7 @@ func Test_alignScanners(t *testing.T) {
 				refIndex int
 				matchIndex int
 			}
-			var matchingBeacons []match
+				var matchingBeacons []match
 			for refIndex, refBeacon := range referenceScanner.beacons {
 				for matchIndex, otherBeacon := range scanners[j].beacons {
 					if refBeacon.distancesToNearest == otherBeacon.distancesToNearest {
@@ -283,31 +283,84 @@ func Test_alignScanners(t *testing.T) {
 				}
 			}
 			if len(matchingBeacons) >= 12 {
-				fmt.Printf("aligning scanner %v and scanner %v: %v of %v beacons match\n", i, j, len(matchingBeacons), len(scanners[j].beacons))
+				//fmt.Printf("aligning scanner %v and scanner %v: %v of %v beacons match\n", i, j, len(matchingBeacons), len(scanners[j].beacons))
+				for rIndexRef, rotationRef := range referenceScanner.rotations() {
+					for rIndex, rotation := range scanners[j].rotations() {
+						for _, matching := range matchingBeacons {
+							// If we found an alignment, we can transform both scanners to have the matching beacon as origin,
+							// then form the intersecting volume, and all beacons within the intersection need to match
+							matchOrigin := rotation.beacons[matching.matchIndex].position
+							translatedMatch := rotation.translateBy(matchOrigin.x, matchOrigin.y, matchOrigin.z)
+
+							refOrigin := rotationRef.beacons[matching.refIndex].position
+							translatedRef := rotationRef.translateBy(refOrigin.x, refOrigin.y, refOrigin.z)
+
+							intersection, overlap := translatedMatch.volume().intersect(translatedRef.volume())
+							if !overlap {
+								// Should not be possible when we translated both scanners to the same origin
+								continue
+							}
+							matchBeaconsInIntersection := translatedMatch.getBeaconsInVolume(intersection)
+							if len(matchBeaconsInIntersection) < 12 {
+								continue
+							}
+							refBeaconsInIntersection := translatedRef.getBeaconsInVolume(intersection)
+
+							if containsSameBeacons(matchBeaconsInIntersection, refBeaconsInIntersection) {
+								fmt.Printf("found alignment between scanners %v and %v at rotation %v/%v with %v beacons\n", i, j, rIndexRef, rIndex, len(matchBeaconsInIntersection))
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func Test_alignScannersBruteForce(t *testing.T) {
+	scanners := parseInput(scannerExamples)
+	for _, s := range scanners {
+		s.setBeaconDistances()
+	}
+	for i := 0; i < len(scanners); i++ {
+		referenceScanner := &scanners[i]
+		for j := 0; j < len(scanners); j++ {
+			if i == j {
+				continue
+			}
+			for rIndexRef, rotationRef := range referenceScanner.rotations() {
 				for rIndex, rotation := range scanners[j].rotations() {
-					for _, matching := range matchingBeacons {
-						// If we found an alignment, we can transform both scanners to have the matching beacon as origin,
-						// then form the intersecting volume, and all beacons within the intersection need to match
-						matchOrigin := rotation.beacons[matching.matchIndex].position
-						translatedMatch := rotation.translateBy(matchOrigin.x, matchOrigin.y, matchOrigin.z)
+					for _, refBeacon := range rotationRef.beacons {
+						for _, matchBeacon := range rotation.beacons {
+							// If we found an alignment, we can transform both scanners to have the matching beacon as origin,
+							// then form the intersecting volume, and all beacons within the intersection need to match
+							matchOrigin := matchBeacon.position
+							translatedMatch := rotation.translateBy(matchOrigin.x, matchOrigin.y, matchOrigin.z)
 
-						refOrigin := referenceScanner.beacons[matching.refIndex].position
-						translatedRef := referenceScanner.translateBy(refOrigin.x, refOrigin.y, refOrigin.z)
+							refOrigin := refBeacon.position
+							translatedRef := rotationRef.translateBy(refOrigin.x, refOrigin.y, refOrigin.z)
 
-						intersection, overlap := translatedMatch.volume().intersect(translatedRef.volume())
-						if !overlap {
-							// Should not be possible when we translated both scanners to the same origin
-							continue
-						}
-						matchBeaconsInIntersection := translatedMatch.getBeaconsInVolume(intersection)
-						if len(matchBeaconsInIntersection) < 12 {
-							continue
-						}
-						refBeaconsInIntersection := translatedRef.getBeaconsInVolume(intersection)
+							intersection, overlap := translatedMatch.volume().intersect(translatedRef.volume())
+							if !overlap {
+								// Should not be possible when we translated both scanners to the same origin
+								continue
+							}
+							matchBeaconsInIntersection := translatedMatch.getBeaconsInVolume(intersection)
+							if len(matchBeaconsInIntersection) < 12 {
+								continue
+							}
+							refBeaconsInIntersection := translatedRef.getBeaconsInVolume(intersection)
 
-						if containsSameBeacons(matchBeaconsInIntersection, refBeaconsInIntersection) {
-							fmt.Printf("found alignment at rotation %v with %v beacons\n", rIndex, len(matchBeaconsInIntersection))
-							break
+							if containsSameBeacons(matchBeaconsInIntersection, refBeaconsInIntersection) {
+								offset := Position{
+									x: matchOrigin.x - refOrigin.x,
+									y: matchOrigin.y - refOrigin.y,
+									z: matchOrigin.z - refOrigin.z,
+								}
+								fmt.Printf("found alignment between scanner %v and %v at rotation %v/%v and offset %v with %v beacons\n", i, j, rIndexRef, rIndex, offset, len(matchBeaconsInIntersection))
+								break
+							}
 						}
 					}
 				}
