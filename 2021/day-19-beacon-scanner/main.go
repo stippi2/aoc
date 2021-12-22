@@ -176,6 +176,68 @@ func (s *Scanner) rotations() []Scanner {
 	return rotatedScanners
 }
 
+type AlignmentInfo struct {
+	rotationIndexA int
+	rotationIndexB int
+	offset         Position
+}
+
+func alignScanners(a, b *Scanner) (*AlignmentInfo, bool) {
+	type match struct {
+		beaconIndexA int
+		beaconIndexB int
+	}
+	var matchingBeacons []match
+	for beaconIndexA, beaconA := range a.beacons {
+		for beaconIndexB, beaconB := range b.beacons {
+			if beaconA.distancesToNearest == beaconB.distancesToNearest {
+				matchingBeacons = append(matchingBeacons, match{beaconIndexA, beaconIndexB})
+			}
+		}
+	}
+	if len(matchingBeacons) < 12 {
+		return nil, false
+	}
+	for rotationIndexA, rotationA := range a.rotations() {
+		for rotationIndexB, rotationB := range b.rotations() {
+			for _, matching := range matchingBeacons {
+				// If we found an alignment, we can transform both scanners to have the matching beacon as origin,
+				// then form the intersecting volume, and all beacons within the intersection need to match
+				originA := rotationA.beacons[matching.beaconIndexA].position
+				translatedA := rotationA.translateBy(originA.x, originA.y, originA.z)
+
+				originB := rotationB.beacons[matching.beaconIndexB].position
+				translatedB := rotationB.translateBy(originB.x, originB.y, originB.z)
+
+				intersection, overlap := translatedB.volume().intersect(translatedA.volume())
+				if !overlap {
+					// Should not be possible when we translated both scanners to the same origin
+					continue
+				}
+				beaconsInIntersectionA := translatedA.getBeaconsInVolume(intersection)
+				if len(beaconsInIntersectionA) < 12 {
+					continue
+				}
+				beaconsInIntersectionB := translatedB.getBeaconsInVolume(intersection)
+
+				if containsSameBeacons(beaconsInIntersectionA, beaconsInIntersectionB) {
+					return &AlignmentInfo{
+						rotationIndexA,
+						rotationIndexB,
+						Position{
+							x: originB.x - originA.x,
+							y: originB.y - originA.y,
+							z: originB.z - originA.z,
+						},
+					}, true
+				}
+			}
+		}
+	}
+	return nil, false
+}
+
+
 func main() {
 }
 
