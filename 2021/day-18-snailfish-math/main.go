@@ -92,8 +92,7 @@ func (p *Pair) Explode(level int) (Node, bool) {
 	if level == 4 {
 		return &RegularNumber{0}, true
 	}
-	newLeft, explodedLeft := p.left.Explode(level + 1)
-	if explodedLeft {
+	if newLeft, exploded := p.left.Explode(level + 1); exploded {
 		if p.left != newLeft {
 			pair := p.left.(*Pair)
 			left := pair.left.Magnitude()
@@ -104,8 +103,7 @@ func (p *Pair) Explode(level int) (Node, bool) {
 		}
 		return p, true
 	}
-	newRight, explodedRight := p.right.Explode(level + 1)
-	if explodedRight {
+	if newRight, exploded := p.right.Explode(level + 1); exploded {
 		if p.right != newRight {
 			pair := p.right.(*Pair)
 			left := pair.left.Magnitude()
@@ -120,12 +118,12 @@ func (p *Pair) Explode(level int) (Node, bool) {
 }
 
 func (p *Pair) Split() (Node, bool) {
-	if newLeft, split := p.left.Split(); split {
+	if newLeft, didSplit := p.left.Split(); didSplit {
 		newLeft.(*Pair).parent = p
 		p.left = newLeft
 		return p, true
 	}
-	if newRight, split := p.right.Split(); split {
+	if newRight, didSplit := p.right.Split(); didSplit {
 		newRight.(*Pair).parent = p
 		p.right = newRight
 		return p, true
