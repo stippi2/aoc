@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -259,23 +260,26 @@ func Test_volumeIntersectInvalid(t *testing.T) {
 	assert.False(t, valid)
 }
 
-func Test_alignScanners(t *testing.T) {
+func Test_combineScanners(t *testing.T) {
 	scanners := parseInput(scannerExamples)
-	for _, s := range scanners {
-		s.setBeaconDistances()
-	}
-	for i := 0; i < len(scanners); i++ {
-		for j := 0; j < len(scanners); j++ {
-			if i == j {
-				continue
-			}
-			alignment, found := alignScanners(&scanners[i], &scanners[j])
-			if found {
-				fmt.Printf("found alignment of scanners %d and %d with offset %v and rotations %d and %d\n",
-					i, j, alignment.offset, alignment.rotationIndexA, alignment.rotationIndexB)
+	combined := &CombinedScanners{}
+	for len(scanners) > 0 {
+		integratedOne := false
+		for i, s := range scanners {
+			if combined.integrate(&s) {
+				last := len(scanners)-1
+				scanners[i] = scanners[last]
+				scanners = scanners[:last]
+				fmt.Printf("integrated scanner %v of %v\n", i, last + 1)
+				integratedOne = true
+				break
+			} else {
+				fmt.Printf("failed to integrated scanner %v\n", i)
 			}
 		}
+		require.True(t, integratedOne)
 	}
+	fmt.Printf("total beacons: %v, remaining scanners: %v\n", len(combined.allBeacons()), len(scanners))
 }
 
 func Test_alignScannersBruteForce(t *testing.T) {

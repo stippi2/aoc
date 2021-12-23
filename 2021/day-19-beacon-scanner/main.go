@@ -112,6 +112,7 @@ func (s *Scanner) setBeaconDistances() {
 	for i := 0; i < len(s.beacons); i++ {
 		var distances []float64
 		a := &s.beacons[i]
+		a.distancesToNearest = ""
 		for j := 0; j < len(s.beacons); j++ {
 			if i == j {
 				continue
@@ -126,13 +127,13 @@ func (s *Scanner) setBeaconDistances() {
 	}
 }
 
-func (s *Scanner) translateBy(x, y, z int) Scanner {
+func (s *Scanner) translateBy(x, y, z int) *Scanner {
 	scanner := Scanner{}
 	for i := 0; i < len(s.beacons); i++ {
 		p := s.beacons[i].position
 		scanner.appendBeacon(p.x - x, p.y - y, p.z - z)
 	}
-	return scanner
+	return &scanner
 }
 
 // volume returns the minimum Volume which contains all beacons of the Scanner
@@ -176,13 +177,39 @@ func (s *Scanner) rotations() []Scanner {
 	return rotatedScanners
 }
 
-type AlignmentInfo struct {
-	rotationIndexA int
-	rotationIndexB int
-	offset         Position
+type CombinedScanners struct {
+	scanners []*Scanner
 }
 
-func alignScanners(a, b *Scanner) (*AlignmentInfo, bool) {
+func (c *CombinedScanners) integrate(scanner *Scanner) bool {
+	if c.scanners == nil {
+		c.scanners = append(c.scanners, scanner)
+		return true
+	}
+	for _, s := range c.scanners {
+		if c.alignAndIntegrateScanner(s, scanner) {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *CombinedScanners) setRotation(index int) {
+	for i := 0; i < len(c.scanners); i++ {
+		c.scanners[i] = &c.scanners[i].rotations()[index]
+	}
+}
+
+func (c *CombinedScanners) translateBy(t Position) {
+	for i := 0; i < len(c.scanners); i++ {
+		c.scanners[i] = c.scanners[i].translateBy(t.x, t.y, t.z)
+	}
+}
+
+func (c *CombinedScanners) alignAndIntegrateScanner(a, b *Scanner) bool {
+	a.setBeaconDistances()
+	b.setBeaconDistances()
+
 	type match struct {
 		beaconIndexA int
 		beaconIndexB int
@@ -196,10 +223,10 @@ func alignScanners(a, b *Scanner) (*AlignmentInfo, bool) {
 		}
 	}
 	if len(matchingBeacons) < 12 {
-		return nil, false
+		return false
 	}
 	for rotationIndexA, rotationA := range a.rotations() {
-		for rotationIndexB, rotationB := range b.rotations() {
+		for _, rotationB := range b.rotations() {
 			for _, matching := range matchingBeacons {
 				// If we found an alignment, we can transform both scanners to have the matching beacon as origin,
 				// then form the intersecting volume, and all beacons within the intersection need to match
@@ -221,24 +248,49 @@ func alignScanners(a, b *Scanner) (*AlignmentInfo, bool) {
 				beaconsInIntersectionB := translatedB.getBeaconsInVolume(intersection)
 
 				if containsSameBeacons(beaconsInIntersectionA, beaconsInIntersectionB) {
-					return &AlignmentInfo{
-						rotationIndexA,
-						rotationIndexB,
-						Position{
-							x: originB.x - originA.x,
-							y: originB.y - originA.y,
-							z: originB.z - originA.z,
-						},
-					}, true
+					c.setRotation(rotationIndexA)
+					c.translateBy(originA)
+					c.scanners = append(c.scanners, translatedB)
+					return true
 				}
 			}
 		}
 	}
-	return nil, false
+	return false
 }
 
+func (c *CombinedScanners) allBeacons() map[Position]bool {
+	allBeacons := make(map[Position]bool)
+	for _, scanner := range c.scanners {
+		for _, beacon := range scanner.beacons {
+			allBeacons[beacon.position] = true
+		}
+	}
+	return allBeacons
+}
 
 func main() {
+	scanners := parseInput(loadInput("puzzle-input.txt"))
+	combined := &CombinedScanners{}
+	for len(scanners) > 0 {
+		integratedOne := false
+		for i, s := range scanners {
+			if combined.integrate(&s) {
+				last := len(scanners)-1
+				scanners[i] = scanners[last]
+				scanners = scanners[:last]
+				fmt.Printf("integrated scanner %v of %v\n", i, last + 1)
+				integratedOne = true
+				break
+			} else {
+				fmt.Printf("failed to integrate scanner %v\n", i)
+			}
+		}
+		if !integratedOne {
+			panic("could not integrate any remaining scanner")
+		}
+	}
+	fmt.Printf("total beacons: %v\n", len(combined.allBeacons()))
 }
 
 func sortBeacons(a []Beacon) {
