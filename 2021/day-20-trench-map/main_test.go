@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -16,7 +15,7 @@ func Test_parseInput(t *testing.T) {
 	a, i := parseInput(example)
 	assert.Equal(t, "###..", a)
 
-	expectedImage := &Image{pixel: map[Point]bool{}}
+	expectedImage := newImage()
 	expectedImage.set(0,0)
 	expectedImage.set(3,0)
 	expectedImage.set(0,1)
@@ -102,11 +101,8 @@ func Test_enhanceTwice(t *testing.T) {
 ##..#
 ..#..
 ..###`)
-	fmt.Printf("image:\n\n%s\n", i)
 	i = i.enhance(a)
-	fmt.Printf("image:\n\n%s\n", i)
 	i = i.enhance(a)
-	fmt.Printf("image:\n\n%s\n", i)
 	assert.Equal(t, 35, len(i.pixel))
 }
 
