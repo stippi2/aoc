@@ -113,7 +113,9 @@ func (s *Scanner) setBeaconDistances() {
 	for i := 0; i < len(s.beacons); i++ {
 		var distances []float64
 		a := &s.beacons[i]
-		a.distancesToNearest = ""
+		if a.distancesToNearest != "" {
+			return
+		}
 		for j := 0; j < len(s.beacons); j++ {
 			if i == j {
 				continue
