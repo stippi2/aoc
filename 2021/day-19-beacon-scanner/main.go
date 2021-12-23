@@ -318,6 +318,7 @@ func main() {
 	}
 	duration := time.Since(start)
 	fmt.Printf("total beacons: %v, found in %v\n", len(combined.allBeacons()), duration)
+	fmt.Printf("largest Manhattan distance between any two scanners %v\n", combined.largestManhattanDistance())
 }
 
 func sortBeacons(a []Beacon) {
