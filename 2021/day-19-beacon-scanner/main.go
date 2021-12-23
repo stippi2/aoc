@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Position struct {
@@ -272,6 +273,7 @@ func (c *CombinedScanners) allBeacons() map[Position]bool {
 func main() {
 	scanners := parseInput(loadInput("puzzle-input.txt"))
 	combined := &CombinedScanners{}
+	start := time.Now()
 	for len(scanners) > 0 {
 		integratedOne := false
 		for i, s := range scanners {
@@ -279,18 +281,16 @@ func main() {
 				last := len(scanners)-1
 				scanners[i] = scanners[last]
 				scanners = scanners[:last]
-				fmt.Printf("integrated scanner %v of %v\n", i, last + 1)
 				integratedOne = true
 				break
-			} else {
-				fmt.Printf("failed to integrate scanner %v\n", i)
 			}
 		}
 		if !integratedOne {
 			panic("could not integrate any remaining scanner")
 		}
 	}
-	fmt.Printf("total beacons: %v\n", len(combined.allBeacons()))
+	duration := time.Since(start)
+	fmt.Printf("total beacons: %v, found in %v\n", len(combined.allBeacons()), duration)
 }
 
 func sortBeacons(a []Beacon) {
