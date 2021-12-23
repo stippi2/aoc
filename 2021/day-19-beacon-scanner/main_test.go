@@ -270,16 +270,13 @@ func Test_combineScanners(t *testing.T) {
 				last := len(scanners)-1
 				scanners[i] = scanners[last]
 				scanners = scanners[:last]
-				fmt.Printf("integrated scanner %v of %v\n", i, last + 1)
 				integratedOne = true
 				break
-			} else {
-				fmt.Printf("failed to integrated scanner %v\n", i)
 			}
 		}
 		require.True(t, integratedOne)
 	}
-	fmt.Printf("total beacons: %v, remaining scanners: %v\n", len(combined.allBeacons()), len(scanners))
+	assert.Equal(t, 79, len(combined.allBeacons()))
 }
 
 func Test_alignScannersBruteForce(t *testing.T) {
