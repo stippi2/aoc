@@ -277,6 +277,7 @@ func Test_combineScanners(t *testing.T) {
 		require.True(t, integratedOne)
 	}
 	assert.Equal(t, 79, len(combined.allBeacons()))
+	assert.Equal(t, 3621, combined.largestManhattanDistance())
 }
 
 func Test_alignScannersBruteForce(t *testing.T) {

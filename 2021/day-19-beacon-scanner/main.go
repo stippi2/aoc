@@ -103,6 +103,7 @@ type Beacon struct {
 
 type Scanner struct {
 	beacons []Beacon
+	origin  Position
 }
 
 func (s *Scanner) appendBeacon(x, y, z int) {
@@ -131,7 +132,9 @@ func (s *Scanner) setBeaconDistances() {
 }
 
 func (s *Scanner) translateBy(x, y, z int) *Scanner {
-	scanner := Scanner{}
+	scanner := Scanner{
+		origin: Position{s.origin.x-x, s.origin.y-y, s.origin.z-z},
+	}
 	for i := 0; i < len(s.beacons); i++ {
 		p := s.beacons[i].position
 		scanner.appendBeacon(p.x - x, p.y - y, p.z - z)
@@ -170,11 +173,18 @@ func (s *Scanner) getBeaconsInVolume(v Volume) []Beacon {
 
 func (s *Scanner) rotations() []Scanner {
 	rotatedScanners := make([]Scanner, 24)
-	for _, beacon := range s.beacons {
+
+	rotatedOrigins := s.origin.rotations()
+	for r := 0; r < 24; r++ {
+		rotatedScanners[r].origin = rotatedOrigins[r]
+	}
+
+	for i, beacon := range s.beacons {
 		rotatedPositions := beacon.position.rotations()
 		for r := 0; r < 24; r++ {
 			p := rotatedPositions[r]
 			rotatedScanners[r].appendBeacon(p.x, p.y, p.z)
+			rotatedScanners[r].beacons[i].distancesToNearest = beacon.distancesToNearest
 		}
 	}
 	return rotatedScanners
@@ -272,6 +282,21 @@ func (c *CombinedScanners) allBeacons() map[Position]bool {
 	return allBeacons
 }
 
+func (c *CombinedScanners) largestManhattanDistance() int {
+	var x, y, z int
+	for i, scannerA := range c.scanners {
+		for j, scannerB := range c.scanners {
+			if i == j {
+				continue
+			}
+			x = max(x, abs(scannerA.origin.x - scannerB.origin.x))
+			y = max(y, abs(scannerA.origin.y - scannerB.origin.y))
+			z = max(z, abs(scannerA.origin.z - scannerB.origin.z))
+		}
+	}
+	return x + y + z
+}
+
 func main() {
 	scanners := parseInput(loadInput("puzzle-input.txt"))
 	combined := &CombinedScanners{}
@@ -342,6 +367,13 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func abs(v int) int {
+	if v < 0 {
+		return -v
+	}
+	return v
 }
 
 func parseInput(input string) []Scanner {
