@@ -271,6 +271,7 @@ func Test_combineScanners(t *testing.T) {
 				scanners[i] = scanners[last]
 				scanners = scanners[:last]
 				integratedOne = true
+				fmt.Printf("integrated scanner %v of %v\n", i, last + 1)
 				break
 			}
 		}
@@ -328,5 +329,54 @@ func Test_alignScannersBruteForce(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func Test_rotations(t *testing.T) {
+	type vector []int
+
+	inversions := []vector{
+		{ 1, 1, 1},
+		{ 1, 1,-1},
+		{ 1,-1, 1},
+		{-1, 1, 1},
+		{-1,-1, 1},
+		{-1, 1,-1},
+		{ 1,-1,-1},
+		{-1,-1,-1},
+	}
+
+	mappings := []vector{
+		{ 0, 1, 2},
+		{ 0, 2, 1},
+		{ 1, 0, 2},
+		{ 1, 2, 0},
+		{ 2, 0, 1},
+		{ 2, 1, 0},
+	}
+
+	rotations := map[string]bool{}
+	axis := []string{"p.x", "p.y", "p.z"}
+
+	for _, i := range inversions {
+		for _, m := range mappings {
+			x := axis[m[0]]
+			y := axis[m[1]]
+			z := axis[m[2]]
+			if i[0] < 0 {
+				x = "-" + x
+			}
+			if i[1] < 0 {
+				y = "-" + y
+			}
+			if i[2] < 0 {
+				z = "-" + z
+			}
+			rotations[x + "," + y + "," + z] = true
+		}
+	}
+
+	for rotation := range rotations {
+		fmt.Printf("{%s},\n", rotation)
 	}
 }

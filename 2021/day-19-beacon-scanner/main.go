@@ -25,31 +25,29 @@ func (p *Position) distance(to Position) float64 {
 func (p *Position) rotations() []Position {
 	return []Position{
 		{p.x, p.y, p.z},
+		{p.x, -p.z, p.y},
 		{p.x, -p.y, -p.z},
 		{p.x, p.z, -p.y},
-		{p.x, -p.z, p.y},
-		{-p.x, p.y, p.z},
-		{-p.x, -p.y, -p.z},
-		{-p.x, p.z, -p.y},
-		{-p.x, -p.z, p.y},
-
-		{p.x, p.y, p.z},
-		{-p.x, p.y, -p.z},
-		{p.z, p.y, -p.x},
-		{-p.z, p.y, p.x},
-		{p.x, -p.y, p.z},
-		{-p.x, -p.y, -p.z},
-		{p.z, -p.y, -p.x},
-		{-p.z, -p.y, p.x},
-
-		{p.x, p.y, p.z},
-		{-p.x, -p.y, p.z},
-		{p.y, -p.x, p.z},
 		{-p.y, p.x, p.z},
-		{p.x, p.y, -p.z},
-		{-p.x, -p.y, -p.z},
-		{p.y, -p.x, -p.z},
-		{-p.y, p.x, -p.z},
+		{p.z, p.x, p.y},
+		{p.y, p.x, -p.z},
+		{-p.z, p.x, -p.y},
+		{-p.x, -p.y, p.z},
+		{-p.x, -p.z, -p.y},
+		{-p.x, p.y, -p.z},
+		{-p.x, p.z, p.y},
+		{p.y, -p.x, p.z},
+		{p.z, -p.x, -p.y},
+		{-p.y, -p.x, -p.z},
+		{-p.z, -p.x, p.y},
+		{-p.z, p.y, p.x},
+		{p.y, p.z, p.x},
+		{p.z, -p.y, p.x},
+		{-p.y,-p.z, p.x},
+		{-p.z, -p.y, -p.x},
+		{-p.y, p.z, -p.x},
+		{p.z, p.y, -p.x},
+		{p.y, -p.z, -p.x},
 	}
 }
 
@@ -174,10 +172,10 @@ func (s *Scanner) getBeaconsInVolume(v Volume) []Beacon {
 func (s *Scanner) rotations() []Scanner {
 	rotatedScanners := make([]Scanner, 24)
 
-	rotatedOrigins := s.origin.rotations()
-	for r := 0; r < 24; r++ {
-		rotatedScanners[r].origin = rotatedOrigins[r]
-	}
+//	rotatedOrigins := s.origin.rotations()
+//	for r := 0; r < 24; r++ {
+//		rotatedScanners[r].origin = rotatedOrigins[r]
+//	}
 
 	for i, beacon := range s.beacons {
 		rotatedPositions := beacon.position.rotations()
@@ -238,34 +236,32 @@ func (c *CombinedScanners) alignAndIntegrateScanner(a, b *Scanner) bool {
 	if len(matchingBeacons) < 12 {
 		return false
 	}
-	for rotationIndexA, rotationA := range a.rotations() {
-		for _, rotationB := range b.rotations() {
-			for _, matching := range matchingBeacons {
-				// If we found an alignment, we can transform both scanners to have the matching beacon as origin,
-				// then form the intersecting volume, and all beacons within the intersection need to match
-				originA := rotationA.beacons[matching.beaconIndexA].position
-				translatedA := rotationA.translateBy(originA.x, originA.y, originA.z)
+	for _, rotationB := range b.rotations() {
+		for _, matching := range matchingBeacons {
+			// If we found an alignment, we can transform both scanners to have the matching beacon as origin,
+			// then form the intersecting volume, and all beacons within the intersection need to match
+			originA := a.beacons[matching.beaconIndexA].position
+			translatedA := a.translateBy(originA.x, originA.y, originA.z)
 
-				originB := rotationB.beacons[matching.beaconIndexB].position
-				translatedB := rotationB.translateBy(originB.x, originB.y, originB.z)
+			originB := rotationB.beacons[matching.beaconIndexB].position
+			translatedB := rotationB.translateBy(originB.x, originB.y, originB.z)
 
-				intersection, overlap := translatedB.volume().intersect(translatedA.volume())
-				if !overlap {
-					// Should not be possible when we translated both scanners to the same origin
-					continue
-				}
-				beaconsInIntersectionA := translatedA.getBeaconsInVolume(intersection)
-				if len(beaconsInIntersectionA) < 12 {
-					continue
-				}
-				beaconsInIntersectionB := translatedB.getBeaconsInVolume(intersection)
+			intersection, overlap := translatedB.volume().intersect(translatedA.volume())
+			if !overlap {
+				// Should not be possible when we translated both scanners to the same origin
+				continue
+			}
+			beaconsInIntersectionA := translatedA.getBeaconsInVolume(intersection)
+			if len(beaconsInIntersectionA) < 12 {
+				continue
+			}
+			beaconsInIntersectionB := translatedB.getBeaconsInVolume(intersection)
 
-				if containsSameBeacons(beaconsInIntersectionA, beaconsInIntersectionB) {
-					c.setRotation(rotationIndexA)
-					c.translateBy(originA)
-					c.scanners = append(c.scanners, translatedB)
-					return true
-				}
+			if containsSameBeacons(beaconsInIntersectionA, beaconsInIntersectionB) {
+				c.translateBy(originA)
+				translatedB.origin = Position{-originB.x, -originB.y, -originB.z}
+				c.scanners = append(c.scanners, translatedB)
+				return true
 			}
 		}
 	}
