@@ -11,5 +11,10 @@ mul z 3
 eql z x`
 
 func Test_parseInput(t *testing.T) {
-	assert.True(t, true)
+	alu, program := parseInput(example)
+	alu.input = []int{1,3}
+	for _, instruction := range program {
+		instruction.Execute()
+	}
+	assert.Equal(t, 1, alu.z)
 }
