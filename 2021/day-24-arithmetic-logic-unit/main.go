@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ALU struct {
@@ -30,6 +31,14 @@ func (alu *ALU) Register(name string) *int {
 func (alu *ALU) Read() int {
 	alu.index++
 	return alu.input[alu.index-1]
+}
+
+func (alu *ALU) reset() {
+	alu.index = 0
+	alu.w = 0
+	alu.x = 0
+	alu.y = 0
+	alu.z = 0
 }
 
 type Register struct {
@@ -114,7 +123,90 @@ func (i *EQL) Execute() {
 	}
 }
 
+type ModelNumber struct {
+	value []int
+}
+
+func newModelNumber() *ModelNumber {
+	// 99999145946229
+	n := &ModelNumber{}
+	n.value = make([]int, 14)
+	for i := 0; i < len(n.value); i++ {
+		n.value[i] = 9
+	}
+	return n
+}
+
+func (n *ModelNumber) setFrom(input string) {
+	for i := 0; i < len(input) && i < len(n.value); i++ {
+		digit, err := strconv.Atoi(input[i:i+1])
+		if err != nil {
+			panic(fmt.Sprintf("failed to parse digit: %s", err))
+		}
+		n.value[i] = digit
+	}
+}
+
+func (n *ModelNumber) decrement() {
+	digit := len(n.value) - 1
+	for digit > 0 {
+		n.value[digit] = n.value[digit] - 1
+		if n.value[digit] != 0 {
+			break
+		}
+		n.value[digit] = 9
+		digit--
+	}
+}
+
+func (n *ModelNumber) increment() {
+	digit := len(n.value) - 1
+	for digit > 0 {
+		n.value[digit] = n.value[digit] + 1
+		if n.value[digit] != 10 {
+			break
+		}
+		n.value[digit] = 1
+		digit--
+	}
+}
+
+func (n *ModelNumber) String() string {
+	result := ""
+	for i := 0; i < len(n.value); i++ {
+		result += strconv.Itoa(n.value[i])
+	}
+	return result
+}
+
 func main() {
+	start := time.Now()
+	alu, program := parseInput(loadInput("puzzle-input.txt"))
+	modelNumber := newModelNumber()
+	alu.input = modelNumber.value
+	iteration := 0
+	for {
+		for _, instruction := range program {
+			instruction.Execute()
+			fmt.Printf("ALU: w: %v, x: %v, y: %v, z: %v\n", alu.w, alu.x, alu.y, alu.z)
+		}
+		if iteration == 0 {
+			break
+		}
+		if alu.z == 0 {
+			break
+		}
+		iteration++
+		if iteration % 100000 == 0 {
+			duration := time.Since(start)
+			durationPerPrint := duration / time.Duration(iteration / 100000)
+			durationAll := durationPerPrint * 999999999
+			fmt.Printf("model number %s: invalid, %s per 100000 iterations, %s for all\n", modelNumber, durationPerPrint, durationAll)
+		}
+		modelNumber.decrement()
+		alu.reset()
+	}
+	fmt.Printf("largest valid model number: %v (%v)\n", modelNumber, time.Since(start))
 }
 
 func inputFor(input string, alu *ALU) Input {
