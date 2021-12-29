@@ -1,52 +1,52 @@
-inp w      // 1..9
-//mul x 0
-//add x z
-//mod x 26
-//div z 1
-//add x 10
-//eql x w  // x now 0, since w can be "9" at max
-//eql x 0  // now x is 1
-//mul y 0
-//add y 25
-//mul y x
-//add y 1  // y = 26
-//mul z y  // z = 0
-//mul y 0  // y = 0
-add y w
-add y 12   // y = 13..21
-//mul y x
-add z y    // z = 13..21
-inp w      // Replaces first digit
-//mul x 0
-add x z    // x = 13..21
-mod x 26   // x =  5..13
-//div z 1
-add x 12   // x = 17..27
-eql x w    // x now 0 since x (17..27) != w
-eql x 0    // x now 1
-mul y 0
-add y 25   // y now 25
-//mul y x
-add y 1    // y now 26
-mul z y    // z = 13 * 26 .. 21 * 26
-mul y 0    // y = 0
-add y w    // y = 1..9
-add y 7    // y = 8..16
-mul y x    // y = 8..16
-add z y    // z = 13*26 + (8..16) .. 21*26 + (8..16)
 inp w
 mul x 0
 add x z
-mod x 26   // x = z % 26
-//div z 1
-add x 10   // x = 10 .. 25
-eql x w    // x = 0
-eql x 0    // x = 1
-mul y 0    // y = 0
-add y 25   // y = 25
-// mul y x // (x = 1)
-add y 1    // y = 26
-mul z y    //
+mod x 26
+div z 1
+add x 10
+eql x w
+eql x 0
+mul y 0
+add y 25
+mul y x
+add y 1
+mul z y
+mul y 0
+add y w
+add y 12
+mul y x
+add z y
+inp w
+mul x 0
+add x z
+mod x 26
+div z 1
+add x 12
+eql x w
+eql x 0
+mul y 0
+add y 25
+mul y x
+add y 1
+mul z y
+mul y 0
+add y w
+add y 7
+mul y x
+add z y
+inp w
+mul x 0
+add x z
+mod x 26
+div z 1
+add x 10
+eql x w
+eql x 0
+mul y 0
+add y 25
+mul y x
+add y 1
+mul z y
 mul y 0
 add y w
 add y 8
@@ -233,20 +233,20 @@ add y 4
 mul y x
 add z y
 inp w
-mul x 0   // x = 0
+mul x 0
 add x z
-mod x 26  // x 0..25
+mod x 26
 div z 26
-add x -14 // x = -14..11
+add x -14
 eql x w
 eql x 0
 mul y 0
-add y 25  // y = 25
-mul y x   // y = 25 or 0
-add y 1   // y = 26 or 1
-mul z y   //
+add y 25
+mul y x
+add y 1
+mul z y
 mul y 0
-add y w   // y = 1..9
-add y 13  // y = 14..22
-mul y x   // y = 0 or 14..22
+add y w
+add y 13
+mul y x
 add z y

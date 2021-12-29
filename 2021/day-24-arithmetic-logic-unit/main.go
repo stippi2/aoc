@@ -179,34 +179,98 @@ func (n *ModelNumber) String() string {
 	return result
 }
 
+func (alu *ALU) runProgramToNextInput(skipInputs int, program []Instruction) {
+	inputsSeen := 0
+	for _, instruction := range program {
+		if _, ok := instruction.(*INP); ok {
+			if skipInputs > 0 {
+				skipInputs--
+				continue
+			}
+			inputsSeen++
+			if inputsSeen == 2 {
+				break
+			}
+		}
+		if inputsSeen == 1 {
+			instruction.Execute()
+		}
+	}
+}
+
+func smallestModelNumber(alu *ALU, program []Instruction) int {
+	aluStates := make([]map[int]int, 15)
+	aluStates[0] = make(map[int]int)
+	aluStates[0][0] = 0
+
+	for digit := 0; digit < 14; digit++ {
+		aluStates[digit + 1] = make(map[int]int)
+		for input := 1; input < 10; input++ {
+			replaced := 0
+			alu.input = []int{input}
+			for state, numberPath := range aluStates[digit] {
+				// Only register "z" carries over from previous digits
+				alu.x = 0
+				alu.y = 0
+				alu.z = state
+				alu.index = 0
+				alu.runProgramToNextInput(digit, program)
+				oldNumberPath := aluStates[digit + 1][alu.z]
+				newNumberPath := numberPath * 10 + input
+				if oldNumberPath == 0 || newNumberPath < oldNumberPath {
+					aluStates[digit + 1][alu.z] = newNumberPath
+					if oldNumberPath > 0 {
+						replaced++
+					}
+				}
+			}
+			fmt.Printf("states at digit %v: %v (replaced: %v)\n", digit, len(aluStates[digit + 1]), replaced)
+		}
+	}
+
+	return aluStates[14][0]
+}
+
+func largestModelNumber(alu *ALU, program []Instruction) int {
+	aluStates := make([]map[int]int, 15)
+	aluStates[0] = make(map[int]int)
+	aluStates[0][0] = 0
+
+	for digit := 0; digit < 14; digit++ {
+		aluStates[digit + 1] = make(map[int]int)
+		for input := 1; input < 10; input++ {
+			replaced := 0
+			alu.input = []int{input}
+			for state, numberPath := range aluStates[digit] {
+				// Only register "z" carries over from previous digits
+				alu.x = 0
+				alu.y = 0
+				alu.z = state
+				alu.index = 0
+				alu.runProgramToNextInput(digit, program)
+				oldNumberPath := aluStates[digit + 1][alu.z]
+				newNumberPath := numberPath * 10 + input
+				if oldNumberPath < newNumberPath {
+					aluStates[digit + 1][alu.z] = newNumberPath
+					if oldNumberPath > 0 {
+						replaced++
+					}
+				}
+			}
+			fmt.Printf("states at digit %v: %v (replaced: %v)\n", digit, len(aluStates[digit + 1]), replaced)
+		}
+	}
+
+	return aluStates[14][0]
+}
+
 func main() {
 	start := time.Now()
-	alu, program := parseInput(loadInput("puzzle-input.txt"))
-	modelNumber := newModelNumber()
-	alu.input = modelNumber.value
-	iteration := 0
-	for {
-		for _, instruction := range program {
-			instruction.Execute()
-			fmt.Printf("ALU: w: %v, x: %v, y: %v, z: %v\n", alu.w, alu.x, alu.y, alu.z)
-		}
-		if iteration == 0 {
-			break
-		}
-		if alu.z == 0 {
-			break
-		}
-		iteration++
-		if iteration % 100000 == 0 {
-			duration := time.Since(start)
-			durationPerPrint := duration / time.Duration(iteration / 100000)
-			durationAll := durationPerPrint * 999999999
-			fmt.Printf("model number %s: invalid, %s per 100000 iterations, %s for all\n", modelNumber, durationPerPrint, durationAll)
-		}
-		modelNumber.decrement()
-		alu.reset()
-	}
-	fmt.Printf("largest valid model number: %v (%v)\n", modelNumber, time.Since(start))
+	alu, program := parseInput(loadInput("puzzle-input-orig.txt"))
+	largest := largestModelNumber(alu, program)
+	smallest := smallestModelNumber(alu, program)
+
+	fmt.Printf("lowest / highest valid model number: %v / %v (%v)\n", smallest, largest, time.Since(start))
 }
 
 func inputFor(input string, alu *ALU) Input {
@@ -221,9 +285,12 @@ func inputFor(input string, alu *ALU) Input {
 	return &Number{v}
 }
 
-func parseInput(input string) (alu *ALU, program []Instruction){
+func parseInput(input string) (alu *ALU, program []Instruction) {
 	alu = &ALU{}
 	for _, line := range strings.Split(input, "\n") {
+		if line == "" || strings.HasPrefix(line, "//") {
+			continue
+		}
 		parts := strings.Split(line, " ")
 		r := alu.Register(parts[1])
 		var i Input
