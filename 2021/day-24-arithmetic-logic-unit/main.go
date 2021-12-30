@@ -198,6 +198,8 @@ func (alu *ALU) runProgramToNextInput(skipInputs int, program []Instruction) {
 	}
 }
 
+// splitInstructions splits the program into 14 chunks that each start with an INP instruction.
+// It is assumed that the program contains exactly 14 INP instructions and that it starts with an INP.
 func splitInstructions(program []Instruction) [][]Instruction {
 	programChunks := make([][]Instruction, 14)
 	inputsSeen := -1
@@ -210,6 +212,7 @@ func splitInstructions(program []Instruction) [][]Instruction {
 	return programChunks
 }
 
+// min is unusual in the sense that it ignores the zero value for a (0)
 func min(a, b int) int {
 	if a == 0 || b < a {
 		return b
@@ -217,6 +220,7 @@ func min(a, b int) int {
 	return a
 }
 
+// max is unusual in the sense that it ignores the zero value for a (0)
 func max(a, b int) int {
 	if a == 0 || b > a {
 		return b
@@ -224,6 +228,11 @@ func max(a, b int) int {
 	return a
 }
 
+// minMaxModelNumber is based on the realization/assumption that only the "z" register of the ALU
+// carries over between each program chunk processing an INP instruction.
+// It builds a map of 14 maps, one for each digit of a "model number".
+// Each of the 14 maps contains the possible values for the "z" register up to the corresponding digit.
+// It is based on the assumption that there are far less than 9^14 possible values for "z".
 func minMaxModelNumber(alu *ALU, program []Instruction) (int, int) {
 	type minMaxNumbers struct {
 		min, max int
@@ -238,8 +247,8 @@ func minMaxModelNumber(alu *ALU, program []Instruction) (int, int) {
 
 	for digit := 0; digit < 14; digit++ {
 		aluStates[digit + 1] = make(map[int]minMaxNumbers)
+		replaced := 0
 		for input := 1; input < 10; input++ {
-			replaced := 0
 			alu.input = []int{input}
 			for state, numberPath := range aluStates[digit] {
 				// Only register "z" carries over from previous digits
@@ -262,8 +271,8 @@ func minMaxModelNumber(alu *ALU, program []Instruction) (int, int) {
 					}
 				}
 			}
-			fmt.Printf("states at digit %v: %v (replaced: %v)\n", digit, len(aluStates[digit + 1]), replaced)
 		}
+		fmt.Printf("states at digit %v: %v (replaced: %v)\n", digit, len(aluStates[digit + 1]), replaced)
 	}
 
 	result := aluStates[14][0]
