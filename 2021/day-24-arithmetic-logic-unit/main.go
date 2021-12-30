@@ -198,46 +198,46 @@ func (alu *ALU) runProgramToNextInput(skipInputs int, program []Instruction) {
 	}
 }
 
-func smallestModelNumber(alu *ALU, program []Instruction) int {
-	aluStates := make([]map[int]int, 15)
-	aluStates[0] = make(map[int]int)
-	aluStates[0][0] = 0
-
-	for digit := 0; digit < 14; digit++ {
-		aluStates[digit + 1] = make(map[int]int)
-		for input := 1; input < 10; input++ {
-			replaced := 0
-			alu.input = []int{input}
-			for state, numberPath := range aluStates[digit] {
-				// Only register "z" carries over from previous digits
-				alu.x = 0
-				alu.y = 0
-				alu.z = state
-				alu.index = 0
-				alu.runProgramToNextInput(digit, program)
-				oldNumberPath := aluStates[digit + 1][alu.z]
-				newNumberPath := numberPath * 10 + input
-				if oldNumberPath == 0 || newNumberPath < oldNumberPath {
-					aluStates[digit + 1][alu.z] = newNumberPath
-					if oldNumberPath > 0 {
-						replaced++
-					}
-				}
-			}
-			fmt.Printf("states at digit %v: %v (replaced: %v)\n", digit, len(aluStates[digit + 1]), replaced)
+func splitInstructions(program []Instruction) [][]Instruction {
+	programChunks := make([][]Instruction, 14)
+	inputsSeen := -1
+	for _, instruction := range program {
+		if _, ok := instruction.(*INP); ok {
+			inputsSeen++
 		}
+		programChunks[inputsSeen] = append(programChunks[inputsSeen], instruction)
 	}
-
-	return aluStates[14][0]
+	return programChunks
 }
 
-func largestModelNumber(alu *ALU, program []Instruction) int {
-	aluStates := make([]map[int]int, 15)
-	aluStates[0] = make(map[int]int)
-	aluStates[0][0] = 0
+func min(a, b int) int {
+	if a == 0 || b < a {
+		return b
+	}
+	return a
+}
+
+func max(a, b int) int {
+	if a == 0 || b > a {
+		return b
+	}
+	return a
+}
+
+func minMaxModelNumber(alu *ALU, program []Instruction) (int, int) {
+	type minMaxNumbers struct {
+		min, max int
+	}
+	zeroValue := minMaxNumbers{}
+
+	aluStates := make([]map[int]minMaxNumbers, 15)
+	aluStates[0] = make(map[int]minMaxNumbers)
+	aluStates[0][0] = zeroValue
+
+	programChunks := splitInstructions(program)
 
 	for digit := 0; digit < 14; digit++ {
-		aluStates[digit + 1] = make(map[int]int)
+		aluStates[digit + 1] = make(map[int]minMaxNumbers)
 		for input := 1; input < 10; input++ {
 			replaced := 0
 			alu.input = []int{input}
@@ -247,12 +247,17 @@ func largestModelNumber(alu *ALU, program []Instruction) int {
 				alu.y = 0
 				alu.z = state
 				alu.index = 0
-				alu.runProgramToNextInput(digit, program)
+				for _, instruction := range programChunks[digit] {
+					instruction.Execute()
+				}
 				oldNumberPath := aluStates[digit + 1][alu.z]
-				newNumberPath := numberPath * 10 + input
-				if oldNumberPath < newNumberPath {
+				newNumberPath := minMaxNumbers{
+					min(oldNumberPath.min, numberPath.min * 10 + input),
+					max(oldNumberPath.max, numberPath.max * 10 + input),
+				}
+				if oldNumberPath != newNumberPath {
 					aluStates[digit + 1][alu.z] = newNumberPath
-					if oldNumberPath > 0 {
+					if oldNumberPath != zeroValue {
 						replaced++
 					}
 				}
@@ -261,16 +266,18 @@ func largestModelNumber(alu *ALU, program []Instruction) int {
 		}
 	}
 
-	return aluStates[14][0]
+	result := aluStates[14][0]
+	return result.min, result.max
 }
 
 func main() {
-	start := time.Now()
 	alu, program := parseInput(loadInput("puzzle-input-orig.txt"))
-	largest := largestModelNumber(alu, program)
-	smallest := smallestModelNumber(alu, program)
 
-	fmt.Printf("lowest / highest valid model number: %v / %v (%v)\n", smallest, largest, time.Since(start))
+	start := time.Now()
+	minModelNumber, maxModelNumber := minMaxModelNumber(alu, program)
+	duration := time.Since(start)
+
+	fmt.Printf("lowest / highest valid model number: %v / %v (%v)\n", minModelNumber, maxModelNumber, duration)
 }
 
 func inputFor(input string, alu *ALU) Input {
