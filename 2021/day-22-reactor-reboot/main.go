@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Position struct {
@@ -158,13 +159,21 @@ func rebootSequence(sequence []Volume) (volumes []Volume) {
 
 func main() {
 	sequence := parseInput(loadInput("puzzle-input.txt"))
+	start := time.Now()
 	volumes := rebootSequence(sequence)
-	cubes := countCubesInVolume(volumes, Volume{
+	doneSequence := time.Now()
+	cubesInitVolume := countCubesInVolume(volumes, Volume{
 		min: Position{-50, -50, -50},
 		max: Position{50, 50, 50},
 	})
-	fmt.Printf("cubes turned on in init volume: %v\n", cubes)
-	fmt.Printf("cubes turned on in total: %v\n", countCubes(volumes))
+	doneCubesPart1 := time.Now()
+	cubesTotal := countCubes(volumes)
+	doneCubesPart2 := time.Now()
+	fmt.Printf("cubes turned on: in init volume: %v, total: %v\n", cubesInitVolume, cubesTotal)
+	fmt.Printf("computation time: sequence: %v, counting cubes: %v / %v\n",
+		time.Duration(doneCubesPart1.Nanosecond() - start.Nanosecond()),
+		time.Duration(doneCubesPart1.Nanosecond() - doneSequence.Nanosecond()),
+		time.Duration(doneCubesPart2.Nanosecond() - doneCubesPart1.Nanosecond()))
 }
 
 func min(a, b int) int {
