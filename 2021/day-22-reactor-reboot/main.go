@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -64,24 +65,6 @@ func (v Volume) contains(other Volume) bool {
 		v.max.z >= other.max.z
 }
 
-func (v Volume) union(other Volume) (volumes []Volume) {
-	if v.contains(other) {
-		return []Volume{v}
-	}
-	if other.contains(v) {
-		return []Volume{other}
-	}
-	_, valid := v.intersect(other)
-	if !valid {
-		return []Volume{v, other}
-	}
-	volumes = []Volume{v}
-	for _, volume := range other.subtract(v) {
-		volumes = append(volumes, volume)
-	}
-	return
-}
-
 func (v Volume) subtract(other Volume) (volumes []Volume) {
 	i, intersects := v.intersect(other)
 	if !intersects {
@@ -120,7 +103,7 @@ func (v Volume) subtract(other Volume) (volumes []Volume) {
 		max: Position{v.max.x, i.max.y, i.max.z},
 		on:  v.on,
 	}
-	for _, volume := range []Volume{front, back, top, bottom, right, left} {
+	for _, volume := range []Volume{front, back, top, bottom, left, right} {
 		if volume.isValid() {
 			volumes = append(volumes, volume)
 		}
@@ -174,6 +157,14 @@ func rebootSequence(sequence []Volume) (volumes []Volume) {
 }
 
 func main() {
+	sequence := parseInput(loadInput("puzzle-input.txt"))
+	volumes := rebootSequence(sequence)
+	cubes := countCubesInVolume(volumes, Volume{
+		min: Position{-50, -50, -50},
+		max: Position{50, 50, 50},
+	})
+	fmt.Printf("cubes turned on in init volume: %v\n", cubes)
+	fmt.Printf("cubes turned on in total: %v\n", countCubes(volumes))
 }
 
 func min(a, b int) int {
@@ -192,8 +183,8 @@ func max(a, b int) int {
 
 func parseDimensions(dimensions []string, part int) Position {
 	dimensions[0] = strings.TrimPrefix(dimensions[0], "x=")
-	dimensions[1] = strings.TrimPrefix(dimensions[0], "y=")
-	dimensions[2] = strings.TrimPrefix(dimensions[0], "z=")
+	dimensions[1] = strings.TrimPrefix(dimensions[1], "y=")
+	dimensions[2] = strings.TrimPrefix(dimensions[2], "z=")
 	xMinMax := strings.Split(dimensions[0], "..")
 	yMinMax := strings.Split(dimensions[1], "..")
 	zMinMax := strings.Split(dimensions[2], "..")
