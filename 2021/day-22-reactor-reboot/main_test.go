@@ -44,79 +44,211 @@ on x=-41..9,y=-7..43,z=-33..15
 on x=-54112..-39298,y=-85059..-49293,z=-27449..7877
 on x=967..23432,y=45373..81175,z=27513..53682`
 
-func Test_examplePartOne(t *testing.T) {
+func Test_largeExamplePartOne(t *testing.T) {
 	sequence := parseInput(largerExample)
 	volumes := rebootSequence(sequence)
-	cubes := countCubes(volumes, Volume{
+	cubes := countCubesInVolume(volumes, Volume{
 		min: Position{-50, -50, -50},
 		max: Position{50, 50, 50},
 	})
 	assert.Equal(t, 590784, cubes)
 }
 
-func Test_splitAlongX(t *testing.T) {
-	volume := Volume{
-		min: Position{-10, -10, -10},
-		max: Position{10, 10, 10},
-	}
+func Test_smallExamplePartOne(t *testing.T) {
+	sequence := parseInput(smallExample)
+	volumes := rebootSequence(sequence)
+	cubes := countCubes(volumes)
+	assert.Equal(t, 39, cubes)
+}
+
+func Test_smallExamplePartOneSteps(t *testing.T) {
+	sequence := parseInput(smallExample)
+	volumes := applyRebootStep(nil, sequence[0])
+	assert.Equal(t, 27, countCubes(volumes))
+	volumes = applyRebootStep(volumes, sequence[1])
+	assert.Equal(t, 27 + 19, countCubes(volumes))
+	volumes = applyRebootStep(volumes, sequence[2])
+	assert.Equal(t, 27 + 19 - 8, countCubes(volumes))
+	volumes = applyRebootStep(volumes, sequence[3])
+	assert.Equal(t, 27 + 19 - 8 + 1, countCubes(volumes))
+}
+
+func Test_intersect(t *testing.T) {
 	tests := []struct {
-		x int
-		expected []Volume
+		v1, v2 Volume
+		expectedIntersection Volume
+		expectedValid bool
 	}{
 		{
-			0,
-			[]Volume{
-				{
-					min: Position{-10, -10, -10},
-					max: Position{0, 10, 10},
-				},
-				{
-					min: Position{1, -10, -10},
-					max: Position{10, 10, 10},
-				},
+			v1: Volume{
+				min: Position{0, 0, 0},
+				max: Position{30, 30, 30},
 			},
+			v2: Volume{
+				min: Position{10, 10, 10},
+				max: Position{20, 20, 20},
+			},
+			expectedIntersection: Volume{
+				min: Position{10, 10, 10},
+				max: Position{20, 20, 20},
+			},
+			expectedValid: true,
 		},
 		{
-			-10,
-			[]Volume{
-				{
-					min: Position{-10, -10, -10},
-					max: Position{10, 10, 10},
-				},
+			v1: Volume{
+				min: Position{0, 0, 0},
+				max: Position{0, 0, 0},
 			},
+			v2: Volume{
+				min: Position{0, 0, 0},
+				max: Position{0, 0, 0},
+			},
+			expectedIntersection: Volume{
+				min: Position{0, 0, 0},
+				max: Position{0, 0, 0},
+			},
+			expectedValid: true,
 		},
 		{
-			10,
-			[]Volume{
-				{
-					min: Position{-10, -10, -10},
-					max: Position{10, 10, 10},
-				},
+			v1: Volume{
+				min: Position{0, 0, 0},
+				max: Position{10, 10, 10},
 			},
+			v2: Volume{
+				min: Position{10, 10, 10},
+				max: Position{20, 20, 20},
+			},
+			expectedIntersection: Volume{
+				min: Position{10, 10, 10},
+				max: Position{10, 10, 10},
+			},
+			expectedValid: true,
+		},
+		{
+			v1: Volume{
+				min: Position{0, 0, 0},
+				max: Position{10, 11, 12},
+			},
+			v2: Volume{
+				min: Position{11, 12, 13},
+				max: Position{30, 30, 30},
+			},
+			expectedValid: false,
 		},
 	}
-
 	for _, test := range tests {
-		actual := volume.splitAlongX(test.x)
-		assert.Equal(t, test.expected, actual)
+		actualIntersection, actualValid := test.v1.intersect(test.v2)
+		assert.Equal(t, test.expectedValid, actualValid)
+		if actualValid {
+			assert.Equal(t, test.expectedIntersection, actualIntersection)
+		}
 	}
 }
 
-func Test_splitAt(t *testing.T) {
+func Test_subtract(t *testing.T) {
 	volume := Volume{
 		min: Position{0, 0, 0},
 		max: Position{30, 30, 30},
 	}
-	intersection := Volume{
-		min: Position{10, 10, 10},
-		max: Position{20, 20, 20},
+	tests := []struct {
+		subtract Volume
+		expected []Volume
+	}{
+		{
+			Volume{
+				min: Position{20, 0, 0},
+				max: Position{30, 30, 30},
+			},
+			[]Volume{
+				{
+					min: Position{0, 0, 0},
+					max: Position{19, 30, 30},
+				},
+			},
+		},
+		{
+			Volume{
+				min: Position{0, 0, 0},
+				max: Position{10, 30, 30},
+			},
+			[]Volume{
+				{
+					min: Position{11, 0, 0},
+					max: Position{30, 30, 30},
+				},
+			},
+		},
+		{
+			Volume{
+				min: Position{0, 0, 0},
+				max: Position{30, 30, 30},
+			},
+			[]Volume{},
+		},
 	}
-	actual := volume.splitAt(intersection)
-	assert.Len(t, actual, 27)
-	assert.Equal(t, 31*31*31, countCubes(actual, volume))
+	for _, test := range tests {
+		actual := volume.subtract(test.subtract)
+		assert.Equal(t, test.expected, actual)
+	}
 }
 
-func Test_subtract(t *testing.T) {
+func Test_union(t *testing.T) {
+	volume := Volume{
+		min: Position{0, 0, 0},
+		max: Position{30, 30, 30},
+	}
+	tests := []struct {
+		other Volume
+		expected []Volume
+	}{
+		{
+			Volume{
+				min: Position{10, 10, 10},
+				max: Position{30, 30, 30},
+			},
+			[]Volume{
+				{
+					min: Position{0, 0, 0},
+					max: Position{30, 30, 30},
+				},
+			},
+		},
+		{
+			Volume{
+				min: Position{30, 30, 30},
+				max: Position{30, 30, 30},
+			},
+			[]Volume{
+				{
+					min: Position{0, 0, 0},
+					max: Position{30, 30, 30},
+				},
+			},
+		},
+		{
+			Volume{
+				min: Position{31, 31, 31},
+				max: Position{31, 31, 31},
+			},
+			[]Volume{
+				{
+					min: Position{0, 0, 0},
+					max: Position{30, 30, 30},
+				},
+				{
+					min: Position{31, 31, 31},
+					max: Position{31, 31, 31},
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		actual := volume.union(test.other)
+		assert.Equal(t, test.expected, actual)
+	}
+}
+
+func Test_subtractVolume(t *testing.T) {
 	volume := Volume{
 		min: Position{0, 0, 0},
 		max: Position{30, 30, 30},
@@ -126,6 +258,14 @@ func Test_subtract(t *testing.T) {
 		max: Position{20, 20, 20},
 	}
 	actual := volume.subtract(intersection)
-	assert.Len(t, actual, 26)
-	assert.Equal(t, 31*31*31 - 10*10*10, countCubes(actual, volume))
+	for i, v1 := range actual {
+		for j, v2 := range actual {
+			if i == j {
+				continue
+			}
+			_, intersects := v1.intersect(v2)
+			assert.False(t, intersects)
+		}
+	}
+	assert.Equal(t, 31*31*31 - 11*11*11, countCubes(actual))
 }

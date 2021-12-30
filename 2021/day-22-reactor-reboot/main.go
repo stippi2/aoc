@@ -50,62 +50,9 @@ func (v Volume) intersect(other Volume) (Volume, bool) {
 	result := Volume{
 		min: v.min.max(other.min),
 		max: v.max.min(other.max),
+		on: v.on,
 	}
 	return result, result.isValid()
-}
-
-func (v Volume) splitAlongX(x int) []Volume {
-	if x <= v.min.x || x >= v.max.x {
-		return []Volume{v}
-	}
-	return []Volume{
-		{
-			on: v.on,
-			min: Position{v.min.x, v.min.y, v.min.z},
-			max: Position{x, v.max.y, v.max.z},
-		},
-		{
-			on: v.on,
-			min: Position{x + 1, v.min.y, v.min.z},
-			max: Position{v.max.x, v.max.y, v.max.z},
-		},
-	}
-}
-
-func (v Volume) splitAlongY(y int) []Volume {
-	if y <= v.min.y || y >= v.max.y {
-		return []Volume{v}
-	}
-	return []Volume{
-		{
-			on: v.on,
-			min: Position{v.min.x, v.min.y, v.min.z},
-			max: Position{v.max.x, y, v.max.z},
-		},
-		{
-			on: v.on,
-			min: Position{v.min.x, y + 1, v.min.z},
-			max: Position{v.max.x, v.max.y, v.max.z},
-		},
-	}
-}
-
-func (v Volume) splitAlongZ(z int) []Volume {
-	if z <= v.min.z || z >= v.max.z {
-		return []Volume{v}
-	}
-	return []Volume{
-		{
-			on: v.on,
-			min: Position{v.min.x, v.min.y, v.min.z},
-			max: Position{v.max.x, v.max.y, z},
-		},
-		{
-			on: v.on,
-			min: Position{v.min.x, v.min.y, z + 1},
-			max: Position{v.max.x, v.max.y, v.max.z},
-		},
-	}
 }
 
 func (v Volume) contains(other Volume) bool {
@@ -117,41 +64,6 @@ func (v Volume) contains(other Volume) bool {
 		v.max.z >= other.max.z
 }
 
-func splitAtX(volumes []Volume, x int) []Volume {
-	var result []Volume
-	for _, volume := range volumes {
-		result = append(result, volume.splitAlongX(x)...)
-	}
-	return result
-}
-
-func splitAtY(volumes []Volume, y int) []Volume {
-	var result []Volume
-	for _, volume := range volumes {
-		result = append(result, volume.splitAlongY(y)...)
-	}
-	return result
-}
-
-func splitAtZ(volumes []Volume, z int) []Volume {
-	var result []Volume
-	for _, volume := range volumes {
-		result = append(result, volume.splitAlongZ(z)...)
-	}
-	return result
-}
-
-func (v Volume) splitAt(intersection Volume) (volumes []Volume) {
-	volumes = []Volume{v}
-	volumes = splitAtX(volumes, intersection.min.x)
-	volumes = splitAtX(volumes, intersection.max.x)
-	volumes = splitAtY(volumes, intersection.min.y)
-	volumes = splitAtY(volumes, intersection.max.y)
-	volumes = splitAtZ(volumes, intersection.min.z)
-	volumes = splitAtZ(volumes, intersection.max.z)
-	return
-}
-
 func (v Volume) union(other Volume) (volumes []Volume) {
 	if v.contains(other) {
 		return []Volume{v}
@@ -159,48 +71,72 @@ func (v Volume) union(other Volume) (volumes []Volume) {
 	if other.contains(v) {
 		return []Volume{other}
 	}
-	intersection, valid := v.intersect(other)
+	_, valid := v.intersect(other)
 	if !valid {
 		return []Volume{v, other}
 	}
-	uniqueVolumes := make(map[Volume]bool)
-	for _, volume := range v.splitAt(intersection) {
-		uniqueVolumes[volume] = true
-	}
-	for _, volume := range other.splitAt(intersection) {
-		uniqueVolumes[volume] = true
-	}
-	for volume := range uniqueVolumes {
+	volumes = []Volume{v}
+	for _, volume := range other.subtract(v) {
 		volumes = append(volumes, volume)
 	}
 	return
 }
 
 func (v Volume) subtract(other Volume) (volumes []Volume) {
-	if !v.contains(other) {
+	i, intersects := v.intersect(other)
+	if !intersects {
 		return []Volume{v}
 	}
 	if other.contains(v) {
 		return []Volume{}
 	}
-	intersection, valid := v.intersect(other)
-	if !valid {
-		return []Volume{v, other}
+	front := Volume{
+		min: v.min,
+		max: Position{v.max.x, v.max.y, i.min.z - 1},
+		on:  v.on,
 	}
-	uniqueVolumes := make(map[Volume]bool)
-	for _, volume := range v.splitAt(intersection) {
-		uniqueVolumes[volume] = true
+	back := Volume{
+		min: Position{v.min.x, v.min.y, i.max.z + 1},
+		max: v.max,
+		on:  v.on,
 	}
-	for _, volume := range other.splitAt(intersection) {
-		delete(uniqueVolumes, volume)
+	top := Volume{
+		min: Position{v.min.x, i.max.y + 1, i.min.z},
+		max: Position{v.max.x, v.max.y, i.max.z},
+		on:  v.on,
 	}
-	for volume := range uniqueVolumes {
-		volumes = append(volumes, volume)
+	bottom := Volume{
+		min: Position{v.min.x, v.min.y, i.min.z},
+		max: Position{v.max.x, i.min.y - 1, i.max.z},
+		on:  v.on,
+	}
+	left := Volume{
+		min: Position{v.min.x, i.min.y, i.min.z},
+		max: Position{i.min.x - 1, i.max.y, i.max.z},
+		on:  v.on,
+	}
+	right := Volume{
+		min: Position{i.max.x + 1, i.min.y, i.min.z},
+		max: Position{v.max.x, i.max.y, i.max.z},
+		on:  v.on,
+	}
+	for _, volume := range []Volume{front, back, top, bottom, right, left} {
+		if volume.isValid() {
+			volumes = append(volumes, volume)
+		}
 	}
 	return
 }
 
-func countCubes(volumes []Volume, within Volume) int {
+func countCubes(volumes []Volume) int {
+	cubes := 0
+	for _, volume := range volumes {
+		cubes += volume.width() * volume.height() * volume.depth()
+	}
+	return cubes
+}
+
+func countCubesInVolume(volumes []Volume, within Volume) int {
 	cubes := 0
 	for _, volume := range volumes {
 		intersection, valid := within.intersect(volume)
@@ -212,28 +148,27 @@ func countCubes(volumes []Volume, within Volume) int {
 	return cubes
 }
 
+func applyRebootStep(volumes []Volume, step Volume) []Volume {
+	if len(volumes) == 0 {
+		if step.on {
+			return []Volume{step}
+		}
+		return nil
+	}
+	var newVolumes []Volume
+	for _, volume := range volumes {
+		newVolumes = append(newVolumes, volume.subtract(step)...)
+	}
+	if step.on {
+		newVolumes = append(newVolumes, step)
+	}
+	return newVolumes
+}
+
+
 func rebootSequence(sequence []Volume) (volumes []Volume) {
 	for _, step := range sequence {
-		if len(volumes) == 0 && step.on {
-			volumes = append(volumes, step)
-			continue
-		}
-		uniqueVolumes := make(map[Volume]bool)
-		for _, volume := range volumes {
-			var parts []Volume
-			if step.on {
-				parts = volume.union(step)
-			} else {
-				parts = volume.subtract(step)
-			}
-			for _, part := range parts {
-				uniqueVolumes[part] = true
-			}
-		}
-		volumes = nil
-		for volume := range uniqueVolumes {
-			volumes = append(volumes, volume)
-		}
+		volumes = applyRebootStep(volumes, step)
 	}
 	return
 }
@@ -253,13 +188,6 @@ func max(a, b int) int {
 		return a
 	}
 	return b
-}
-
-func abs(v int) int {
-	if v < 0 {
-		return -v
-	}
-	return v
 }
 
 func parseDimensions(dimensions []string, part int) Position {
