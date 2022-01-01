@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
 )
 
 type Map struct {
@@ -26,9 +27,11 @@ func (m *Map) wrap(x, y int) (int, int) {
 	for x < 0 {
 		x = m.width + x
 	}
+	x = x % m.width
 	for y < 0 {
 		y = m.height + y
 	}
+	y = y % m.height
 	return x, y
 }
 
@@ -43,7 +46,55 @@ func (m *Map) get(x, y int) uint8 {
 	return m.data[m.offset(x, y)]
 }
 
-func (m *Map) step() {
+func (m *Map) step() bool {
+	anyMoved := false
+	// East
+	for y := 0; y < m.height; y++ {
+		previous := m.get(-1, y)
+		for x := 0; x < m.width; x++ {
+			v := m.get(x, y)
+			if v == '.' && previous == '>' {
+				m.set(x - 1, y, 'x')
+				m.set(x, y, ')')
+				anyMoved = true
+			}
+			previous = v
+		}
+	}
+	for y := 0; y < m.height; y++ {
+		for x := 0; x < m.width; x++ {
+			switch m.get(x, y) {
+			case 'x':
+				m.set(x, y, '.')
+			case ')':
+				m.set(x, y, '>')
+			}
+		}
+	}
+	// South
+	for x := 0; x < m.width; x++ {
+		previous := m.get(x, -1)
+		for y := 0; y < m.height; y++ {
+			v := m.get(x, y)
+			if v == '.' && previous == 'v' {
+				m.set(x, y - 1, 'x')
+				m.set(x, y, 'V')
+				anyMoved = true
+			}
+			previous = v
+		}
+	}
+	for y := 0; y < m.height; y++ {
+		for x := 0; x < m.width; x++ {
+			switch m.get(x, y) {
+			case 'x':
+				m.set(x, y, '.')
+			case 'V':
+				m.set(x, y, 'v')
+			}
+		}
+	}
+	return anyMoved
 }
 
 func (m *Map) String() string {
@@ -54,10 +105,20 @@ func (m *Map) String() string {
 		}
 		result += fmt.Sprintf("%s\n", string(m.get(m.width-1, y)))
 	}
-	return result
+	return result[0:len(result)-1]
 }
 
 func main() {
+	m := parseInput(loadInput("puzzle-input.txt"))
+	start := time.Now()
+	step := 0
+	for {
+		step++
+		if !m.step() {
+			break
+		}
+	}
+	fmt.Printf("movement stopped after step: %v (took %s)\n", step, time.Since(start))
 }
 
 func parseInput(input string) *Map {
