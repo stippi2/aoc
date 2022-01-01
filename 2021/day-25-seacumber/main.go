@@ -37,8 +37,7 @@ func (m *Map) wrap(x, y int) (int, int) {
 
 func (m *Map) set(x, y int, value uint8) {
 	x, y = m.wrap(x, y)
-	offset := m.offset(x, y)
-	m.data[offset] = value
+	m.data[m.offset(x, y)] = value
 }
 
 func (m *Map) get(x, y int) uint8 {
