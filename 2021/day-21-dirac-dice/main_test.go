@@ -29,3 +29,11 @@ func Test_playGame(t *testing.T) {
 	assert.Equal(t, 993, dice.rolls)
 	assert.Equal(t, 745, players[1].score)
 }
+
+func Test_playGameDiracDice(t *testing.T) {
+	p1 := Player{pos: 4}
+	p2 := Player{pos: 8}
+	wins1, wins2 := countWinningUniverses(p1, p2)
+	assert.Equal(t, 444356092776315, wins1)
+	assert.Equal(t, 341960390180808, wins2)
+}
