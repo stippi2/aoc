@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -187,30 +185,6 @@ var scannerExamples = `--- scanner 0 ---
 -652,-548,-490
 30,-46,-14`
 
-func Test_compareBeacons(t *testing.T) {
-	scanners := parseInput(scannerExamples)
-	for _, s := range scanners {
-		s.setBeaconDistances()
-	}
-	for i := 0; i < len(scanners); i++ {
-		referenceScanner := &scanners[i]
-		for j := 0; j < len(scanners); j++ {
-			if i == j {
-				continue
-			}
-			matchingBeacons := 0
-			for _, refBeacon := range referenceScanner.beacons {
-				for _, otherBeacon := range scanners[j].beacons {
-					if refBeacon.distancesToNearest == otherBeacon.distancesToNearest {
-						matchingBeacons++
-					}
-				}
-			}
-			fmt.Printf("common beacons scanner %v and scanner %v: %v of %v\n", i, j, matchingBeacons, len(scanners[j].beacons))
-		}
-	}
-}
-
 func Test_beaconsInVolume(t *testing.T) {
 	scanner := Scanner{}
 	scanner.appendBeacon(1, 1, 1)
@@ -260,123 +234,9 @@ func Test_volumeIntersectInvalid(t *testing.T) {
 	assert.False(t, valid)
 }
 
-func Test_combineScanners(t *testing.T) {
+func Test_integrateScanners(t *testing.T) {
 	scanners := parseInput(scannerExamples)
-	combined := &CombinedScanners{}
-	for len(scanners) > 0 {
-		integratedOne := false
-		for i, s := range scanners {
-			if combined.integrate(&s) {
-				last := len(scanners)-1
-				scanners[i] = scanners[last]
-				scanners = scanners[:last]
-				integratedOne = true
-				fmt.Printf("integrated scanner %v of %v\n", i, last + 1)
-				break
-			}
-		}
-		require.True(t, integratedOne)
-	}
+	combined := integrateScanners(scanners)
 	assert.Equal(t, 79, len(combined.allBeacons()))
 	assert.Equal(t, 3621, combined.largestManhattanDistance())
-}
-
-func Test_alignScannersBruteForce(t *testing.T) {
-	scanners := parseInput(scannerExamples)
-	for _, s := range scanners {
-		s.setBeaconDistances()
-	}
-	for i := 0; i < len(scanners); i++ {
-		referenceScanner := &scanners[i]
-		for j := 0; j < len(scanners); j++ {
-			if i == j {
-				continue
-			}
-			for rIndexRef, rotationRef := range referenceScanner.rotations() {
-				for rIndex, rotation := range scanners[j].rotations() {
-					for _, refBeacon := range rotationRef.beacons {
-						for _, matchBeacon := range rotation.beacons {
-							// If we found an alignment, we can transform both scanners to have the matching beacon as origin,
-							// then form the intersecting volume, and all beacons within the intersection need to match
-							matchOrigin := matchBeacon.position
-							translatedMatch := rotation.translateBy(matchOrigin.x, matchOrigin.y, matchOrigin.z)
-
-							refOrigin := refBeacon.position
-							translatedRef := rotationRef.translateBy(refOrigin.x, refOrigin.y, refOrigin.z)
-
-							intersection, overlap := translatedMatch.volume().intersect(translatedRef.volume())
-							if !overlap {
-								// Should not be possible when we translated both scanners to the same origin
-								continue
-							}
-							matchBeaconsInIntersection := translatedMatch.getBeaconsInVolume(intersection)
-							if len(matchBeaconsInIntersection) < 12 {
-								continue
-							}
-							refBeaconsInIntersection := translatedRef.getBeaconsInVolume(intersection)
-
-							if containsSameBeacons(matchBeaconsInIntersection, refBeaconsInIntersection) {
-								offset := Position{
-									x: matchOrigin.x - refOrigin.x,
-									y: matchOrigin.y - refOrigin.y,
-									z: matchOrigin.z - refOrigin.z,
-								}
-								fmt.Printf("found alignment between scanner %v and %v at rotation %v/%v and offset %v with %v beacons\n", i, j, rIndexRef, rIndex, offset, len(matchBeaconsInIntersection))
-								break
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-func Test_rotations(t *testing.T) {
-	type vector []int
-
-	inversions := []vector{
-		{ 1, 1, 1},
-		{ 1, 1,-1},
-		{ 1,-1, 1},
-		{-1, 1, 1},
-		{-1,-1, 1},
-		{-1, 1,-1},
-		{ 1,-1,-1},
-		{-1,-1,-1},
-	}
-
-	mappings := []vector{
-		{ 0, 1, 2},
-		{ 0, 2, 1},
-		{ 1, 0, 2},
-		{ 1, 2, 0},
-		{ 2, 0, 1},
-		{ 2, 1, 0},
-	}
-
-	rotations := map[string]bool{}
-	axis := []string{"p.x", "p.y", "p.z"}
-
-	for _, i := range inversions {
-		for _, m := range mappings {
-			x := axis[m[0]]
-			y := axis[m[1]]
-			z := axis[m[2]]
-			if i[0] < 0 {
-				x = "-" + x
-			}
-			if i[1] < 0 {
-				y = "-" + y
-			}
-			if i[2] < 0 {
-				z = "-" + z
-			}
-			rotations[x + "," + y + "," + z] = true
-		}
-	}
-
-	for rotation := range rotations {
-		fmt.Printf("{%s},\n", rotation)
-	}
 }

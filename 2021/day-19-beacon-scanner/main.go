@@ -67,6 +67,14 @@ func (p *Position) min(other Position) Position {
 	}
 }
 
+func (p *Position) negate() Position {
+	return Position{
+		x: -p.x,
+		y: -p.y,
+		z: -p.z,
+	}
+}
+
 type Volume struct {
 	min, max Position
 }
@@ -129,13 +137,13 @@ func (s *Scanner) setBeaconDistances() {
 	}
 }
 
-func (s *Scanner) translateBy(x, y, z int) *Scanner {
+func (s *Scanner) translateBy(t Position) *Scanner {
 	scanner := Scanner{
-		origin: Position{s.origin.x-x, s.origin.y-y, s.origin.z-z},
+		origin: Position{s.origin.x-t.x, s.origin.y-t.y, s.origin.z-t.z},
 	}
 	for i := 0; i < len(s.beacons); i++ {
 		p := s.beacons[i].position
-		scanner.appendBeacon(p.x - x, p.y - y, p.z - z)
+		scanner.appendBeacon(p.x - t.x, p.y - t.y, p.z - t.z)
 	}
 	return &scanner
 }
@@ -171,11 +179,6 @@ func (s *Scanner) getBeaconsInVolume(v Volume) []Beacon {
 
 func (s *Scanner) rotations() []Scanner {
 	rotatedScanners := make([]Scanner, 24)
-
-//	rotatedOrigins := s.origin.rotations()
-//	for r := 0; r < 24; r++ {
-//		rotatedScanners[r].origin = rotatedOrigins[r]
-//	}
 
 	for i, beacon := range s.beacons {
 		rotatedPositions := beacon.position.rotations()
@@ -213,7 +216,7 @@ func (c *CombinedScanners) setRotation(index int) {
 
 func (c *CombinedScanners) translateBy(t Position) {
 	for i := 0; i < len(c.scanners); i++ {
-		c.scanners[i] = c.scanners[i].translateBy(t.x, t.y, t.z)
+		c.scanners[i] = c.scanners[i].translateBy(t)
 	}
 }
 
@@ -241,10 +244,10 @@ func (c *CombinedScanners) alignAndIntegrateScanner(a, b *Scanner) bool {
 			// If we found an alignment, we can transform both scanners to have the matching beacon as origin,
 			// then form the intersecting volume, and all beacons within the intersection need to match
 			originA := a.beacons[matching.beaconIndexA].position
-			translatedA := a.translateBy(originA.x, originA.y, originA.z)
+			translatedA := a.translateBy(originA)
 
 			originB := rotationB.beacons[matching.beaconIndexB].position
-			translatedB := rotationB.translateBy(originB.x, originB.y, originB.z)
+			translatedB := rotationB.translateBy(originB)
 
 			intersection, overlap := translatedB.volume().intersect(translatedA.volume())
 			if !overlap {
@@ -258,8 +261,7 @@ func (c *CombinedScanners) alignAndIntegrateScanner(a, b *Scanner) bool {
 			beaconsInIntersectionB := translatedB.getBeaconsInVolume(intersection)
 
 			if containsSameBeacons(beaconsInIntersectionA, beaconsInIntersectionB) {
-				c.translateBy(originA)
-				translatedB.origin = Position{-originB.x, -originB.y, -originB.z}
+				translatedB = translatedB.translateBy(originA.negate())
 				c.scanners = append(c.scanners, translatedB)
 				return true
 			}
@@ -279,24 +281,26 @@ func (c *CombinedScanners) allBeacons() map[Position]bool {
 }
 
 func (c *CombinedScanners) largestManhattanDistance() int {
-	var x, y, z int
+	largestDistance := math.MinInt64
 	for i, scannerA := range c.scanners {
 		for j, scannerB := range c.scanners {
 			if i == j {
 				continue
 			}
-			x = max(x, abs(scannerA.origin.x - scannerB.origin.x))
-			y = max(y, abs(scannerA.origin.y - scannerB.origin.y))
-			z = max(z, abs(scannerA.origin.z - scannerB.origin.z))
+			x := abs(scannerA.origin.x - scannerB.origin.x)
+			y := abs(scannerA.origin.y - scannerB.origin.y)
+			z := abs(scannerA.origin.z - scannerB.origin.z)
+			manhattanDistance := x + y +z
+			if manhattanDistance > largestDistance {
+				largestDistance = manhattanDistance
+			}
 		}
 	}
-	return x + y + z
+	return largestDistance
 }
 
-func main() {
-	scanners := parseInput(loadInput("puzzle-input.txt"))
+func integrateScanners(scanners []Scanner) *CombinedScanners {
 	combined := &CombinedScanners{}
-	start := time.Now()
 	for len(scanners) > 0 {
 		integratedOne := false
 		for i, s := range scanners {
@@ -312,6 +316,13 @@ func main() {
 			panic("could not integrate any remaining scanner")
 		}
 	}
+	return combined
+}
+
+func main() {
+	scanners := parseInput(loadInput("puzzle-input.txt"))
+	start := time.Now()
+	combined := integrateScanners(scanners)
 	duration := time.Since(start)
 	fmt.Printf("total beacons: %v, found in %v\n", len(combined.allBeacons()), duration)
 	fmt.Printf("largest Manhattan distance between any two scanners %v\n", combined.largestManhattanDistance())
