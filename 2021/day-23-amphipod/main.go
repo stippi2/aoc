@@ -335,7 +335,7 @@ func solve(m, mapTemplate *Map) int {
 					currentBestLevel, contained := configurations[derived.String()]
 					if !contained || currentBestLevel > derived.energyLevel {
 						configurations[derived.String()] = derived.energyLevel
-						heap.Push(solutions, solution.apply(pod, move))
+						heap.Push(solutions, derived)
 					} else {
 						rejected++
 					}
