@@ -234,8 +234,10 @@ func (m *Map) findPathQueue() int {
 			return path.risk
 		}
 		visited[path.tip] = true
-		//fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), risk: %v\n", iteration, queue.Len(),
-		//	path.tip.x, path.tip.y, path.risk)
+		if iteration % 1000 == 0 {
+			fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), risk: %v\n",
+				iteration, queue.Len(), path.tip.x, path.tip.y, path.risk)
+		}
 
 		neighbors := m.neighbors(path.tip)
 
@@ -255,10 +257,11 @@ func (m *Map) findPathQueue() int {
 					tip:  n,
 				}
 				pathMap[pathMapOffset] = pathToNext
+				heap.Push(queue, pathToNext)
 			} else if risk < pathToNext.risk {
 				pathToNext.risk = risk
+				heap.Push(queue, pathToNext)
 			}
-			queue.Push(pathToNext)
 		}
 	}
 	return -1
