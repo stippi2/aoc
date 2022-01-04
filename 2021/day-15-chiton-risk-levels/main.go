@@ -234,7 +234,7 @@ func (m *Map) findPathQueue() int {
 			return path.risk
 		}
 		visited[path.tip] = true
-		if iteration % 1000 == 0 {
+		if iteration % 100000 == 0 {
 			fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), risk: %v\n",
 				iteration, queue.Len(), path.tip.x, path.tip.y, path.risk)
 		}
