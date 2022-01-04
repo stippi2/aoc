@@ -16,21 +16,6 @@ type Map struct {
 	data   []uint8
 }
 
-func (m *Map) isEqual(other *Map) bool {
-	if m.width != other.width {
-		return false
-	}
-	if m.height != other.height {
-		return false
-	}
-	for i := 0; i < len(m.data); i++ {
-		if m.data[i] != other.data[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func (m *Map) init(width, height int) {
 	m.width = width
 	m.height = height
@@ -98,12 +83,12 @@ func (a Amphipod) targetX() int {
 }
 
 func (a Amphipod) possibleMoves(m *Map) (moves []Move) {
-	// Moving from hallway into room
 	room := a.targetX()
 	if a.x == room && a.moved {
 		return nil
 	}
 	if a.y == 1 {
+		// Moving from hallway into room
 		// Check if it's possible to move into target room
 		y := m.height - 2
 		for y > 1 {
