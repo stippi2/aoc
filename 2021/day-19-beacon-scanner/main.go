@@ -208,18 +208,6 @@ func (c *CombinedScanners) integrate(scanner *Scanner) bool {
 	return false
 }
 
-func (c *CombinedScanners) setRotation(index int) {
-	for i := 0; i < len(c.scanners); i++ {
-		c.scanners[i] = &c.scanners[i].rotations()[index]
-	}
-}
-
-func (c *CombinedScanners) translateBy(t Position) {
-	for i := 0; i < len(c.scanners); i++ {
-		c.scanners[i] = c.scanners[i].translateBy(t)
-	}
-}
-
 func (c *CombinedScanners) alignAndIntegrateScanner(a, b *Scanner) bool {
 	a.setBeaconDistances()
 	b.setBeaconDistances()
