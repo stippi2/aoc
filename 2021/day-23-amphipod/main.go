@@ -85,7 +85,7 @@ func (a Amphipod) targetX() int {
 func (a Amphipod) possibleMoves(m *Map) (moves []Move) {
 	room := a.targetX()
 	if a.x == room && a.moved {
-		return nil
+		return
 	}
 	if a.y == 1 {
 		// Moving from hallway into room
@@ -224,6 +224,10 @@ func (s *Solution) apply(pod Amphipod, move Move) *Solution {
 			result.pods[i] = p
 		}
 	}
+	// Sorting the pods is important only for achieving that two solutions with the
+	// same pod configuration return the same string from String(). The string is used
+	// to map a specific pod configuration to the least energy to achieve it in order
+	// to throw away more expensive solution chains.
 	sortPods(result.pods)
 	return result
 }
