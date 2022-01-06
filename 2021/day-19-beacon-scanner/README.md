@@ -38,3 +38,8 @@ It wouldn't work well when integrating the Beacons of aligned Scanners into one 
 Therefore, the intersection of volumes could contain all of the Scanner which is currently being integrated.
 This means it does not contain the same Beacons in the combined space and the Scanner. 
 For this reason, the Scanners are [kept separate](main.go#L200) in the CombinedScanners.
+
+### Part 2
+
+The solution for part 2 becomes easy by treating the origin of each Scanner like an additional Beacon.
+This means it is translated along with the other Beacons of the Scanner.
