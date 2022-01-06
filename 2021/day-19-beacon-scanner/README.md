@@ -42,4 +42,4 @@ For this reason, the Scanners are [kept separate](main.go#L200) in the CombinedS
 ### Part 2
 
 The solution for part 2 becomes easy by treating the origin of each Scanner like an additional Beacon.
-This means it is translated along with the other Beacons of the Scanner.
+This means it is [translated along](main.go#L144) with the other Beacons of the Scanner.
