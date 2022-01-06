@@ -28,26 +28,28 @@ func (p *Position) rotations() []Position {
 		{p.x, -p.z, p.y},
 		{p.x, -p.y, -p.z},
 		{p.x, p.z, -p.y},
-		{-p.y, p.x, p.z},
-		{p.z, p.x, p.y},
-		{p.y, p.x, -p.z},
-		{-p.z, p.x, -p.y},
 		{-p.x, -p.y, p.z},
 		{-p.x, -p.z, -p.y},
 		{-p.x, p.y, -p.z},
 		{-p.x, p.z, p.y},
+
 		{p.y, -p.x, p.z},
-		{p.z, -p.x, -p.y},
+		{p.y, p.x, -p.z},
+		{p.y, p.z, p.x},
+		{p.y, -p.z, -p.x},
 		{-p.y, -p.x, -p.z},
+		{-p.y, p.x, p.z},
+		{-p.y,-p.z, p.x},
+		{-p.y, p.z, -p.x},
+
+		{p.z, p.x, p.y},
+		{p.z, -p.y, p.x},
+		{p.z, -p.x, -p.y},
+		{p.z, p.y, -p.x},
+		{-p.z, p.x, -p.y},
 		{-p.z, -p.x, p.y},
 		{-p.z, p.y, p.x},
-		{p.y, p.z, p.x},
-		{p.z, -p.y, p.x},
-		{-p.y,-p.z, p.x},
 		{-p.z, -p.y, -p.x},
-		{-p.y, p.z, -p.x},
-		{p.z, p.y, -p.x},
-		{p.y, -p.z, -p.x},
 	}
 }
 
@@ -139,11 +141,14 @@ func (s *Scanner) setBeaconDistances() {
 
 func (s *Scanner) translateBy(t Position) *Scanner {
 	scanner := Scanner{
-		origin: Position{s.origin.x-t.x, s.origin.y-t.y, s.origin.z-t.z},
+		origin: Position{s.origin.x+t.x, s.origin.y+t.y, s.origin.z+t.z},
 	}
 	for i := 0; i < len(s.beacons); i++ {
 		p := s.beacons[i].position
-		scanner.appendBeacon(p.x - t.x, p.y - t.y, p.z - t.z)
+		scanner.beacons = append(scanner.beacons, Beacon{
+			position:           Position{p.x + t.x, p.y + t.y, p.z + t.z},
+			distancesToNearest: s.beacons[i].distancesToNearest,
+		})
 	}
 	return &scanner
 }
@@ -232,10 +237,10 @@ func (c *CombinedScanners) alignAndIntegrateScanner(a, b *Scanner) bool {
 			// If we found an alignment, we can transform both scanners to have the matching beacon as origin,
 			// then form the intersecting volume, and all beacons within the intersection need to match
 			originA := a.beacons[matching.beaconIndexA].position
-			translatedA := a.translateBy(originA)
+			translatedA := a.translateBy(originA.negate())
 
 			originB := rotationB.beacons[matching.beaconIndexB].position
-			translatedB := rotationB.translateBy(originB)
+			translatedB := rotationB.translateBy(originB.negate())
 
 			intersection, overlap := translatedB.volume().intersect(translatedA.volume())
 			if !overlap {
@@ -249,7 +254,7 @@ func (c *CombinedScanners) alignAndIntegrateScanner(a, b *Scanner) bool {
 			beaconsInIntersectionB := translatedB.getBeaconsInVolume(intersection)
 
 			if containsSameBeacons(beaconsInIntersectionA, beaconsInIntersectionB) {
-				translatedB = translatedB.translateBy(originA.negate())
+				translatedB = translatedB.translateBy(originA)
 				c.scanners = append(c.scanners, translatedB)
 				return true
 			}
