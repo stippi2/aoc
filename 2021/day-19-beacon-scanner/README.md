@@ -10,7 +10,7 @@ If two coordinate systems intersect, the intersection contains at least 12 refer
 ## Solution
 
 There are 24 possible rotations for each coordinate system (Scanner).
-Since the reference points (Beacons) are relative to the Scanner's origin, a rotation can be obtained by [swapping and negating](main.go#L25) the 3 coordinates components of the Beacons.
+Since the reference points (Beacons) are relative to the Scanner's origin, a rotation can be obtained by [swapping and negating](main.go#L25) the 3 coordinate components of the Beacons.
 Aligning two Scanners can be achieved by assuming any two Beacons are the same Beacons.
 The first Scanner does not need to be rotated, since one of the 24 rotations of the second Scanner will match the rotation of the first.
 For each rotation of the second Scanner, both Scanners are translated such that the tested Beacon becomes the origin of the Scanner.
