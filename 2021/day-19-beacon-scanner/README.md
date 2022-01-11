@@ -29,7 +29,7 @@ There are a number of potential flaws with this optimization:
 - For Beacons right at the edge of the intersection volume, the closest neighbors could be outside the intersection.
   However, it would be enough for a single of the 12 matching Beacons to have the same 2 closest neighbors that are within the intersection for the optimization to produce enough match candidates.
   Still, if every single one of the 12 Beacons in the intersection volume had a closest neighbor outside the intersection volume, the optimization would break. 
-- If the Scanners contain the same constellation of Beacons more than once (patterns), the optimization doesn't make so mush sense.
+- If the Scanners contain the same constellation of Beacons more than once (patterns), the optimization doesn't make so much sense.
 
 ### Challenges
 
