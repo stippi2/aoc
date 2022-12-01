@@ -35,7 +35,7 @@ There are a number of potential flaws with this optimization:
 
 One of the challenges of performing the test with the intersection volume is that it needs to be done with the original Scanners.
 It wouldn't work well when integrating the Beacons of aligned Scanners into one big volume, since then the total volume of the combined space has unmapped holes.
-Therefore, the intersection of volumes could contain all of the Scanner which is currently being integrated.
+Therefore, the intersection of volumes could contain all the Scanner which is currently being integrated.
 This means it does not contain the same Beacons in the combined space and the Scanner. 
 For this reason, the Scanners are [kept separate](main.go#L200) in the CombinedScanners.
 
