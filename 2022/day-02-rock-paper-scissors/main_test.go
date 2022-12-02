@@ -24,18 +24,14 @@ func Test_playRound(t *testing.T) {
 		paper:    "B",
 		scissors: "C",
 	}
-	playerB.mapping = Mapping{
-		rock:     "X",
-		paper:    "Y",
-		scissors: "Z",
-	}
+	playerB.mapping = playerA.mapping
 
 	playRound(&playerA, &playerB, 0)
-	assert.Equal(t, playerB.score, 8)
+	assert.Equal(t, playerB.score, 4)
 
 	playRound(&playerA, &playerB, 1)
-	assert.Equal(t, playerB.score, 8+1)
+	assert.Equal(t, playerB.score, 4+1)
 
 	playRound(&playerA, &playerB, 2)
-	assert.Equal(t, playerB.score, 8+1+6)
+	assert.Equal(t, playerB.score, 4+1+7)
 }

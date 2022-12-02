@@ -72,11 +72,7 @@ func main() {
 		paper:    "B",
 		scissors: "C",
 	}
-	playerB.mapping = Mapping{
-		rock:     "X",
-		paper:    "Y",
-		scissors: "Z",
-	}
+	playerB.mapping = playerA.mapping
 	for round := 0; round < len(playerA.moves); round++ {
 		playRound(&playerA, &playerB, round)
 	}
@@ -89,7 +85,29 @@ func parseInput(input string) (playerA, playerB Player) {
 	for _, line := range lines {
 		moves := strings.Split(line, " ")
 		playerA.appendMove(moves[0])
-		playerB.appendMove(moves[1])
+		switch moves[1] {
+		case "X": // lose
+			switch moves[0] {
+			case "A":
+				playerB.appendMove("C")
+			case "B":
+				playerB.appendMove("A")
+			case "C":
+				playerB.appendMove("B")
+			}
+		case "Y": // draw
+			playerB.appendMove(moves[0])
+			break
+		case "Z": // win
+			switch moves[0] {
+			case "A":
+				playerB.appendMove("B")
+			case "B":
+				playerB.appendMove("C")
+			case "C":
+				playerB.appendMove("A")
+			}
+		}
 	}
 	return
 }
