@@ -29,11 +29,9 @@ func priorityOfDuplicateItem(items []string) int {
 
 func sumContents(rucksackContents []string) int {
 	sum := 0
-	for i, contents := range rucksackContents {
+	for _, contents := range rucksackContents {
 		items := strings.Split(contents, "")
-		dupPriority := priorityOfDuplicateItem(items)
-		sum += dupPriority
-		fmt.Printf("rucksack: %v, priority: %v\n", i, dupPriority)
+		sum += priorityOfDuplicateItem(items)
 	}
 	return sum
 }
@@ -60,10 +58,8 @@ func sumBadges(rucksackContents []string) int {
 
 func main() {
 	rucksackContents := parseInput(loadInput("puzzle-input.txt"))
-	sum := sumContents(rucksackContents)
-	fmt.Printf("total sum of item priorities: %v\n", sum)
-	sum = sumBadges(rucksackContents)
-	fmt.Printf("total sum of badges: %v\n", sum)
+	fmt.Printf("total sum of item priorities: %v\n", sumContents(rucksackContents))
+	fmt.Printf("total sum of badges: %v\n", sumBadges(rucksackContents))
 }
 
 func parseInput(input string) []string {
