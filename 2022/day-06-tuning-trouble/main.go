@@ -68,6 +68,10 @@ func findWindowOfDifferentCharsGoFuncs(sequence string, windowSize int) int {
 func main() {
 	input := loadInput("puzzle-input.txt")
 	fmt.Printf("pos after start marker: %v\n", findDifferentCharsQuick(input, 4))
+
+	// Dry run for spinning up the OS threads
+	findWindowOfDifferentCharsGoFuncs(input, 14)
+
 	startSlowVersion := time.Now()
 	posPartSlow := findWindowOfDifferentChars(input, 14)
 	startQuickVersion := time.Now()
