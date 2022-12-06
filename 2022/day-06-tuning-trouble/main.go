@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 func findWindowOfDifferentChars(sequence string, windowSize int) int {
@@ -43,7 +44,13 @@ func findDifferentCharsQuick(sequence string, windowSize int) int {
 func main() {
 	input := loadInput("puzzle-input.txt")
 	fmt.Printf("pos after start marker: %v\n", findDifferentCharsQuick(input, 4))
-	fmt.Printf("pos after message: %v\n", findDifferentCharsQuick(input, 14))
+	startSlowVersion := time.Now()
+	posPartSlow := findWindowOfDifferentChars(input, 14)
+	startQuickVersion := time.Now()
+	posPartQuick := findDifferentCharsQuick(input, 14)
+	allDone := time.Now()
+	fmt.Printf("pos after message: %v/%v, slow version: %v, quick version: %v\n", posPartSlow, posPartQuick,
+		startQuickVersion.Sub(startSlowVersion), allDone.Sub(startQuickVersion))
 }
 
 func loadInput(filename string) string {
