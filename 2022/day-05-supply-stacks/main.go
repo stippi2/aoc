@@ -38,22 +38,43 @@ func (s *CrateStack) addTop(crate Crate) {
 	s.crates = append(s.crates, crate)
 }
 
+func (s *CrateStack) removeStack(count int) ([]Crate, error) {
+	if count > len(s.crates) {
+		return nil, errors.New("not enough crates in stack")
+	}
+	crates := s.crates[len(s.crates)-count:]
+	s.crates = s.crates[:len(s.crates)-count]
+	return crates, nil
+}
+
+func (s *CrateStack) addStack(crates []Crate) {
+	s.crates = append(s.crates, crates...)
+}
+
 type MoveInstruction struct {
 	from  int
 	to    int
 	count int
 }
 
-func applyMoveInstructions(stacks []CrateStack, instructions []MoveInstruction) {
+func applyMoveInstructions(stacks []CrateStack, instructions []MoveInstruction, moveAtOnce bool) {
 	for _, instruction := range instructions {
 		from := &stacks[instruction.from-1]
 		to := &stacks[instruction.to-1]
-		for i := 0; i < instruction.count; i++ {
-			crate, err := from.removeTop()
+		if moveAtOnce {
+			crates, err := from.removeStack(instruction.count)
 			if err != nil {
 				panic(err)
 			}
-			to.addTop(crate)
+			to.addStack(crates)
+		} else {
+			for i := 0; i < instruction.count; i++ {
+				crate, err := from.removeTop()
+				if err != nil {
+					panic(err)
+				}
+				to.addTop(crate)
+			}
 		}
 	}
 }
@@ -68,8 +89,12 @@ func getTopCrates(stacks []CrateStack) string {
 
 func main() {
 	stacks, instructions := parseInput(loadInput("puzzle-input.txt"), 9)
-	applyMoveInstructions(stacks, instructions)
-	fmt.Printf("top crates: %v\n", getTopCrates(stacks))
+	applyMoveInstructions(stacks, instructions, false)
+	fmt.Printf("top crates part 1: %v\n", getTopCrates(stacks))
+
+	stacks, instructions = parseInput(loadInput("puzzle-input.txt"), 9)
+	applyMoveInstructions(stacks, instructions, true)
+	fmt.Printf("top crates part 2: %v\n", getTopCrates(stacks))
 }
 
 func parseStacks(stacksInput string, stackCount int) []CrateStack {

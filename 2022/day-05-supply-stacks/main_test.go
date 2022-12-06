@@ -34,7 +34,14 @@ func Test_Part1(t *testing.T) {
 		{from: 2, to: 1, count: 2},
 		{from: 1, to: 2, count: 1},
 	}, instructions)
-	applyMoveInstructions(stacks, instructions)
+	applyMoveInstructions(stacks, instructions, false)
 	topCrates := getTopCrates(stacks)
 	assert.Equal(t, "CMZ", topCrates)
+}
+
+func Test_Part2(t *testing.T) {
+	stacks, instructions := parseInput(exampleInput, 3)
+	applyMoveInstructions(stacks, instructions, true)
+	topCrates := getTopCrates(stacks)
+	assert.Equal(t, "MCD", topCrates)
 }
