@@ -3,22 +3,25 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 )
 
+func windowContainsAllDifferentChars(sequence string, start, windowSize int) bool {
+	set := make(map[uint8]bool)
+	for c := 0; c < windowSize; c++ {
+		set[sequence[start+c]] = true
+	}
+	return len(set) == windowSize
+}
+
 func findWindowOfDifferentChars(sequence string, windowSize int) int {
-	pos := 0
-	for pos < len(sequence)-windowSize {
-		set := make(map[uint8]bool)
-		for c := 0; c < windowSize; c++ {
-			set[sequence[pos+c]] = true
-		}
-		if len(set) == windowSize {
+	for pos := 0; pos < len(sequence)-windowSize; pos++ {
+		if windowContainsAllDifferentChars(sequence, pos, windowSize) {
 			return pos + windowSize
 		}
-		pos++
 	}
-	return pos
+	return -1
 }
 
 func findDifferentCharsQuick(sequence string, windowSize int) int {
@@ -41,6 +44,27 @@ func findDifferentCharsQuick(sequence string, windowSize int) int {
 	return -1
 }
 
+func findWindowOfDifferentCharsGoFuncs(sequence string, windowSize int) int {
+	result := 0
+	var wg sync.WaitGroup
+	for pos := 0; pos < len(sequence)-windowSize; pos++ {
+		wg.Add(1)
+		go func(pos int) {
+			defer wg.Done()
+			if windowContainsAllDifferentChars(sequence, pos, windowSize) {
+				if result == 0 || pos+windowSize < result {
+					result = pos + windowSize
+				}
+			}
+		}(pos)
+		if result != 0 {
+			break
+		}
+	}
+	wg.Wait()
+	return result
+}
+
 func main() {
 	input := loadInput("puzzle-input.txt")
 	fmt.Printf("pos after start marker: %v\n", findDifferentCharsQuick(input, 4))
@@ -48,9 +72,14 @@ func main() {
 	posPartSlow := findWindowOfDifferentChars(input, 14)
 	startQuickVersion := time.Now()
 	posPartQuick := findDifferentCharsQuick(input, 14)
+	startParallelVersion := time.Now()
+	posPartParallel := findWindowOfDifferentCharsGoFuncs(input, 14)
 	allDone := time.Now()
-	fmt.Printf("pos after message: %v/%v, slow version: %v, quick version: %v\n", posPartSlow, posPartQuick,
-		startQuickVersion.Sub(startSlowVersion), allDone.Sub(startQuickVersion))
+	fmt.Printf("pos after message: %v/%v/%v, slow version: %v, quick version: %v, parallel version: %v\n",
+		posPartSlow, posPartQuick, posPartParallel,
+		startQuickVersion.Sub(startSlowVersion),
+		startParallelVersion.Sub(startQuickVersion),
+		allDone.Sub(startParallelVersion))
 }
 
 func loadInput(filename string) string {
