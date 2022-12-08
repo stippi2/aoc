@@ -75,11 +75,7 @@ func (m *Map) countVisibleTrees() int {
 }
 
 func increaseScenicScore(tree, treeInSight *Tree, score int) (int, bool) {
-	if treeInSight.height < tree.height {
-		return score + 1, false
-	} else {
-		return score + 1, true
-	}
+	return score + 1, treeInSight.height >= tree.height
 }
 
 func (m *Map) computeScenicScore(x, y int) int {
