@@ -83,41 +83,26 @@ func increaseScenicScore(tree, treeInSight *Tree, score int) (int, bool) {
 }
 
 func (m *Map) computeScenicScore(x, y int) int {
-	if x == 2 && y == 3 {
-		fmt.Printf("")
-	}
 	scoreLeft := 0
 	scoreRight := 0
 	scoreTop := 0
 	scoreBottom := 0
 	tree := m.get(x, y)
-	for xl := x - 1; xl >= 0; xl-- {
-		var stop bool
+	stop := false
+	for xl := x - 1; xl >= 0 && !stop; xl-- {
 		scoreLeft, stop = increaseScenicScore(tree, m.get(xl, y), scoreLeft)
-		if stop {
-			break
-		}
 	}
-	for xr := x + 1; xr < m.width; xr++ {
-		var stop bool
+	stop = false
+	for xr := x + 1; xr < m.width && !stop; xr++ {
 		scoreRight, stop = increaseScenicScore(tree, m.get(xr, y), scoreRight)
-		if stop {
-			break
-		}
 	}
-	for yt := y - 1; yt >= 0; yt-- {
-		var stop bool
+	stop = false
+	for yt := y - 1; yt >= 0 && !stop; yt-- {
 		scoreTop, stop = increaseScenicScore(tree, m.get(x, yt), scoreTop)
-		if stop {
-			break
-		}
 	}
-	for yb := y + 1; yb < m.height; yb++ {
-		var stop bool
+	stop = false
+	for yb := y + 1; yb < m.height && !stop; yb++ {
 		scoreBottom, stop = increaseScenicScore(tree, m.get(x, yb), scoreBottom)
-		if stop {
-			break
-		}
 	}
 	return scoreLeft * scoreRight * scoreTop * scoreBottom
 }
