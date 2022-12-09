@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -22,19 +23,12 @@ func (t *TrackingPos) setPos(p Pos) {
 	t.current = p
 }
 
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
 func (t *TrackingPos) track(p Pos) {
 	newPos := t.current
 	diffX := p.x - newPos.x
 	diffY := p.y - newPos.y
 
-	if abs(diffX) <= 1 && abs(diffY) <= 1 {
+	if math.Abs(float64(diffX)) <= 1 && math.Abs(float64(diffY)) <= 1 {
 		return
 	}
 
@@ -101,22 +95,19 @@ func main() {
 	partTwo()
 }
 
+var motion = map[string]Pos{
+	"L": {-1, 0},
+	"R": {1, 0},
+	"U": {0, -1},
+	"D": {0, 1},
+}
+
 func runPositions(input string, rope *Rope) {
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
 		repeat, _ := strconv.Atoi(parts[1])
-		diff := Pos{}
-		switch parts[0] {
-		case "R":
-			diff.x = 1
-		case "L":
-			diff.x = -1
-		case "U":
-			diff.y = -1
-		case "D":
-			diff.y = 1
-		}
+		diff := motion[parts[0]]
 		for i := 0; i < repeat; i++ {
 			rope.moveHead(diff)
 		}
