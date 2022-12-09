@@ -76,23 +76,10 @@ func (r *Rope) tail() *TrackingPos {
 	return &r.knots[len(r.knots)-1]
 }
 
-func partOne() {
-	rope := &Rope{}
-	rope.appendKnots(2)
-	runPositions(loadInput("puzzle-input.txt"), rope)
-	fmt.Printf("unique visited tail positions: %v\n", len(rope.tail().visitedPositions))
-}
-
-func partTwo() {
-	rope := &Rope{}
-	rope.appendKnots(10)
-	runPositions(loadInput("puzzle-input.txt"), rope)
-	fmt.Printf("unique visited tail positions: %v\n", len(rope.tail().visitedPositions))
-}
-
 func main() {
-	partOne()
-	partTwo()
+	input := loadInput("puzzle-input.txt")
+	fmt.Printf("unique visited tail positions (rope length 2): %v\n", runRopeSimulation(input, 2))
+	fmt.Printf("unique visited tail positions (rope length 10): %v\n", runRopeSimulation(input, 10))
 }
 
 var motion = map[string]Pos{
@@ -102,7 +89,9 @@ var motion = map[string]Pos{
 	"D": {0, 1},
 }
 
-func runPositions(input string, rope *Rope) {
+func runRopeSimulation(input string, knotCount int) int {
+	rope := &Rope{}
+	rope.appendKnots(knotCount)
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
@@ -112,6 +101,7 @@ func runPositions(input string, rope *Rope) {
 			rope.moveHead(diff)
 		}
 	}
+	return len(rope.tail().visitedPositions)
 }
 
 func loadInput(filename string) string {

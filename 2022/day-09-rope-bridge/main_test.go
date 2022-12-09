@@ -15,10 +15,7 @@ L 5
 R 2`
 
 func Test_Part1(t *testing.T) {
-	rope := &Rope{}
-	rope.appendKnots(2)
-	runPositions(exampleInput, rope)
-	assert.Equal(t, 13, len(rope.tail().visitedPositions))
+	assert.Equal(t, 13, runRopeSimulation(exampleInput, 2))
 }
 
 var exampleInput2 = `R 5
@@ -31,8 +28,5 @@ L 25
 U 20`
 
 func Test_Part2(t *testing.T) {
-	rope := &Rope{}
-	rope.appendKnots(10)
-	runPositions(exampleInput2, rope)
-	assert.Equal(t, 36, len(rope.tail().visitedPositions))
+	assert.Equal(t, 36, runRopeSimulation(exampleInput2, 10))
 }
