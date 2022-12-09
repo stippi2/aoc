@@ -12,68 +12,39 @@ type Pos struct {
 	x, y int
 }
 
-type TrackingPos struct {
-	current          Pos
-	visitedPositions map[Pos]int
-}
-
-func (t *TrackingPos) setPos(p Pos) {
-	visited := t.visitedPositions[p]
-	t.visitedPositions[p] = visited + 1
-	t.current = p
-}
-
-func (t *TrackingPos) track(p Pos) {
-	newPos := t.current
-	diffX := p.x - newPos.x
-	diffY := p.y - newPos.y
-
+func (p *Pos) track(to Pos) {
+	diffX := to.x - p.x
+	diffY := to.y - p.y
 	if math.Abs(float64(diffX)) <= 1 && math.Abs(float64(diffY)) <= 1 {
 		return
 	}
 
 	if diffX > 0 {
-		newPos.x++
+		p.x++
 	} else if diffX < 0 {
-		newPos.x--
+		p.x--
 	}
 	if diffY > 0 {
-		newPos.y++
+		p.y++
 	} else if diffY < 0 {
-		newPos.y--
+		p.y--
 	}
-
-	t.setPos(newPos)
-}
-
-func newTrackablePos() *TrackingPos {
-	pos := &TrackingPos{
-		visitedPositions: map[Pos]int{},
-	}
-	pos.visitedPositions[pos.current] = 1
-	return pos
 }
 
 type Rope struct {
-	knots []TrackingPos
+	knots []Pos
 }
 
 func (r *Rope) moveHead(diff Pos) {
-	head := &r.knots[0]
-	head.setPos(Pos{head.current.x + diff.x, head.current.y + diff.y})
+	r.knots[0].x += diff.x
+	r.knots[0].y += diff.y
 	for i := 1; i < len(r.knots); i++ {
-		r.knots[i].track(r.knots[i-1].current)
+		r.knots[i].track(r.knots[i-1])
 	}
 }
 
-func (r *Rope) appendKnots(count int) {
-	for i := 0; i < count; i++ {
-		r.knots = append(r.knots, *newTrackablePos())
-	}
-}
-
-func (r *Rope) tail() *TrackingPos {
-	return &r.knots[len(r.knots)-1]
+func (r *Rope) tail() Pos {
+	return r.knots[len(r.knots)-1]
 }
 
 func main() {
@@ -90,8 +61,8 @@ var motion = map[string]Pos{
 }
 
 func runRopeSimulation(input string, knotCount int) int {
-	rope := &Rope{}
-	rope.appendKnots(knotCount)
+	rope := Rope{knots: make([]Pos, knotCount)}
+	visitedPositions := map[Pos]bool{rope.tail(): true}
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
@@ -99,9 +70,10 @@ func runRopeSimulation(input string, knotCount int) int {
 		diff := motion[parts[0]]
 		for i := 0; i < repeat; i++ {
 			rope.moveHead(diff)
+			visitedPositions[rope.tail()] = true
 		}
 	}
-	return len(rope.tail().visitedPositions)
+	return len(visitedPositions)
 }
 
 func loadInput(filename string) string {
