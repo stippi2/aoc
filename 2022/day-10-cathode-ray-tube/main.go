@@ -12,8 +12,17 @@ func main() {
 	fmt.Printf("signal strength after 220 ticks: %v\n", getSignalStrength(input))
 }
 
-func increaseSignalStrength(x, tick, signal int) int {
-	if (tick+20)%40 == 0 {
+func drawAndTrackSignal(x, tick, signal int) int {
+	col := tick % 40
+	if x <= col && x+2 >= col {
+		fmt.Print("#")
+	} else {
+		fmt.Print(".")
+	}
+	if col == 0 {
+		fmt.Print("\n")
+	}
+	if tick <= 220 && (tick+20)%40 == 0 {
 		signal += x * tick
 	}
 	return signal
@@ -25,17 +34,14 @@ func getSignalStrength(input string) int {
 	signalStrength := 0
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
-		signalStrength = increaseSignalStrength(x, tick, signalStrength)
+		signalStrength = drawAndTrackSignal(x, tick, signalStrength)
 		tick++
 		if line != "noop" {
-			signalStrength = increaseSignalStrength(x, tick, signalStrength)
+			signalStrength = drawAndTrackSignal(x, tick, signalStrength)
 			tick++
 			line = strings.TrimPrefix(line, "addx ")
 			value, _ := strconv.Atoi(line)
 			x += value
-		}
-		if tick > 220 {
-			break
 		}
 	}
 	return signalStrength
