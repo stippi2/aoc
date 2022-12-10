@@ -7,44 +7,63 @@ import (
 	"strings"
 )
 
+type CycleRunner interface {
+	AtTick(tick, x int)
+}
+
+type SignalStrengthCollector struct {
+	signalStrength int
+}
+
+func (c *SignalStrengthCollector) AtTick(tick, x int) {
+	if tick <= 220 && (tick+20)%40 == 0 {
+		c.signalStrength += x * tick
+	}
+}
+
+type Display struct {
+	frameBuffer string
+}
+
+func (d *Display) AtTick(tick, x int) {
+	col := (tick - 1) % 40
+	if x-1 <= col && x+1 >= col {
+		d.frameBuffer += "#"
+	} else {
+		d.frameBuffer += "."
+	}
+	if col == 39 {
+		d.frameBuffer += "\n"
+	}
+}
+
 func main() {
 	input := loadInput("puzzle-input.txt")
-	fmt.Printf("signal strength after 220 ticks: %v\n", getSignalStrength(input))
+	// part 1
+	c := SignalStrengthCollector{}
+	parseAndRunInstructions(input, &c)
+	fmt.Printf("signal strength after 220 ticks: %v\n", c.signalStrength)
+	// part 2
+	d := Display{}
+	parseAndRunInstructions(input, &d)
+	fmt.Printf("display contents:\n%v", d.frameBuffer)
 }
 
-func drawAndTrackSignal(x, tick, signal int) int {
-	col := tick % 40
-	if x <= col && x+2 >= col {
-		fmt.Print("#")
-	} else {
-		fmt.Print(".")
-	}
-	if col == 0 {
-		fmt.Print("\n")
-	}
-	if tick <= 220 && (tick+20)%40 == 0 {
-		signal += x * tick
-	}
-	return signal
-}
-
-func getSignalStrength(input string) int {
+func parseAndRunInstructions(input string, runner CycleRunner) {
 	x := 1
 	tick := 1
-	signalStrength := 0
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
-		signalStrength = drawAndTrackSignal(x, tick, signalStrength)
+		runner.AtTick(tick, x)
 		tick++
 		if line != "noop" {
-			signalStrength = drawAndTrackSignal(x, tick, signalStrength)
+			runner.AtTick(tick, x)
 			tick++
-			line = strings.TrimPrefix(line, "addx ")
-			value, _ := strconv.Atoi(line)
+			valueString := strings.TrimPrefix(line, "addx ")
+			value, _ := strconv.Atoi(valueString)
 			x += value
 		}
 	}
-	return signalStrength
 }
 
 func loadInput(filename string) string {

@@ -153,5 +153,19 @@ noop
 noop`
 
 func Test_Part1(t *testing.T) {
-	assert.Equal(t, 13140, getSignalStrength(exampleInput))
+	c := SignalStrengthCollector{}
+	parseAndRunInstructions(exampleInput, &c)
+	assert.Equal(t, 13140, c.signalStrength)
+}
+
+func Test_Part2(t *testing.T) {
+	d := Display{}
+	parseAndRunInstructions(exampleInput, &d)
+	assert.Equal(t, `##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....
+`, d.frameBuffer)
 }
