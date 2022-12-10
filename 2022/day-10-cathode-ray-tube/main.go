@@ -52,8 +52,7 @@ func main() {
 func parseAndRunInstructions(input string, runner CycleRunner) {
 	x := 1
 	tick := 1
-	lines := strings.Split(input, "\n")
-	for _, line := range lines {
+	for _, line := range strings.Split(input, "\n") {
 		runner.AtTick(tick, x)
 		tick++
 		if line != "noop" {
