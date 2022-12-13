@@ -60,9 +60,13 @@ type Pair struct {
 func sumIndicesOrderedPairs(pairs []Pair) int {
 	sumIndices := 0
 	for i := 0; i < len(pairs); i++ {
-		if compare(pairs[i].left, pairs[i].right) == Sorted {
+		comparison := compare(pairs[i].left, pairs[i].right)
+		if comparison == Sorted {
 			fmt.Printf("sorted: %v\n", i+1)
 			sumIndices += i + 1
+		}
+		if comparison == NoDecision {
+			fmt.Printf("no decision: %v\n", i+1)
 		}
 	}
 	return sumIndices
