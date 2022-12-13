@@ -39,7 +39,7 @@ func compare(left, right any) int {
 	leftLength := len(leftList)
 	rightLength := len(rightList)
 	for i := 0; i < leftLength; i++ {
-		if i >= rightLength {
+		if i == rightLength {
 			return Unsorted
 		}
 		innerCompare := compare(leftList[i], rightList[i])
@@ -107,7 +107,7 @@ func parseItem(n string) any {
 			item = parseItem(n[start:end])
 			start = end
 		} else if n[start] >= '0' && n[start] <= '9' {
-			end := start + 1
+			end := len(n)
 			for j := start + 1; j < len(n); j++ {
 				if n[j] < '0' || n[j] > '9' {
 					end = j
