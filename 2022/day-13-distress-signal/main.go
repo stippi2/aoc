@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -72,9 +74,37 @@ func sumIndicesOrderedPairs(pairs []Pair) int {
 	return sumIndices
 }
 
+func sortPackets(pairs []Pair) []any {
+	var packets []any
+	for _, pair := range pairs {
+		packets = append(packets, pair.left, pair.right)
+	}
+	packets = append(packets, []any{[]any{2}}, []any{[]any{6}})
+	sort.Slice(packets, func(i, j int) bool {
+		return compare(packets[i], packets[j]) == Sorted
+	})
+	return packets
+}
+
+func findIndex(packets []any, packet any) int {
+	for i := 0; i < len(packets); i++ {
+		if reflect.DeepEqual(packets[i], packet) {
+			return i
+		}
+	}
+	return -1
+}
+
+func decoderKey(packets []any) int {
+	return (findIndex(packets, []any{[]any{2}}) + 1) * (findIndex(packets, []any{[]any{6}}) + 1)
+}
+
 func main() {
 	pairs := parseInput(loadInput("puzzle-input.txt"))
 	fmt.Printf("sum of the indices of the ordered pairs: %v\n", sumIndicesOrderedPairs(pairs))
+
+	packets := sortPackets(pairs)
+	fmt.Printf("decoder key: %v\n", decoderKey(packets))
 }
 
 func parseItem(n string) any {
