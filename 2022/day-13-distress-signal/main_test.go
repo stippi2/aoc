@@ -29,6 +29,10 @@ var exampleInput = `[1,1,3,1,1]
 [1,[2,[3,[4,[5,6,7]]]],8,9]
 [1,[2,[3,[4,[5,6,0]]]],8,9]`
 
+func Test_parse(t *testing.T) {
+	assert.Equal(t, []any{1, []any{21, []any{3, []any{4, []any{5, 621, 7}}}}, 8, 9}, parseItem("[1,[21,[3,[4,[5,621,7]]]],8,9]"))
+}
+
 func Test_part1(t *testing.T) {
 	pairs := parseInput(exampleInput)
 
