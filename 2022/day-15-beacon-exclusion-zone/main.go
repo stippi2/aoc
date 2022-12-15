@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -51,6 +52,13 @@ func (l *Line) union(other *Line) {
 	}
 }
 
+func (l *Line) intersect(other *Line) {
+	if l.intersects(other) {
+		l.x1 = max(l.x1, other.x1)
+		l.x2 = min(l.x2, other.x2)
+	}
+}
+
 func (s *Sensor) minMaxX(y int) (*Line, bool) {
 	distance := abs(s.beacon.x-s.pos.x) + abs(s.beacon.y-s.pos.y)
 	distance -= abs(y - s.pos.y)
@@ -60,11 +68,21 @@ func (s *Sensor) minMaxX(y int) (*Line, bool) {
 	return &Line{s.pos.x - distance, s.pos.x + distance}, true
 }
 
-func emptyPositionsOnLine(y int, sensors []Sensor) int {
+func intersect(lines []*Line, line Line) []*Line {
+	var newLines []*Line
+	for _, l := range lines {
+		if line.intersects(l) {
+			intersection := &Line{line.x1, line.x2}
+			intersection.intersect(l)
+			newLines = append(newLines, intersection)
+		}
+	}
+	return newLines
+}
+
+func knownSections(y int, sensors []Sensor) []*Line {
 	var lines []*Line
-	allBeacons := make(map[Pos]bool)
 	for _, sensor := range sensors {
-		allBeacons[sensor.beacon] = true
 		newLine, insideRange := sensor.minMaxX(y)
 		if insideRange {
 			newLines := []*Line{newLine}
@@ -77,6 +95,15 @@ func emptyPositionsOnLine(y int, sensors []Sensor) int {
 			}
 			lines = newLines
 		}
+	}
+	return lines
+}
+
+func emptyPositionsOnLine(y int, sensors []Sensor) int {
+	lines := knownSections(y, sensors)
+	allBeacons := make(map[Pos]bool)
+	for _, sensor := range sensors {
+		allBeacons[sensor.beacon] = true
 	}
 	emptyPositions := 0
 	for _, line := range lines {
@@ -95,6 +122,18 @@ func emptyPositionsOnLine(y int, sensors []Sensor) int {
 func main() {
 	sensors := parseInput(loadInput("puzzle-input.txt"))
 	fmt.Printf("empty positions on y = 2000000: %v\n", emptyPositionsOnLine(2000000, sensors))
+
+	for y := 0; y <= 4000000; y++ {
+		lines := intersect(knownSections(y, sensors), Line{0, 4000000})
+		if len(lines) != 1 {
+			fmt.Printf("lines on %v: %v\n", y, len(lines))
+			sort.Slice(lines, func(i, j int) bool {
+				return lines[i].x1 < lines[j].x1
+			})
+			x := lines[0].x2 + 1
+			fmt.Printf("distress signal location: %vx%v, tuning frequency: %v\n", x, y, x*4000000+y)
+		}
+	}
 }
 
 func parseInput(input string) []Sensor {
