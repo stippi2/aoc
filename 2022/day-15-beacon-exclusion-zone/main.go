@@ -5,6 +5,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 )
 
 type Pos struct {
@@ -121,17 +122,22 @@ func emptyPositionsOnLine(y int, sensors []Sensor) int {
 
 func main() {
 	sensors := parseInput(loadInput("puzzle-input.txt"))
-	fmt.Printf("empty positions on y = 2000000: %v\n", emptyPositionsOnLine(2000000, sensors))
+	start := time.Now()
+	emptyPositions := emptyPositionsOnLine(2000000, sensors)
+	durationPart1 := time.Now().Sub(start)
+	fmt.Printf("empty positions on y = 2000000: %v (%v)\n", emptyPositions, durationPart1)
 
+	start = time.Now()
 	for y := 0; y <= 4000000; y++ {
 		lines := intersect(knownSections(y, sensors), Line{0, 4000000})
 		if len(lines) != 1 {
-			fmt.Printf("lines on %v: %v\n", y, len(lines))
 			sort.Slice(lines, func(i, j int) bool {
 				return lines[i].x1 < lines[j].x1
 			})
 			x := lines[0].x2 + 1
-			fmt.Printf("distress signal location: %vx%v, tuning frequency: %v\n", x, y, x*4000000+y)
+			durationPart2 := time.Now().Sub(start)
+			fmt.Printf("distress signal location: %vx%v, tuning frequency: %v (%v)\n", x, y, x*4000000+y, durationPart2)
+			break
 		}
 	}
 }
