@@ -32,3 +32,15 @@ func Test_parseInput(t *testing.T) {
 		beacon: Pos{10, 16},
 	}, sensors[1])
 }
+
+func Test_minMaxX(t *testing.T) {
+	sensors := parseInput(exampleInput)
+	line, insideRange := sensors[6].minMaxX(9)
+	assert.True(t, insideRange)
+	assert.Equal(t, Line{1, 16}, *line)
+}
+
+func Test_part1(t *testing.T) {
+	sensors := parseInput(exampleInput)
+	assert.Equal(t, 26, emptyPositionsOnLine(10, sensors))
+}
