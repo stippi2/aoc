@@ -34,10 +34,51 @@ func Test_parseInput(t *testing.T) {
 }
 
 func Test_minMaxX(t *testing.T) {
-	sensors := parseInput(exampleInput)
-	line, insideRange := sensors[6].minMaxX(9)
+	//	sensors := parseInput(exampleInput)
+	//line, insideRange := sensors[6].minMaxX(9)
+	//assert.True(t, insideRange)
+	//assert.Equal(t, Line{0, 16}, *line)
+
+	sensor := Sensor{
+		pos:    Pos{0, 0},
+		beacon: Pos{0, 0},
+	}
+	line, insideRange := sensor.minMaxX(0)
 	assert.True(t, insideRange)
-	assert.Equal(t, Line{1, 16}, *line)
+	assert.Equal(t, Line{0, 0}, *line)
+
+	line, insideRange = sensor.minMaxX(-1)
+	assert.False(t, insideRange)
+	assert.Nil(t, line)
+
+	line, insideRange = sensor.minMaxX(1)
+	assert.False(t, insideRange)
+	assert.Nil(t, line)
+
+	sensor = Sensor{
+		pos:    Pos{0, 0},
+		beacon: Pos{0, 1},
+	}
+
+	line, insideRange = sensor.minMaxX(-1)
+	assert.True(t, insideRange)
+	assert.Equal(t, Line{0, 0}, *line)
+
+	line, insideRange = sensor.minMaxX(0)
+	assert.True(t, insideRange)
+	assert.Equal(t, Line{-1, 1}, *line)
+
+	line, insideRange = sensor.minMaxX(1)
+	assert.True(t, insideRange)
+	assert.Equal(t, Line{0, 0}, *line)
+
+	line, insideRange = sensor.minMaxX(2)
+	assert.False(t, insideRange)
+	assert.Nil(t, line)
+
+	line, insideRange = sensor.minMaxX(-2)
+	assert.False(t, insideRange)
+	assert.Nil(t, line)
 }
 
 func Test_part1(t *testing.T) {

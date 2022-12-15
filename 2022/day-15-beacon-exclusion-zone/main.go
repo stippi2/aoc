@@ -41,7 +41,7 @@ type Line struct {
 }
 
 func (l *Line) intersects(other *Line) bool {
-	return !(other.x2 < l.x1 || other.x1 > l.x2)
+	return !(other.x2 < l.x1-1 || other.x1 > l.x2+1)
 }
 
 func (l *Line) union(other *Line) {
@@ -53,16 +53,18 @@ func (l *Line) union(other *Line) {
 
 func (s *Sensor) minMaxX(y int) (*Line, bool) {
 	distance := abs(s.beacon.x-s.pos.x) + abs(s.beacon.y-s.pos.y)
-	distance -= abs(y - s.beacon.y)
-	if distance <= 0 {
+	distance -= abs(y - s.pos.y)
+	if distance < 0 {
 		return nil, false
 	}
-	return &Line{s.pos.x - (distance - 1), s.pos.x + distance}, true
+	return &Line{s.pos.x - distance, s.pos.x + distance}, true
 }
 
 func emptyPositionsOnLine(y int, sensors []Sensor) int {
 	var lines []*Line
+	allBeacons := make(map[Pos]bool)
 	for _, sensor := range sensors {
+		allBeacons[sensor.beacon] = true
 		newLine, insideRange := sensor.minMaxX(y)
 		if insideRange {
 			newLines := []*Line{newLine}
@@ -78,7 +80,14 @@ func emptyPositionsOnLine(y int, sensors []Sensor) int {
 	}
 	emptyPositions := 0
 	for _, line := range lines {
-		emptyPositions += line.x2 - line.x1
+		emptyPositions += line.x2 - line.x1 + 1
+		for beacon := range allBeacons {
+			if beacon.y == y {
+				if line.x1 <= beacon.x && line.x2 >= beacon.x {
+					emptyPositions--
+				}
+			}
+		}
 	}
 	return emptyPositions
 }
