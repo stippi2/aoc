@@ -137,7 +137,7 @@ func main() {
 			x := lines[0].x2 + 1
 			durationPart2 := time.Now().Sub(start)
 			fmt.Printf("distress signal location: %vx%v, tuning frequency: %v (%v)\n", x, y, x*4000000+y, durationPart2)
-			break
+			//			break
 		}
 	}
 }
