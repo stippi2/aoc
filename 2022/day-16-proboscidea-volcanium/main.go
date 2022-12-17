@@ -48,11 +48,12 @@ func (p *Path) canOpenValue(node *Node, timeLimit int) bool {
 }
 
 func (p *Path) potential() int {
-	potential := p.pressureReleased
-	for _, v := range p.valvesToOpen {
-		potential += v.flowRate * (30 - p.elapsedTime)
-	}
-	return potential
+	//potential := p.pressureReleased
+	//for _, v := range p.valvesToOpen {
+	//	potential += v.flowRate * (30 - p.elapsedTime)
+	//}
+	//return potential
+	return p.pressureReleased + (30 - p.elapsedTime)
 }
 
 func (p *Path) String() string {
@@ -140,8 +141,8 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 			continue
 		}
 		if iteration%100000 == 0 {
-			fmt.Printf("iteration: %v, paths: %v, tip: (%v), pressure released: %v\n",
-				iteration, queue.Len(), path.tip.label, path.pressureReleased)
+			fmt.Printf("iteration: %v, paths: %v, tip: (%v), pressure released: %v, potential: %v, elapsed minutes: %v\n",
+				iteration, queue.Len(), path.tip.label, path.pressureReleased, path.potential(), path.elapsedTime)
 		}
 
 		var nextPaths []*Path
