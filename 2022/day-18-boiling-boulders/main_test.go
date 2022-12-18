@@ -23,3 +23,9 @@ func Test_part1(t *testing.T) {
 	droplet := parseInput(exampleInput)
 	assert.Equal(t, 64, droplet.surfaceArea())
 }
+
+func Test_part2(t *testing.T) {
+	droplet := parseInput(exampleInput)
+	droplet.fillAllPockets()
+	assert.Equal(t, 58, droplet.surfaceArea())
+}
