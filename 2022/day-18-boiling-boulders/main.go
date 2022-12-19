@@ -66,7 +66,7 @@ func (d *Droplet) countSurfacesAlongVector(p Pos, vector Pos) int {
 	return inOutFlips
 }
 
-func (d *Droplet) fillPocketsAlongVector(p Pos, v Pos) {
+func (d *Droplet) fillPocketsAlongVector(p Pos, vector Pos) {
 	inside := false
 	for d.isWithinBounds(p) {
 		if !inside && d.voxels[p] {
@@ -74,16 +74,16 @@ func (d *Droplet) fillPocketsAlongVector(p Pos, v Pos) {
 		} else if !d.voxels[p] && inside {
 			d.fill(p)
 		}
-		p = p.add(v)
+		p = p.add(vector)
 	}
 }
 
-func (d *Droplet) fill(p Pos) {
-	if d.voxels[p] {
+func (d *Droplet) fill(start Pos) {
+	if d.voxels[start] {
 		return
 	}
 	visited := make(map[Pos]bool)
-	queue := []Pos{p}
+	queue := []Pos{start}
 	reachedOutside := false
 	for len(queue) > 0 {
 		tip := queue[0]
@@ -93,7 +93,7 @@ func (d *Droplet) fill(p Pos) {
 		}
 		visited[tip] = true
 		queue = queue[1:]
-		next := []Pos{
+		nextPositions := []Pos{
 			tip.add(Pos{1, 0, 0}),
 			tip.add(Pos{-1, 0, 0}),
 			tip.add(Pos{0, 1, 0}),
@@ -101,9 +101,9 @@ func (d *Droplet) fill(p Pos) {
 			tip.add(Pos{0, 0, 1}),
 			tip.add(Pos{0, 0, -1}),
 		}
-		for _, n := range next {
-			if !visited[n] && !d.voxels[n] {
-				queue = append(queue, n)
+		for _, pos := range nextPositions {
+			if !visited[pos] && !d.voxels[pos] {
+				queue = append(queue, pos)
 			}
 		}
 	}
