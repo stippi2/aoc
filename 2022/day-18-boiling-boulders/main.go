@@ -50,7 +50,7 @@ func (d *Droplet) isWithinBounds(p Pos) bool {
 	return p.x >= d.minX && p.x <= d.maxX && p.y >= d.minY && p.y <= d.maxY && p.z >= d.minZ && p.z <= d.maxZ
 }
 
-func (d *Droplet) countSurfacesAlongVector(p Pos, v Pos) int {
+func (d *Droplet) countSurfacesAlongVector(p Pos, vector Pos) int {
 	inside := false
 	inOutFlips := 0
 	for d.isWithinBounds(p) {
@@ -58,7 +58,7 @@ func (d *Droplet) countSurfacesAlongVector(p Pos, v Pos) int {
 			inside = !inside
 			inOutFlips++
 		}
-		p = p.add(v)
+		p = p.add(vector)
 	}
 	if inside {
 		inOutFlips++
