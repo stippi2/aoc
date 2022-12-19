@@ -50,7 +50,7 @@ func (d *Droplet) isWithinBounds(p Pos) bool {
 	return p.x >= d.minX && p.x <= d.maxX && p.y >= d.minY && p.y <= d.maxY && p.z >= d.minZ && p.z <= d.maxZ
 }
 
-func (d *Droplet) castRay(p Pos, v Pos) int {
+func (d *Droplet) countSurfacesAlongVector(p Pos, v Pos) int {
 	inside := false
 	inOutFlips := 0
 	for d.isWithinBounds(p) {
@@ -66,7 +66,7 @@ func (d *Droplet) castRay(p Pos, v Pos) int {
 	return inOutFlips
 }
 
-func (d *Droplet) fillPockets(p Pos, v Pos) {
+func (d *Droplet) fillPocketsAlongVector(p Pos, v Pos) {
 	inside := false
 	for d.isWithinBounds(p) {
 		if !inside && d.voxels[p] {
@@ -78,9 +78,9 @@ func (d *Droplet) fillPockets(p Pos, v Pos) {
 	}
 }
 
-func (d *Droplet) fill(p Pos) bool {
+func (d *Droplet) fill(p Pos) {
 	if d.voxels[p] {
-		return true
+		return
 	}
 	visited := make(map[Pos]bool)
 	queue := []Pos{p}
@@ -113,44 +113,37 @@ func (d *Droplet) fill(p Pos) bool {
 			d.voxels[pos] = true
 		}
 	}
-	return !reachedOutside
 }
 
-func (d *Droplet) fillAllPockets() {
+func (d *Droplet) sweepVolume(callback func(start, vector Pos)) {
 	for x := d.minX; x <= d.maxX; x++ {
 		for y := d.minY; y <= d.maxY; y++ {
-			d.fillPockets(Pos{x, y, d.minZ}, Pos{0, 0, 1})
+			callback(Pos{x, y, d.minZ}, Pos{0, 0, 1})
 		}
 	}
 	for x := d.minX; x <= d.maxX; x++ {
 		for z := d.minZ; z <= d.maxZ; z++ {
-			d.fillPockets(Pos{x, d.minY, z}, Pos{0, 1, 0})
+			callback(Pos{x, d.minY, z}, Pos{0, 1, 0})
 		}
 	}
 	for y := d.minY; y <= d.maxY; y++ {
 		for z := d.minZ; z <= d.maxZ; z++ {
-			d.fillPockets(Pos{d.minX, y, z}, Pos{1, 0, 0})
+			callback(Pos{d.minX, y, z}, Pos{1, 0, 0})
 		}
 	}
+}
+
+func (d *Droplet) fillAllPockets() {
+	d.sweepVolume(func(start, vector Pos) {
+		d.fillPocketsAlongVector(start, vector)
+	})
 }
 
 func (d *Droplet) surfaceArea() int {
 	area := 0
-	for x := d.minX; x <= d.maxX; x++ {
-		for y := d.minY; y <= d.maxY; y++ {
-			area += d.castRay(Pos{x, y, d.minZ}, Pos{0, 0, 1})
-		}
-	}
-	for x := d.minX; x <= d.maxX; x++ {
-		for z := d.minZ; z <= d.maxZ; z++ {
-			area += d.castRay(Pos{x, d.minY, z}, Pos{0, 1, 0})
-		}
-	}
-	for y := d.minY; y <= d.maxY; y++ {
-		for z := d.minZ; z <= d.maxZ; z++ {
-			area += d.castRay(Pos{d.minX, y, z}, Pos{1, 0, 0})
-		}
-	}
+	d.sweepVolume(func(start, vector Pos) {
+		area += d.countSurfacesAlongVector(start, vector)
+	})
 	return area
 }
 
