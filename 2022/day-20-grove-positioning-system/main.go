@@ -130,9 +130,7 @@ func (s *Sequence) mix() {
 				count--
 				previous = previous.previous
 			}
-			// Detach current
 			s.remove(current)
-			// Attach after previous
 			s.insertAfter(current, previous)
 		} else if current.value > 0 {
 			count := current.value % (s.length - 1)
@@ -141,9 +139,7 @@ func (s *Sequence) mix() {
 				count--
 				next = next.next
 			}
-			// Detach current
 			s.remove(current)
-			// Attach after previous
 			s.insertBefore(current, next)
 		}
 	}
