@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Number struct {
@@ -174,16 +175,18 @@ func (s *Sequence) multiply(v int) {
 }
 
 func main() {
+	start := time.Now()
 	sequence := parseInput(loadInput("puzzle-input.txt"))
 	sequence.mix()
-	fmt.Printf("part 1: grove coordinates: %v\n", sequence.findGroveCoordinates())
+	fmt.Printf("part 1: grove coordinates: %v (%v)\n", sequence.findGroveCoordinates(), time.Since(start))
 
+	start = time.Now()
 	sequence = parseInput(loadInput("puzzle-input.txt"))
 	sequence.multiply(811589153)
 	for i := 0; i < 10; i++ {
 		sequence.mix()
 	}
-	fmt.Printf("part 2: grove coordinates: %v\n", sequence.findGroveCoordinates())
+	fmt.Printf("part 2: grove coordinates: %v (%v)\n", sequence.findGroveCoordinates(), time.Since(start))
 }
 
 func parseInput(input string) *Sequence {
