@@ -48,12 +48,11 @@ func (p *Path) canOpenValue(node *Node, timeLimit int) bool {
 }
 
 func (p *Path) potential() int {
-	//potential := p.pressureReleased
-	//for _, v := range p.valvesToOpen {
-	//	potential += v.flowRate * (30 - p.elapsedTime)
-	//}
-	//return potential
-	return p.pressureReleased + (30 - p.elapsedTime)
+	potential := p.pressureReleased
+	for _, v := range p.valvesToOpen {
+		potential += v.flowRate * (30 - p.elapsedTime)
+	}
+	return potential
 }
 
 func (p *Path) String() string {
