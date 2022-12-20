@@ -103,45 +103,34 @@ func (s *Sequence) insertBefore(n, next *Number) {
 
 func (s *Sequence) skip(n *Number, value int) *Number {
 	if value < 0 {
-		count := (-value) % s.length
+		count := (-value) % (s.length - 1)
 		previous := n
-		for count >= 0 {
+		for count > 0 {
 			count--
 			previous = previous.previous
 		}
-		return previous.next
+		return previous
 	} else if value > 0 {
-		count := value % s.length
+		count := value % (s.length - 1)
 		next := n
-		for count >= 0 {
+		for count > 0 {
 			count--
 			next = next.next
 		}
-		return next.previous
+		return next
 	}
 	return n
 }
 
 func (s *Sequence) mix() {
 	for _, current := range s.numbers {
+		insertion := s.skip(current, current.value)
 		if current.value < 0 {
-			count := (-current.value) % (s.length - 1)
-			previous := current
-			for count >= 0 {
-				count--
-				previous = previous.previous
-			}
 			s.remove(current)
-			s.insertAfter(current, previous)
+			s.insertBefore(current, insertion)
 		} else if current.value > 0 {
-			count := current.value % (s.length - 1)
-			next := current
-			for count >= 0 {
-				count--
-				next = next.next
-			}
 			s.remove(current)
-			s.insertBefore(current, next)
+			s.insertAfter(current, insertion)
 		}
 	}
 }
