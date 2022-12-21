@@ -1,4 +1,4 @@
-module github.tools.sap/I531928/2022-day-20
+module github.tools.sap/I531928/2022-day-21
 
 go 1.19
 
