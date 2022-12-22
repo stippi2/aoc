@@ -325,9 +325,8 @@ func partTwo() {
 }
 
 func main() {
-	//	partOne()
+	partOne()
 	partTwo()
-	//	fmt.Printf("tower height after 1000000000000 rocks: %v\n", simulateRocks(jetSequence, 1000000000000))
 }
 
 func loadInput(filename string) string {
