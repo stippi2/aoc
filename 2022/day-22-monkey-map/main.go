@@ -136,7 +136,9 @@ func (m *Map) startingPos() *Explorer {
 	return e
 }
 
-func executeInstructions(m *Map, i *Instructions, e *Explorer) {
+type WrappingFunction func(m *Map, e *Explorer) (Pos, Pos)
+
+func executeInstructions(m *Map, i *Instructions, e *Explorer, handleWrap WrappingFunction) {
 	for {
 		instruction := i.next()
 		if instruction == "" {
@@ -152,18 +154,12 @@ func executeInstructions(m *Map, i *Instructions, e *Explorer) {
 		default:
 			distance, _ := strconv.Atoi(instruction)
 			for distance > 0 {
-				newLocation := e.location.add(e.facing)
-				if m.getLocation(newLocation) == " " {
-					// Wrap around
-					facingOpposite := e.facing.negate()
-					for m.getLocation(newLocation.add(facingOpposite)) != " " {
-						newLocation = newLocation.add(facingOpposite)
-					}
-				}
+				newLocation, newFacing := handleWrap(m, e)
 				switch m.getLocation(newLocation) {
 				case ".":
 					e.tracePath()
 					e.location = newLocation
+					e.facing = newFacing
 				case "#":
 					// Nothing
 				}
@@ -192,7 +188,19 @@ func main() {
 	m, instructions := parseInput(loadInput("puzzle-input.txt"))
 	explorer := m.startingPos()
 	fmt.Printf("start pos: %s\n", explorer.location)
-	executeInstructions(m, instructions, explorer)
+
+	handleWrapPartOne := func(m *Map, e *Explorer) (Pos, Pos) {
+		newLocation := e.location.add(e.facing)
+		if m.getLocation(newLocation) == " " {
+			facingOpposite := e.facing.negate()
+			for m.getLocation(newLocation.add(facingOpposite)) != " " {
+				newLocation = newLocation.add(facingOpposite)
+			}
+		}
+		return newLocation, e.facing
+	}
+
+	executeInstructions(m, instructions, explorer, handleWrapPartOne)
 	fmt.Printf("end pos: %s, password is %v\n", explorer.location, explorer.getPassword())
 }
 
