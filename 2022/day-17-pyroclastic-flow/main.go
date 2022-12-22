@@ -18,10 +18,35 @@ func (s *Sequence) next() string {
 	return s.input[s.pos-1 : s.pos]
 }
 
+func (s *Sequence) skip(amount int) {
+	s.pos = (s.pos + amount) % len(s.input)
+}
+
 const rocks = "-+L|x"
 
 type Row struct {
 	columns []bool
+}
+
+func (r *Row) String() string {
+	result := ""
+	for x := 0; x < 7; x++ {
+		if r.columns[x] {
+			result += "#"
+		} else {
+			result += "."
+		}
+	}
+	return result
+}
+
+func (r *Row) equals(other *Row) bool {
+	for x := 0; x < 7; x++ {
+		if r.columns[x] != other.columns[x] {
+			return false
+		}
+	}
+	return true
 }
 
 type Rock struct {
@@ -79,25 +104,22 @@ func newRock(kind string) *Rock {
 }
 
 type Chamber struct {
-	rows        []Row
-	removedRows int64
+	rows []Row
 }
 
 func (c *Chamber) String() string {
 	result := ""
 	for y := len(c.rows) - 1; y > 0; y-- {
 		result += "|"
-		for x := 0; x < 7; x++ {
-			if c.rows[y].columns[x] {
-				result += "#"
-			} else {
-				result += "."
-			}
-		}
+		result += c.rows[y].String()
 		result += "|\n"
 	}
 	result += "+-------+\n"
 	return result
+}
+
+func (c *Chamber) height() int {
+	return len(c.rows) - 1
 }
 
 func hitTest(rock *Rock, offsetX, offsetY int, chamber *Chamber) bool {
@@ -160,10 +182,6 @@ func settleRock(rock *Rock, chamber *Chamber) {
 			chamberRow.columns[rock.x+x] = chamberRow.columns[rock.x+x] || rockRow.columns[x]
 		}
 	}
-	if len(chamber.rows) > 1000 {
-		chamber.rows = chamber.rows[500:]
-		chamber.removedRows += 500
-	}
 }
 
 func moveRock(rock *Rock, chamber *Chamber, jetSequence *Sequence) {
@@ -187,28 +205,123 @@ func moveRock(rock *Rock, chamber *Chamber, jetSequence *Sequence) {
 	}
 }
 
-func simulateRocks(jetSequence *Sequence, rockCount int64) int64 {
-	chamber := &Chamber{rows: []Row{{columns: []bool{true, true, true, true, true, true, true}}}}
+func newChamber() *Chamber {
+	return &Chamber{rows: []Row{{columns: []bool{true, true, true, true, true, true, true}}}}
+}
 
-	rockSequence := &Sequence{input: rocks}
-
-	for i := int64(0); i < rockCount; i++ {
+func simulateRocks(chamber *Chamber, jetSequence, rockSequence *Sequence, rockCount int) int {
+	for i := 0; i < rockCount; i++ {
 		rock := newRock(rockSequence.next())
 		rock.x = 2
 		rock.y = -3
 		moveRock(rock, chamber, jetSequence)
-		if i%10000000 == 0 {
-			fmt.Printf("%.2f%%\n", float64(i)/float64(rockCount)*100)
+	}
+	return chamber.height()
+}
+
+func (c *Chamber) isRepeatedSequence() bool {
+	offset := (len(c.rows) - 1) / 2
+	sequenceRepeats := true
+	for i := 1; i < offset+1; i++ {
+		if !c.rows[i].equals(&c.rows[i+offset]) {
+			sequenceRepeats = false
+			break
 		}
 	}
-	return int64(len(chamber.rows)-1) + chamber.removedRows
+	return sequenceRepeats
+}
+
+func isRepeatedHeightChangeSequence(heightChanges []int) bool {
+	if len(heightChanges)%2 != 0 {
+		return false
+	}
+	offset := len(heightChanges) / 2
+	sequenceRepeats := true
+	for i := 0; i < offset; i++ {
+		if heightChanges[i] != heightChanges[i+offset] {
+			sequenceRepeats = false
+			break
+		}
+	}
+	return sequenceRepeats
+}
+
+func reverseInplace(s []int) {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+}
+
+func findRepeatableSequence(heightChanges []int) []int {
+	reverseInplace(heightChanges)
+	var repeatableSequence []int
+	for i := 0; i < len(heightChanges); i++ {
+		if repeatableSequence != nil {
+			repeats := true
+			for j := 0; j < len(repeatableSequence); j++ {
+				if heightChanges[i+j] != repeatableSequence[j] {
+					repeats = false
+					break
+				}
+			}
+			if repeats {
+				return repeatableSequence
+			}
+		}
+		repeatableSequence = append(repeatableSequence, heightChanges[i])
+	}
+	return nil
+}
+
+func partOne() {
+	jetSequence := &Sequence{input: loadInput("puzzle-input.txt")}
+	rockSequence := &Sequence{input: rocks}
+	chamber := newChamber()
+	fmt.Printf("tower height after 2022 rocks: %v\n", simulateRocks(chamber, jetSequence, rockSequence, 2022))
+}
+
+func partTwo() {
+	jetSequence := &Sequence{input: loadInput("puzzle-input.txt")}
+	rockSequence := &Sequence{input: rocks}
+	chamber := newChamber()
+
+	var heightChanges []int
+	probeRockCount := 10000
+	lastHeight := 0
+	for i := 0; i < probeRockCount; i++ {
+		height := simulateRocks(chamber, jetSequence, rockSequence, 1)
+		if i%len(rocks) == 0 {
+			heightChanges = append(heightChanges, height-lastHeight)
+		}
+	}
+	repeatableSequence := findRepeatableSequence(heightChanges)
+	rocksPerCycle := len(repeatableSequence) * len(rocks)
+	heightPerCycle := 0
+	for _, heightDiff := range repeatableSequence {
+		heightPerCycle += heightDiff
+	}
+	fmt.Printf("found repeatable sequence with height %v, rocks per cycle: %v\n", heightPerCycle, rocksPerCycle)
+	//for {
+	//	lastHeight := chamber.height()
+	//	heightPerCycle = simulateRocks(chamber, jetSequence, rockSequence, len(rocks))
+	//	rocksPerCycle += len(rocks)
+	//	heightChanges = append(heightChanges, heightPerCycle-lastHeight)
+	//	if isRepeatedHeightChangeSequence(heightChanges) {
+	//		break
+	//	}
+	//	//if heightPerCycle > 20 {
+	//	//	fmt.Printf("%s\n", chamber)
+	//	//}
+	//}
+
+	fmt.Printf("cycle height: %v / rocks: %v\n", heightPerCycle, rocksPerCycle)
+
 }
 
 func main() {
-	jetSequence := &Sequence{input: loadInput("puzzle-input.txt")}
-	fmt.Printf("tower height after 2022 rocks: %v\n", simulateRocks(jetSequence, 2022))
-
-	fmt.Printf("tower height after 1000000000000 rocks: %v\n", simulateRocks(jetSequence, 1000000000000))
+	//	partOne()
+	partTwo()
+	//	fmt.Printf("tower height after 1000000000000 rocks: %v\n", simulateRocks(jetSequence, 1000000000000))
 }
 
 func loadInput(filename string) string {
