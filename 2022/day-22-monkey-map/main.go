@@ -138,11 +138,11 @@ func (m *Map) startingPos() *Explorer {
 
 func executeInstructions(m *Map, i *Instructions, e *Explorer) {
 	for {
-		instructions := i.next()
-		if instructions == "" {
+		instruction := i.next()
+		if instruction == "" {
 			break
 		}
-		switch instructions {
+		switch instruction {
 		case "L":
 			e.facing = e.facing.rotateLeft()
 			e.tracePath()
@@ -150,7 +150,7 @@ func executeInstructions(m *Map, i *Instructions, e *Explorer) {
 			e.facing = e.facing.rotateRight()
 			e.tracePath()
 		default:
-			distance, _ := strconv.Atoi(instructions)
+			distance, _ := strconv.Atoi(instruction)
 			for distance > 0 {
 				newLocation := e.location.add(e.facing)
 				if m.getLocation(newLocation) == " " {
