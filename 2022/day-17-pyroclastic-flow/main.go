@@ -292,6 +292,7 @@ func partTwo() {
 		height := simulateRocks(chamber, jetSequence, rockSequence, 1)
 		if i%len(rocks) == 0 {
 			heightChanges = append(heightChanges, height-lastHeight)
+			lastHeight = height
 		}
 	}
 	repeatableSequence := findRepeatableSequence(heightChanges)
@@ -313,8 +314,6 @@ func partTwo() {
 	//	//	fmt.Printf("%s\n", chamber)
 	//	//}
 	//}
-
-	fmt.Printf("cycle height: %v / rocks: %v\n", heightPerCycle, rocksPerCycle)
 
 }
 
