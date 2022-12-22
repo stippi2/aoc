@@ -314,7 +314,14 @@ func partTwo() {
 	//	//	fmt.Printf("%s\n", chamber)
 	//	//}
 	//}
+	repeatableTimes := (1000000000000 - probeRockCount) / rocksPerCycle
+	repeatedHeight := repeatableTimes * heightPerCycle
+	timesLeft := (1000000000000 - probeRockCount) % rocksPerCycle
 
+	simulateRocks(chamber, jetSequence, rockSequence, timesLeft)
+
+	totalHeight := repeatedHeight + chamber.height()
+	fmt.Printf("tower height after 1000000000000 rocks: %v\n", totalHeight)
 }
 
 func main() {
