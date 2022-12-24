@@ -7,6 +7,20 @@ import (
 	"strings"
 )
 
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 type Pos struct {
 	x, y int
 }
@@ -28,7 +42,11 @@ func (p Pos) negate() Pos {
 }
 
 func (p Pos) isBetween(a, b Pos) bool {
-	return p.x >= a.x && p.x <= b.x && p.y >= a.y && p.y <= b.y
+	xMin := min(a.x, b.x)
+	xMax := max(a.x, b.x)
+	yMin := min(a.y, b.y)
+	yMax := max(a.y, b.y)
+	return p.x >= xMin && p.x <= xMax && p.y >= yMin && p.y <= yMax
 }
 
 func (p Pos) String() string {
@@ -255,8 +273,8 @@ var seams = []CubeSeam{
 				rotation: "R",
 			},
 			{
-				a:        Pos{50, 150},
-				b:        Pos{50, 199},
+				a:        Pos{49, 150},
+				b:        Pos{49, 199},
 				facing:   Pos{1, 0},
 				rotation: "L",
 			},
@@ -323,8 +341,8 @@ var seams = []CubeSeam{
 				rotation: "R",
 			},
 			{
-				a:        Pos{50, 99},
-				b:        Pos{50, 50},
+				a:        Pos{50, 50},
+				b:        Pos{50, 99},
 				facing:   Pos{-1, 0},
 				rotation: "L",
 			},
@@ -370,6 +388,7 @@ func main() {
 	fmt.Printf("part 1 end pos: %s, password is %v\n", explorer.location, explorer.getPassword())
 
 	explorer = m.startingPos()
+	instructions.pos = 0
 	executeInstructions(m, instructions, explorer, handleWrapPartTwo)
 	fmt.Printf("part 2 end pos: %s, password is %v\n", explorer.location, explorer.getPassword())
 }
