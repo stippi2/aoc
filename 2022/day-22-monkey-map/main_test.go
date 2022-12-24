@@ -25,7 +25,7 @@ func Test_part1(t *testing.T) {
 	m, instructions := parseInput(exampleInput)
 	explorer := m.startingPos()
 	fmt.Printf("start pos: %s\n", explorer.location)
-	executeInstructions(m, instructions, explorer)
+	executeInstructions(m, instructions, explorer, handleWrapPartOne)
 	printMap(m, explorer)
 	assert.Equal(t, Pos{7, 5}, explorer.location)
 	assert.Equal(t, 6032, explorer.getPassword())

@@ -27,6 +27,10 @@ func (p Pos) negate() Pos {
 	return Pos{-p.x, -p.y}
 }
 
+func (p Pos) isBetween(a, b Pos) bool {
+	return p.x >= a.x && p.x <= b.x && p.y >= a.y && p.y <= b.y
+}
+
 func (p Pos) String() string {
 	return fmt.Sprintf("[%v, %v]", p.x, p.y)
 }
@@ -184,24 +188,190 @@ func printMap(m *Map, e *Explorer) {
 	}
 }
 
+func handleWrapPartOne(m *Map, e *Explorer) (Pos, Pos) {
+	newLocation := e.location.add(e.facing)
+	if m.getLocation(newLocation) == " " {
+		facingOpposite := e.facing.negate()
+		for m.getLocation(newLocation.add(facingOpposite)) != " " {
+			newLocation = newLocation.add(facingOpposite)
+		}
+	}
+	return newLocation, e.facing
+}
+
+type Edge struct {
+	a, b     Pos
+	facing   Pos
+	rotation string
+}
+
+type CubeSeam struct {
+	label string
+	edges []Edge
+}
+
+var seams = []CubeSeam{
+	{
+		label: "FC",
+		edges: []Edge{
+			{
+				a:        Pos{149, 0},
+				b:        Pos{149, 49},
+				facing:   Pos{1, 0},
+				rotation: "RR",
+			},
+			{
+				a:        Pos{99, 149},
+				b:        Pos{99, 100},
+				facing:   Pos{1, 0},
+				rotation: "LL",
+			},
+		},
+	},
+	{
+		label: "FD",
+		edges: []Edge{
+			{
+				a:        Pos{100, 49},
+				b:        Pos{149, 49},
+				facing:   Pos{0, 1},
+				rotation: "R",
+			},
+			{
+				a:        Pos{99, 50},
+				b:        Pos{99, 99},
+				facing:   Pos{1, 0},
+				rotation: "L",
+			},
+		},
+	},
+	{
+		label: "CA",
+		edges: []Edge{
+			{
+				a:        Pos{50, 149},
+				b:        Pos{99, 149},
+				facing:   Pos{0, 1},
+				rotation: "R",
+			},
+			{
+				a:        Pos{50, 150},
+				b:        Pos{50, 199},
+				facing:   Pos{1, 0},
+				rotation: "L",
+			},
+		},
+	},
+	{
+		label: "AF",
+		edges: []Edge{
+			{
+				a:        Pos{0, 199},
+				b:        Pos{49, 199},
+				facing:   Pos{0, 1},
+				rotation: "",
+			},
+			{
+				a:        Pos{100, 0},
+				b:        Pos{149, 0},
+				facing:   Pos{0, -1},
+				rotation: "",
+			},
+		},
+	},
+	{
+		label: "AE",
+		edges: []Edge{
+			{
+				a:        Pos{0, 150},
+				b:        Pos{0, 199},
+				facing:   Pos{-1, 0},
+				rotation: "L",
+			},
+			{
+				a:        Pos{99, 0},
+				b:        Pos{50, 0},
+				facing:   Pos{0, -1},
+				rotation: "R",
+			},
+		},
+	},
+	{
+		label: "BE",
+		edges: []Edge{
+			{
+				a:        Pos{0, 100},
+				b:        Pos{0, 149},
+				facing:   Pos{-1, 0},
+				rotation: "RR",
+			},
+			{
+				a:        Pos{50, 49},
+				b:        Pos{50, 0},
+				facing:   Pos{-1, 0},
+				rotation: "LL",
+			},
+		},
+	},
+	{
+		label: "BD",
+		edges: []Edge{
+			{
+				a:        Pos{0, 100},
+				b:        Pos{49, 100},
+				facing:   Pos{0, -1},
+				rotation: "R",
+			},
+			{
+				a:        Pos{50, 99},
+				b:        Pos{50, 50},
+				facing:   Pos{-1, 0},
+				rotation: "L",
+			},
+		},
+	},
+}
+
+func project(location, from, to Pos, rotation string) Pos {
+	location.x -= from.x
+	location.y -= from.y
+	for i := 0; i < len(rotation); i++ {
+		switch rotation[i : i+1] {
+		case "L":
+			location = location.rotateLeft()
+		case "R":
+			location = location.rotateRight()
+		}
+	}
+	location.x += to.x
+	location.y += to.y
+	return location
+}
+
+func handleWrapPartTwo(_ *Map, e *Explorer) (Pos, Pos) {
+	for _, seam := range seams {
+		for i, edge := range seam.edges {
+			if e.facing == edge.facing && e.location.isBetween(edge.a, edge.b) {
+				otherEdge := seam.edges[(i+1)%2]
+				newFacing := otherEdge.facing.negate()
+				newLocation := project(e.location, edge.a, otherEdge.a, edge.rotation)
+				return newLocation, newFacing
+			}
+		}
+	}
+	return e.location.add(e.facing), e.facing
+}
+
 func main() {
 	m, instructions := parseInput(loadInput("puzzle-input.txt"))
 	explorer := m.startingPos()
 	fmt.Printf("start pos: %s\n", explorer.location)
-
-	handleWrapPartOne := func(m *Map, e *Explorer) (Pos, Pos) {
-		newLocation := e.location.add(e.facing)
-		if m.getLocation(newLocation) == " " {
-			facingOpposite := e.facing.negate()
-			for m.getLocation(newLocation.add(facingOpposite)) != " " {
-				newLocation = newLocation.add(facingOpposite)
-			}
-		}
-		return newLocation, e.facing
-	}
-
 	executeInstructions(m, instructions, explorer, handleWrapPartOne)
-	fmt.Printf("end pos: %s, password is %v\n", explorer.location, explorer.getPassword())
+	fmt.Printf("part 1 end pos: %s, password is %v\n", explorer.location, explorer.getPassword())
+
+	explorer = m.startingPos()
+	executeInstructions(m, instructions, explorer, handleWrapPartTwo)
+	fmt.Printf("part 2 end pos: %s, password is %v\n", explorer.location, explorer.getPassword())
 }
 
 func parseInput(input string) (*Map, *Instructions) {
