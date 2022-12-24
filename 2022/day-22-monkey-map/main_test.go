@@ -84,13 +84,40 @@ func Test_part2(t *testing.T) {
 			expectedFacing:   Pos{0, -1},
 		},
 		{
-			label: "CA",
+			label: "CA-1",
 			explorer: Explorer{
 				location: Pos{50, 149},
 				facing:   Pos{0, 1},
 			},
 			expectedLocation: Pos{49, 150},
 			expectedFacing:   Pos{-1, 0},
+		},
+		{
+			label: "CA-2",
+			explorer: Explorer{
+				location: Pos{99, 149},
+				facing:   Pos{0, 1},
+			},
+			expectedLocation: Pos{49, 199},
+			expectedFacing:   Pos{-1, 0},
+		},
+		{
+			label: "BE",
+			explorer: Explorer{
+				location: Pos{0, 102},
+				facing:   Pos{-1, 0},
+			},
+			expectedLocation: Pos{50, 47},
+			expectedFacing:   Pos{1, 0},
+		},
+		{
+			label: "EA",
+			explorer: Explorer{
+				location: Pos{80, 0},
+				facing:   Pos{0, -1},
+			},
+			expectedLocation: Pos{0, 180},
+			expectedFacing:   Pos{1, 0},
 		},
 	}
 	for _, test := range tests {
