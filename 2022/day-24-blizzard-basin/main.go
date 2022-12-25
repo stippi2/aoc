@@ -183,7 +183,7 @@ func findPathQueue(m *Map, start, end Pos) int {
 		}
 		visited[PosAndMinute{path.tip, path.nextMinute() - 1}] = true
 		if iteration%100000 == 0 {
-			fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), risk: %v\n",
+			fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), minutes: %v\n",
 				iteration, queue.Len(), path.tip.x, path.tip.y, path.cost)
 		}
 
