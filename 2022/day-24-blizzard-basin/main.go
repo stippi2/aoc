@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -40,30 +41,74 @@ type Map struct {
 func (m *Map) nextMinute() {
 	occupiedByBlizzard := make(map[Pos]bool)
 	for _, blizzard := range m.blizzards {
-		blizzard.pos = blizzard.pos.add(blizzard.direction)
-		if blizzard.pos.x < 0 {
-			blizzard.pos.x = m.width - 1
-		}
-		if blizzard.pos.x == m.width {
-			blizzard.pos.x = 0
-		}
-		if blizzard.pos.y < 0 {
-			blizzard.pos.y = m.height - 1
-		}
-		if blizzard.pos.y == m.height {
-			blizzard.pos.y = 0
+		if blizzard.direction.x != 0 || blizzard.direction.y != 0 {
+			blizzard.pos = blizzard.pos.add(blizzard.direction)
+			if blizzard.pos.x == 0 {
+				blizzard.pos.x = m.width - 2
+			}
+			if blizzard.pos.x == m.width-1 {
+				blizzard.pos.x = 1
+			}
+			if blizzard.pos.y == 0 {
+				blizzard.pos.y = m.height - 2
+			}
+			if blizzard.pos.y == m.height-1 {
+				blizzard.pos.y = 1
+			}
 		}
 		occupiedByBlizzard[blizzard.pos] = true
 	}
 	emptyPositions := make(map[Pos]bool)
 	for y := 0; y < m.height; y++ {
-		for x := 0; x < m.height; x++ {
+		for x := 0; x < m.width; x++ {
 			if !occupiedByBlizzard[Pos{x, y}] {
 				emptyPositions[Pos{x, y}] = true
 			}
 		}
 	}
 	m.emptyPositions = append(m.emptyPositions, emptyPositions)
+}
+
+func (m *Map) String() string {
+	positions := make(map[Pos]string)
+	for _, blizzard := range m.blizzards {
+		p := positions[blizzard.pos]
+		if p != "" {
+			value, err := strconv.Atoi(p)
+			if err != nil {
+				value = 2
+			} else {
+				value++
+			}
+			positions[blizzard.pos] = strconv.Itoa(value)
+		} else {
+			switch blizzard.direction {
+			case Pos{0, 0}:
+				positions[blizzard.pos] = "#"
+			case Pos{-1, 0}:
+				positions[blizzard.pos] = "<"
+			case Pos{1, 0}:
+				positions[blizzard.pos] = ">"
+			case Pos{0, -1}:
+				positions[blizzard.pos] = "^"
+			case Pos{0, 1}:
+				positions[blizzard.pos] = "v"
+			}
+		}
+	}
+	result := ""
+	for y := 0; y < m.height; y++ {
+		for x := 0; x < m.width; x++ {
+			p := positions[Pos{x, y}]
+			if p == "" {
+				result += "."
+			} else {
+				result += p
+			}
+		}
+		result += "\n"
+	}
+	return strings.TrimSpace(result)
 }
 
 // PathQueue implements a priority queue, see https://pkg.go.dev/container/heap
