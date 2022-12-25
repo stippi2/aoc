@@ -35,7 +35,7 @@ type Blizzard struct {
 type Map struct {
 	width, height  int
 	emptyPositions []map[Pos]bool
-	blizzards      []Blizzard
+	blizzards      []*Blizzard
 }
 
 func (m *Map) nextMinute() {
@@ -164,10 +164,8 @@ func findPathQueue(m *Map, start, end Pos) int {
 		tip:       start,
 	}
 
-	//	pathMap := make([]*Path, m.width*m.height)
 	visited := make(map[PosAndMinute]bool)
 
-	//	pathMap[m.offset(start.x, start.y)] = startPath
 	queue := &PathQueue{startPath}
 	heap.Init(queue)
 
@@ -181,7 +179,7 @@ func findPathQueue(m *Map, start, end Pos) int {
 			fmt.Printf("found end after %v iterations, paths in queue: %v\n", iteration, queue.Len())
 			fmt.Printf("found end after %v / %v iterations, paths in map: %v\n", time.Since(startTime),
 				iteration, queue.Len())
-			return path.nextMinute()
+			return path.nextMinute() - 1
 		}
 		visited[PosAndMinute{path.tip, path.nextMinute() - 1}] = true
 		if iteration%100000 == 0 {
@@ -199,20 +197,6 @@ func findPathQueue(m *Map, start, end Pos) int {
 				continue
 			}
 			cost := path.cost + 1
-			//pathMapOffset := m.offset(n.x, n.y)
-			//pathToNext := pathMap[pathMapOffset]
-			//if pathToNext == nil {
-			//	pathToNext = &Path{
-			//		positions: append(path.positions, n),
-			//		cost:      cost,
-			//		tip:       n,
-			//	}
-			//	pathMap[pathMapOffset] = pathToNext
-			//	heap.Push(queue, pathToNext)
-			//} else if cost < pathToNext.cost {
-			//	pathToNext.cost = cost
-			//	heap.Push(queue, pathToNext)
-			//}
 			pathToNext := &Path{
 				positions: append(path.positions, n),
 				cost:      cost,
@@ -241,15 +225,15 @@ func parseInput(input string) *Map {
 			p := Pos{x, y}
 			switch line[x] {
 			case '#':
-				m.blizzards = append(m.blizzards, Blizzard{p, Pos{0, 0}})
+				m.blizzards = append(m.blizzards, &Blizzard{p, Pos{0, 0}})
 			case '^':
-				m.blizzards = append(m.blizzards, Blizzard{p, Pos{0, -1}})
+				m.blizzards = append(m.blizzards, &Blizzard{p, Pos{0, -1}})
 			case 'v':
-				m.blizzards = append(m.blizzards, Blizzard{p, Pos{0, 1}})
+				m.blizzards = append(m.blizzards, &Blizzard{p, Pos{0, 1}})
 			case '>':
-				m.blizzards = append(m.blizzards, Blizzard{p, Pos{1, 0}})
+				m.blizzards = append(m.blizzards, &Blizzard{p, Pos{1, 0}})
 			case '<':
-				m.blizzards = append(m.blizzards, Blizzard{p, Pos{-1, 0}})
+				m.blizzards = append(m.blizzards, &Blizzard{p, Pos{-1, 0}})
 			case '.':
 				emptyPositions[p] = true
 			}

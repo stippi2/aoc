@@ -26,12 +26,12 @@ func Test_advanceBlizzards(t *testing.T) {
 #>2.22.#
 #>v..^<#
 ######.#`, m.String())
-	//	m.nextMinute()
-	//	assert.Equal(t, `#.######
-	//#.2>2..#
-	//#.^22^<#
-	//#.>2.^>#
-	//#.>..<.#
-	//######.#`, m.String())
-	//	assert.True(t, m.emptyPositions[2][Pos{1, 2}])
+	m.nextMinute()
+	assert.Equal(t, `#.######
+#.2>2..#
+#.^22^<#
+#.>2.^>#
+#.>..<.#
+######.#`, m.String())
+	assert.True(t, m.emptyPositions[2][Pos{1, 2}])
 }
