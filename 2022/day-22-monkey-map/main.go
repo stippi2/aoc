@@ -307,8 +307,8 @@ var seams = []CubeSeam{
 				rotation: "L",
 			},
 			{
-				a:        Pos{99, 0},
-				b:        Pos{50, 0},
+				a:        Pos{50, 0},
+				b:        Pos{99, 0},
 				facing:   Pos{0, -1},
 				rotation: "R",
 			},
