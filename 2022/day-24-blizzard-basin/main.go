@@ -18,13 +18,20 @@ func (p Pos) add(vector Pos) Pos {
 }
 
 type Path struct {
-	positions []Pos
-	tip       Pos
-	cost      int
+	positions  []Pos
+	tip        Pos
+	end        Pos
+	backTracks int
 }
 
 func (p *Path) nextMinute() int {
 	return len(p.positions)
+}
+
+func (p *Path) cost() int {
+	totalDistance := p.end.x*p.end.x + p.end.y*p.end.y
+	distanceToEnd := (p.end.x-p.tip.x)*(p.end.x-p.tip.x) + (p.end.y-p.tip.y)*(p.end.y-p.tip.y)
+	return len(p.positions)*totalDistance + distanceToEnd/100 + p.backTracks*totalDistance/10
 }
 
 type Blizzard struct {
@@ -36,6 +43,10 @@ type Map struct {
 	width, height  int
 	emptyPositions []map[Pos]bool
 	blizzards      []*Blizzard
+}
+
+func (m *Map) offset(p Pos) int {
+	return p.y*m.width + p.x
 }
 
 func (m *Map) nextMinute() {
@@ -115,7 +126,7 @@ func (m *Map) String() string {
 type PathQueue []*Path
 
 func (q *PathQueue) Len() int           { return len(*q) }
-func (q *PathQueue) Less(i, j int) bool { return (*q)[i].cost < (*q)[j].cost }
+func (q *PathQueue) Less(i, j int) bool { return (*q)[i].cost() < (*q)[j].cost() }
 func (q *PathQueue) Swap(i, j int)      { (*q)[i], (*q)[j] = (*q)[j], (*q)[i] }
 
 func (q *PathQueue) Push(x interface{}) {
@@ -162,9 +173,10 @@ func findPathQueue(m *Map, start, end Pos) int {
 	startPath := &Path{
 		positions: []Pos{start},
 		tip:       start,
+		end:       end,
 	}
 
-	visited := make(map[PosAndMinute]bool)
+	visited := make(map[Pos]int)
 
 	queue := &PathQueue{startPath}
 	heap.Init(queue)
@@ -181,27 +193,22 @@ func findPathQueue(m *Map, start, end Pos) int {
 				iteration, queue.Len())
 			return path.nextMinute() - 1
 		}
-		visited[PosAndMinute{path.tip, path.nextMinute() - 1}] = true
+		visited[path.tip] = visited[path.tip] + 1
 		if iteration%100000 == 0 {
-			fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), minutes: %v\n",
-				iteration, queue.Len(), path.tip.x, path.tip.y, path.cost)
+			fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), cost: %v\n",
+				iteration, queue.Len(), path.tip.x, path.tip.y, path.cost())
 		}
 
 		positions := possiblePositions(m, path.tip, path.nextMinute())
 
-		// For each of the possible positions, create a new path that includes the point taken
-		// If that path is better than the path already stored to reach the new point, replace it
 		for _, n := range positions {
-			// If we visited this position already, it means we did so via a cheaper path
-			if visited[PosAndMinute{n, path.nextMinute()}] {
-				continue
-			}
-			cost := path.cost + 1
 			pathToNext := &Path{
-				positions: append(path.positions, n),
-				cost:      cost,
-				tip:       n,
+				positions:  append(path.positions, n),
+				tip:        n,
+				end:        end,
+				backTracks: visited[n],
 			}
+
 			heap.Push(queue, pathToNext)
 		}
 	}
