@@ -164,12 +164,7 @@ func possiblePositions(m *Map, p Pos, currentMinute int) []Pos {
 	return positions
 }
 
-type PosAndMinute struct {
-	pos    Pos
-	minute int
-}
-
-func findPathQueue(m *Map, start, end Pos) int {
+func findPathQueue(m *Map, start, end Pos, minuteOffset int) int {
 	startPath := &Path{
 		positions: []Pos{start},
 		tip:       start,
@@ -199,7 +194,7 @@ func findPathQueue(m *Map, start, end Pos) int {
 				iteration, queue.Len(), path.tip.x, path.tip.y, path.cost())
 		}
 
-		positions := possiblePositions(m, path.tip, path.nextMinute())
+		positions := possiblePositions(m, path.tip, path.nextMinute()+minuteOffset)
 
 		for _, n := range positions {
 			pathToNext := &Path{
@@ -217,7 +212,11 @@ func findPathQueue(m *Map, start, end Pos) int {
 
 func main() {
 	m := parseInput(loadInput("puzzle-input.txt"))
-	fmt.Printf("minimum minutes: %v\n", findPathQueue(m, Pos{1, 0}, Pos{m.width - 2, m.height - 1}))
+	minutesToGoal := findPathQueue(m, Pos{1, 0}, Pos{m.width - 2, m.height - 1}, 0)
+	fmt.Printf("part one, minutes to goal: %v\n", minutesToGoal)
+	minutesBack := findPathQueue(m, Pos{m.width - 2, m.height - 1}, Pos{1, 0}, minutesToGoal)
+	minutesBackToGoal := findPathQueue(m, Pos{1, 0}, Pos{m.width - 2, m.height - 1}, minutesToGoal+minutesBack)
+	fmt.Printf("part two, minutes to goal, back to start, and back to goal: %v\n", minutesToGoal+minutesBack+minutesBackToGoal)
 }
 
 func parseInput(input string) *Map {
