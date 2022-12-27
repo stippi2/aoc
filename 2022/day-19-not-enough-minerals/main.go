@@ -12,12 +12,16 @@ type Blueprint struct {
 
 type Inventory struct {
 	minerals map[string]int
-	robots map[string]int
+	robots   map[string]int
 }
 
 func (i *Inventory) canBuildRobot(blueprint Blueprint, kind string) bool {
-	for mineral := range blueprint
-	return i.minerals[]
+	for mineral, howMuch := range blueprint.costs[kind] {
+		if i.minerals[mineral] < howMuch {
+			return false
+		}
+	}
+	return true
 }
 
 func main() {
