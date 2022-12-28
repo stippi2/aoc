@@ -3,6 +3,7 @@ package main
 import (
 	"container/heap"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 	"time"
@@ -12,6 +13,40 @@ type Node struct {
 	label          string
 	flowRate       int
 	connectedNodes []*Node
+	distance       map[string]int
+}
+
+type NodePath struct {
+	visited map[*Node]bool
+	tip     *Node
+}
+
+func findDistance(fromNode *Node, toNode *Node) int {
+	var pathQueue []*NodePath
+	for _, node := range fromNode.connectedNodes {
+		pathQueue = append(pathQueue, &NodePath{tip: node, visited: map[*Node]bool{node: true}})
+	}
+	distance := math.MaxInt
+	for len(pathQueue) > 0 {
+		path := pathQueue[0]
+		pathQueue = pathQueue[1:]
+		if path.tip == toNode {
+			if len(path.visited) < distance {
+				distance = len(path.visited)
+			}
+			continue
+		}
+		for _, node := range path.tip.connectedNodes {
+			if !path.visited[node] {
+				nextPath := &NodePath{tip: node, visited: map[*Node]bool{node: true}}
+				for visited := range path.visited {
+					nextPath.visited[visited] = true
+				}
+				pathQueue = append(pathQueue, nextPath)
+			}
+		}
+	}
+	return distance
 }
 
 type Path struct {
@@ -38,7 +73,7 @@ func (p *Path) canOpenValue(node *Node) bool {
 func (p *Path) potential() int {
 	potential := p.pressureReleased
 	for _, v := range p.valvesToOpen {
-		potential += v.flowRate * p.timeRemaining
+		potential += v.flowRate * (p.timeRemaining - p.tip.distance[v.label] - 1)
 	}
 	return potential
 }
@@ -55,7 +90,7 @@ func (p *Path) String() string {
 }
 
 func explore(path *Path, node *Node) *Path {
-	path = &Path{
+	newPath := &Path{
 		timeRemaining:    path.timeRemaining - 1,
 		pressureReleased: path.pressureReleased,
 		actions:          append([]string{}, path.actions...),
@@ -63,18 +98,21 @@ func explore(path *Path, node *Node) *Path {
 		previous:         path.tip,
 		tip:              node,
 	}
-	path.actions = append(path.actions, "visit "+node.label)
-	return path
+	newPath.actions = append(newPath.actions, "visit "+node.label)
+	return newPath
 }
 
 func openValve(path *Path, node *Node) *Path {
+	if path.tip != node {
+		panic(fmt.Sprintf("cannot open node %s, path: %s", node.label, path))
+	}
 	var valuesToOpen []*Node
 	for _, n := range path.valvesToOpen {
 		if n != node {
 			valuesToOpen = append(valuesToOpen, n)
 		}
 	}
-	path = &Path{
+	newPath := &Path{
 		timeRemaining:    path.timeRemaining - 1,
 		pressureReleased: path.pressureReleased,
 		actions:          append([]string{}, path.actions...),
@@ -82,9 +120,9 @@ func openValve(path *Path, node *Node) *Path {
 		previous:         path.previous,
 		tip:              path.tip,
 	}
-	path.pressureReleased += node.flowRate * path.timeRemaining
-	path.actions = append(path.actions, "open "+node.label)
-	return path
+	newPath.pressureReleased += node.flowRate * newPath.timeRemaining
+	newPath.actions = append(newPath.actions, "open "+node.label)
+	return newPath
 }
 
 // PathQueue implements a priority queue, see https://pkg.go.dev/container/heap
@@ -158,7 +196,7 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 			pathToNode := explore(path, n)
 			nextPaths = append(nextPaths, pathToNode)
 			if pathToNode.canOpenValue(n) {
-				nextPaths = append(nextPaths, openValve(path, n))
+				nextPaths = append(nextPaths, openValve(pathToNode, n))
 			}
 		}
 
@@ -211,6 +249,16 @@ func parseInput(input string) *Path {
 		node := nodes[label]
 		for _, connectedLabel := range strings.Split(connectedLabels, ", ") {
 			node.connectedNodes = append(node.connectedNodes, nodes[connectedLabel])
+		}
+	}
+	// Establish the distances
+	for _, fromNode := range nodes {
+		fromNode.distance = map[string]int{}
+		for _, toNode := range nodes {
+			if fromNode == toNode {
+				continue
+			}
+			fromNode.distance[toNode.label] = findDistance(fromNode, toNode)
 		}
 	}
 	return &Path{

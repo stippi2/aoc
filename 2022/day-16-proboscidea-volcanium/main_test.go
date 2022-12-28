@@ -23,6 +23,9 @@ func Test_parseInput(t *testing.T) {
 		assert.Equal(t, root.connectedNodes[0].label, "DD")
 		assert.Equal(t, root.connectedNodes[1].label, "II")
 		assert.Equal(t, root.connectedNodes[2].label, "BB")
+		assert.Equal(t, root.distance["DD"], 1)
+		assert.Equal(t, root.distance["II"], 1)
+		assert.Equal(t, root.distance["CC"], 2)
 	}
 }
 
