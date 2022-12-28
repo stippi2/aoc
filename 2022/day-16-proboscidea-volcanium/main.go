@@ -15,7 +15,7 @@ type Node struct {
 }
 
 type Path struct {
-	elapsedTime      int
+	timeRemaining    int
 	pressureReleased int
 	actions          []string
 	valvesToOpen     []*Node
@@ -23,20 +23,8 @@ type Path struct {
 	tip              *Node
 }
 
-func (p *Path) openValue(node *Node, timeLimit int) {
-	var valuesToOpen []*Node
-	for _, n := range p.valvesToOpen {
-		if n != node {
-			valuesToOpen = append(valuesToOpen, n)
-		}
-	}
-	p.elapsedTime++
-	p.pressureReleased += node.flowRate * (timeLimit - p.elapsedTime)
-	p.valvesToOpen = valuesToOpen
-}
-
-func (p *Path) canOpenValue(node *Node, timeLimit int) bool {
-	if p.elapsedTime == timeLimit {
+func (p *Path) canOpenValue(node *Node) bool {
+	if p.timeRemaining == 0 {
 		return false
 	}
 	for _, n := range p.valvesToOpen {
@@ -50,7 +38,7 @@ func (p *Path) canOpenValue(node *Node, timeLimit int) bool {
 func (p *Path) potential() int {
 	potential := p.pressureReleased
 	for _, v := range p.valvesToOpen {
-		potential += v.flowRate * (30 - p.elapsedTime)
+		potential += v.flowRate * p.timeRemaining
 	}
 	return potential
 }
@@ -66,9 +54,9 @@ func (p *Path) String() string {
 	return s
 }
 
-func explore(path *Path, node *Node, openVale bool, timeLimit int) *Path {
+func explore(path *Path, node *Node) *Path {
 	path = &Path{
-		elapsedTime:      path.elapsedTime + 1,
+		timeRemaining:    path.timeRemaining - 1,
 		pressureReleased: path.pressureReleased,
 		actions:          append([]string{}, path.actions...),
 		valvesToOpen:     append([]*Node{}, path.valvesToOpen...),
@@ -76,10 +64,26 @@ func explore(path *Path, node *Node, openVale bool, timeLimit int) *Path {
 		tip:              node,
 	}
 	path.actions = append(path.actions, "visit "+node.label)
-	if openVale && path.canOpenValue(node, timeLimit) {
-		path.openValue(node, timeLimit)
-		path.actions = append(path.actions, "open "+node.label)
+	return path
+}
+
+func openValve(path *Path, node *Node) *Path {
+	var valuesToOpen []*Node
+	for _, n := range path.valvesToOpen {
+		if n != node {
+			valuesToOpen = append(valuesToOpen, n)
+		}
 	}
+	path = &Path{
+		timeRemaining:    path.timeRemaining - 1,
+		pressureReleased: path.pressureReleased,
+		actions:          append([]string{}, path.actions...),
+		valvesToOpen:     valuesToOpen,
+		previous:         path.previous,
+		tip:              path.tip,
+	}
+	path.pressureReleased += node.flowRate * path.timeRemaining
+	path.actions = append(path.actions, "open "+node.label)
 	return path
 }
 
@@ -117,6 +121,7 @@ func (q *PathQueue) Pop() interface{} {
 }
 
 func maximumPressureRelease(startPath *Path, timeLimit int) int {
+	startPath.timeRemaining = timeLimit
 	queue := &PathQueue{startPath}
 	heap.Init(queue)
 
@@ -129,7 +134,7 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 	for queue.Len() > 0 {
 		iteration++
 		path := heap.Pop(queue).(*Path)
-		if path.elapsedTime == timeLimit || len(path.valvesToOpen) == 0 {
+		if path.timeRemaining == 0 || len(path.valvesToOpen) == 0 {
 			//fmt.Printf("found path with pressure release %v after %v / %v iterations, paths in map: %v\n",
 			//	path.pressureReleased, time.Since(startTime), iteration, queue.Len())
 			//fmt.Printf("path: %s\n", path)
@@ -141,18 +146,20 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 		}
 		if iteration%100000 == 0 {
 			fmt.Printf("iteration: %v, paths: %v, tip: (%v), pressure released: %v, potential: %v, elapsed minutes: %v\n",
-				iteration, queue.Len(), path.tip.label, path.pressureReleased, path.potential(), path.elapsedTime)
+				iteration, queue.Len(), path.tip.label, path.pressureReleased, path.potential(), timeLimit-path.timeRemaining)
 		}
 
 		var nextPaths []*Path
 		for _, n := range path.tip.connectedNodes {
 			if n == path.previous {
+				// No immediate backtracking
 				continue
 			}
-			if path.canOpenValue(n, timeLimit-1) {
-				nextPaths = append(nextPaths, explore(path, n, true, timeLimit))
+			pathToNode := explore(path, n)
+			nextPaths = append(nextPaths, pathToNode)
+			if pathToNode.canOpenValue(n) {
+				nextPaths = append(nextPaths, openValve(path, n))
 			}
-			nextPaths = append(nextPaths, explore(path, n, false, timeLimit))
 		}
 
 		// For each of the possible directions, create a new path that includes the node taken
