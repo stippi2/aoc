@@ -30,6 +30,9 @@ func findDistance(fromNode *Node, toNode *Node) int {
 	for len(pathQueue) > 0 {
 		path := pathQueue[0]
 		pathQueue = pathQueue[1:]
+		if len(path.visited) >= distance {
+			continue
+		}
 		if path.tip == toNode {
 			if len(path.visited) < distance {
 				distance = len(path.visited)
@@ -175,33 +178,30 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 			fmt.Printf("path: %s\n", path)
 			return path.pressureReleased
 		}
-		if iteration%100000 == 0 {
+		if iteration%1000 == 0 {
 			fmt.Printf("iteration: %v, paths: %v, tip: (%v), pressure released: %v, potential: %v, elapsed minutes: %v\n",
 				iteration, queue.Len(), path.tip.label, path.pressureReleased, path.potential(), timeLimit-path.timeRemaining)
 		}
 
-		var nextPaths []*Path
 		for _, n := range path.tip.connectedNodes {
 			if n == path.previous {
 				// No immediate backtracking
 				continue
 			}
 			pathToNode := explore(path, n)
-			nextPaths = append(nextPaths, pathToNode)
+			heap.Push(queue, pathToNode)
 			if pathToNode.canOpenValue(n) {
-				nextPaths = append(nextPaths, openValve(pathToNode, n))
+				heap.Push(queue, openValve(pathToNode, n))
 			}
-		}
-
-		for _, p := range nextPaths {
-			heap.Push(queue, p)
 		}
 	}
 	return 0
 }
 
 func main() {
+	startTime := time.Now()
 	start := parseInput(loadInput("puzzle-input.txt"))
+	fmt.Printf("building node tree: %v\n", time.Since(startTime))
 	fmt.Printf("highest achievable pressure release within 30 minutes: %v\n", maximumPressureRelease(start, 30))
 }
 
