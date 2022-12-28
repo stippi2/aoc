@@ -29,5 +29,6 @@ func Test_parseInput(t *testing.T) {
 func Test_findQualityLevel(t *testing.T) {
 	blueprints := parseInput(exampleInput)
 	assert.Equal(t, 9, findQualityLevel(blueprints[0], 24))
-	//	assert.Equal(t, 12, findQualityLevel(blueprints[1], 24))
+	assert.Equal(t, 12, findQualityLevel(blueprints[1], 24))
+	assert.Equal(t, 62, findQualityLevel(blueprints[1], 32))
 }
