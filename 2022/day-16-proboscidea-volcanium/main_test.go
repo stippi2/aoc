@@ -33,3 +33,10 @@ func Test_part1(t *testing.T) {
 	start := parseInput(exampleInput)
 	assert.Equal(t, 1651, maximumPressureRelease(start, 30))
 }
+
+func Test_part2(t *testing.T) {
+	start := parseInput(exampleInput)
+	// Elephant: DD(20), HH(22), EE(3)
+	// Me: JJ(21), BB(13), CC(2)
+	assert.Equal(t, 1707, maximumPressureReleaseWithElephant(start, 26))
+}

@@ -86,21 +86,34 @@ func (p *Path) String() string {
 	for _, action := range p.actions {
 		s += "\n" + action
 	}
-	for _, valve := range p.valvesToOpen {
-		s += "\nnot yet opened: " + valve.label
+	if len(p.valvesToOpen) > 0 {
+		s += "\nnot yet opened: "
+		for i, valve := range p.valvesToOpen {
+			if i > 0 {
+				s += ", "
+			}
+			s += valve.label
+		}
 	}
 	return s
 }
 
-func explore(path *Path, node *Node) *Path {
-	newPath := &Path{
-		timeRemaining:    path.timeRemaining - 1,
-		pressureReleased: path.pressureReleased,
-		actions:          append([]string{}, path.actions...),
-		valvesToOpen:     append([]*Node{}, path.valvesToOpen...),
-		previous:         path.tip,
-		tip:              node,
+func (p *Path) clone() *Path {
+	return &Path{
+		timeRemaining:    p.timeRemaining,
+		pressureReleased: p.pressureReleased,
+		actions:          append([]string{}, p.actions...),
+		valvesToOpen:     append([]*Node{}, p.valvesToOpen...),
+		previous:         p.previous,
+		tip:              p.tip,
 	}
+}
+
+func explore(path *Path, node *Node) *Path {
+	newPath := path.clone()
+	newPath.timeRemaining--
+	newPath.previous = path.tip // Prevent going back to this node immediately
+	newPath.tip = node
 	newPath.actions = append(newPath.actions, "visit "+node.label)
 	return newPath
 }
@@ -115,14 +128,10 @@ func openValve(path *Path, node *Node) *Path {
 			valuesToOpen = append(valuesToOpen, n)
 		}
 	}
-	newPath := &Path{
-		timeRemaining:    path.timeRemaining - 1,
-		pressureReleased: path.pressureReleased,
-		actions:          append([]string{}, path.actions...),
-		valvesToOpen:     valuesToOpen,
-		previous:         nil, // It's ok to go back to the actual previous node if we just opened the tip
-		tip:              path.tip,
-	}
+	newPath := path.clone()
+	newPath.timeRemaining--
+	newPath.valvesToOpen = valuesToOpen
+	newPath.previous = nil // It's ok to go back to the actual previous node if we just opened the tip
 	newPath.pressureReleased += node.flowRate * newPath.timeRemaining
 	newPath.actions = append(newPath.actions, "open "+node.label)
 	return newPath
@@ -136,10 +145,6 @@ func (q *PathQueue) Len() int {
 }
 
 func (q *PathQueue) Less(i, j int) bool {
-	//if (*q)[i].pressureReleased == (*q)[j].pressureReleased {
-	//	return (*q)[i].elapsedTime < (*q)[j].elapsedTime
-	//}
-	//return (*q)[i].pressureReleased > (*q)[j].pressureReleased
 	return (*q)[i].potential() > (*q)[j].potential()
 }
 
@@ -195,6 +200,11 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 			}
 		}
 	}
+	return 0
+}
+
+func maximumPressureReleaseWithElephant(startPath *Path, timeLimit int) int {
+	//	startPathMe :=
 	return 0
 }
 
