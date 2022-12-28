@@ -211,7 +211,6 @@ func sortNodes(valves []*Node, tip *Node) {
 }
 
 func maximumPressureReleaseWithElephant(startPath *Path, timeLimit int) int {
-	// Not yet taking the distance between the nodes into account:
 	var myValves []*Node
 	myTip := startPath.tip
 	var elephantValves []*Node
