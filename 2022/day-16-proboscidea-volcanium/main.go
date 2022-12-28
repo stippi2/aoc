@@ -117,7 +117,7 @@ func openValve(path *Path, node *Node) *Path {
 		pressureReleased: path.pressureReleased,
 		actions:          append([]string{}, path.actions...),
 		valvesToOpen:     valuesToOpen,
-		previous:         path.previous,
+		previous:         nil, // It's ok to go back to the actual previous node if we just opened the tip
 		tip:              path.tip,
 	}
 	newPath.pressureReleased += node.flowRate * newPath.timeRemaining
@@ -166,21 +166,14 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 	startTime := time.Now()
 	iteration := 0
 
-	//	elapsedTimeToMostPressureReleased := make(map[int]*Path)
-	var bestPath *Path
-
 	for queue.Len() > 0 {
 		iteration++
 		path := heap.Pop(queue).(*Path)
 		if path.timeRemaining == 0 || len(path.valvesToOpen) == 0 {
-			//fmt.Printf("found path with pressure release %v after %v / %v iterations, paths in map: %v\n",
-			//	path.pressureReleased, time.Since(startTime), iteration, queue.Len())
-			//fmt.Printf("path: %s\n", path)
-			//return path.pressureReleased
-			if bestPath == nil || path.pressureReleased > bestPath.pressureReleased {
-				bestPath = path
-			}
-			continue
+			fmt.Printf("found path with pressure release %v after %v / %v iterations, paths in map: %v\n",
+				path.pressureReleased, time.Since(startTime), iteration, queue.Len())
+			fmt.Printf("path: %s\n", path)
+			return path.pressureReleased
 		}
 		if iteration%100000 == 0 {
 			fmt.Printf("iteration: %v, paths: %v, tip: (%v), pressure released: %v, potential: %v, elapsed minutes: %v\n",
@@ -200,23 +193,11 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 			}
 		}
 
-		// For each of the possible directions, create a new path that includes the node taken
 		for _, p := range nextPaths {
-			//pathAtTime := elapsedTimeToMostPressureReleased[p.elapsedTime]
-			//if pathAtTime == nil {
-			//	elapsedTimeToMostPressureReleased[p.elapsedTime] = p
-			//	heap.Push(queue, p)
-			//} else if p.pressureReleased > pathAtTime.pressureReleased {
-			//	elapsedTimeToMostPressureReleased[p.elapsedTime] = p
-			//	heap.Push(queue, p)
-			//}
 			heap.Push(queue, p)
 		}
 	}
-	fmt.Printf("found path with pressure release %v after %v / %v iterations, paths in map: %v\n",
-		bestPath.pressureReleased, time.Since(startTime), iteration, queue.Len())
-	fmt.Printf("path: %s\n", bestPath)
-	return bestPath.pressureReleased
+	return 0
 }
 
 func main() {
