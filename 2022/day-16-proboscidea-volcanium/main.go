@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strings"
 	"time"
 )
@@ -203,9 +204,40 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 	return 0
 }
 
+func sortNodes(valves []*Node, tip *Node) {
+	sort.Slice(valves, func(i, j int) bool {
+		return (valves[i].flowRate - tip.distance[valves[i].label]) > (valves[j].flowRate - tip.distance[valves[j].label])
+	})
+}
+
 func maximumPressureReleaseWithElephant(startPath *Path, timeLimit int) int {
-	//	startPathMe :=
-	return 0
+	// Not yet taking the distance between the nodes into account:
+	var myValves []*Node
+	myTip := startPath.tip
+	var elephantValves []*Node
+	elephantTip := startPath.tip
+	valves := append([]*Node{}, startPath.valvesToOpen...)
+	index := 0
+	for len(valves) > 0 {
+		if index%2 == 0 {
+			sortNodes(valves, myTip)
+			myValves = append(myValves, valves[0])
+			myTip = valves[0]
+		} else {
+			sortNodes(valves, elephantTip)
+			elephantValves = append(elephantValves, valves[0])
+			elephantTip = valves[0]
+		}
+		index++
+		valves = valves[1:]
+	}
+	myPath := startPath.clone()
+	myPath.valvesToOpen = myValves
+
+	elephantPath := startPath.clone()
+	elephantPath.valvesToOpen = elephantValves
+
+	return maximumPressureRelease(myPath, timeLimit) + maximumPressureRelease(elephantPath, timeLimit)
 }
 
 func main() {
@@ -213,6 +245,9 @@ func main() {
 	start := parseInput(loadInput("puzzle-input.txt"))
 	fmt.Printf("building node tree: %v\n", time.Since(startTime))
 	fmt.Printf("highest achievable pressure release within 30 minutes: %v\n", maximumPressureRelease(start, 30))
+
+	startTime = time.Now()
+	fmt.Printf("highest achievable pressure release within 26 minutes with elephant: %v\n", maximumPressureReleaseWithElephant(start, 26))
 }
 
 func parseInput(input string) *Path {
