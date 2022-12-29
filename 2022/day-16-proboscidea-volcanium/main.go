@@ -17,6 +17,16 @@ type Node struct {
 	distance       map[string]int
 }
 
+func removeNode(nodes []*Node, node *Node) []*Node {
+	var newNodes []*Node
+	for _, n := range nodes {
+		if n != node {
+			newNodes = append(newNodes, n)
+		}
+	}
+	return newNodes
+}
+
 type NodePath struct {
 	visited map[*Node]bool
 	tip     *Node
@@ -123,15 +133,9 @@ func openValve(path *Path, node *Node) *Path {
 	if path.tip != node {
 		panic(fmt.Sprintf("cannot open node %s, path: %s", node.label, path))
 	}
-	var valuesToOpen []*Node
-	for _, n := range path.valvesToOpen {
-		if n != node {
-			valuesToOpen = append(valuesToOpen, n)
-		}
-	}
 	newPath := path.clone()
 	newPath.timeRemaining--
-	newPath.valvesToOpen = valuesToOpen
+	newPath.valvesToOpen = removeNode(newPath.valvesToOpen, node)
 	newPath.previous = nil // It's ok to go back to the actual previous node if we just opened the tip
 	newPath.pressureReleased += node.flowRate * newPath.timeRemaining
 	newPath.actions = append(newPath.actions, "open "+node.label)
@@ -231,16 +235,6 @@ func bestNextNode(valves []*Node, tip *Node, remainingTime int) *Node {
 		}
 	}
 	return valves[index]
-}
-
-func removeNode(nodes []*Node, node *Node) []*Node {
-	var newNodes []*Node
-	for _, n := range nodes {
-		if n != node {
-			newNodes = append(newNodes, n)
-		}
-	}
-	return newNodes
 }
 
 type ValveDistribution struct {
