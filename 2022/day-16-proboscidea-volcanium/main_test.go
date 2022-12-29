@@ -17,7 +17,7 @@ Valve II has flow rate=0; tunnels lead to valves AA, JJ
 Valve JJ has flow rate=21; tunnel leads to valve II`
 
 func Test_parseInput(t *testing.T) {
-	root := parseInput(exampleInput).tip
+	root := parseInput(exampleInput).tip[0]
 	assert.Equal(t, root.label, "AA")
 	if assert.Len(t, root.connectedNodes, 3) {
 		assert.Equal(t, root.connectedNodes[0].label, "DD")
@@ -31,12 +31,12 @@ func Test_parseInput(t *testing.T) {
 
 func Test_part1(t *testing.T) {
 	start := parseInput(exampleInput)
-	assert.Equal(t, 1651, maximumPressureRelease(start, 30))
+	assert.Equal(t, 1651, maximumPressureRelease(start, 30, 1))
 }
 
 func Test_part2(t *testing.T) {
 	start := parseInput(exampleInput)
 	// Elephant: DD(20), HH(22), EE(3)
 	// Me: JJ(21), BB(13), CC(2)
-	assert.Equal(t, 1707, maximumPressureReleaseWithElephant(start, 26))
+	assert.Equal(t, 1707, maximumPressureRelease(start, 26, 2))
 }

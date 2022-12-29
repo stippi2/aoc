@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 	"strings"
 	"time"
 )
@@ -30,6 +29,13 @@ func removeNode(nodes []*Node, node *Node) []*Node {
 type NodePath struct {
 	visited map[*Node]bool
 	tip     *Node
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func findDistance(fromNode, toNode *Node) int {
@@ -64,16 +70,16 @@ func findDistance(fromNode, toNode *Node) int {
 }
 
 type Path struct {
-	timeRemaining    int
+	timeRemaining    []int
 	pressureReleased int
 	actions          []string
 	valvesToOpen     []*Node
-	previous         *Node
-	tip              *Node
+	previous         []*Node
+	tip              []*Node
 }
 
-func (p *Path) canOpenValue(node *Node) bool {
-	if p.timeRemaining == 0 {
+func (p *Path) canOpenValue(node *Node, tipIndex int) bool {
+	if p.timeRemaining[tipIndex] == 0 {
 		return false
 	}
 	for _, n := range p.valvesToOpen {
@@ -87,7 +93,11 @@ func (p *Path) canOpenValue(node *Node) bool {
 func (p *Path) potential() int {
 	potential := p.pressureReleased
 	for _, v := range p.valvesToOpen {
-		potential += v.flowRate * (p.timeRemaining - p.tip.distance[v.label] - 1)
+		maxPotential := 0
+		for i, tip := range p.tip {
+			maxPotential = max(maxPotential, p.timeRemaining[i]-tip.distance[v.label]-1)
+		}
+		potential += v.flowRate * maxPotential
 	}
 	return potential
 }
@@ -111,35 +121,52 @@ func (p *Path) String() string {
 
 func (p *Path) clone() *Path {
 	return &Path{
-		timeRemaining:    p.timeRemaining,
+		timeRemaining:    append([]int{}, p.timeRemaining...),
 		pressureReleased: p.pressureReleased,
 		actions:          append([]string{}, p.actions...),
 		valvesToOpen:     append([]*Node{}, p.valvesToOpen...),
-		previous:         p.previous,
-		tip:              p.tip,
+		previous:         append([]*Node{}, p.previous...),
+		tip:              append([]*Node{}, p.tip...),
 	}
 }
 
-func explore(path *Path, node *Node) *Path {
+func explore(path *Path, tipIndex int, node *Node) *Path {
 	newPath := path.clone()
-	newPath.timeRemaining--
-	newPath.previous = path.tip // Prevent going back to this node immediately
-	newPath.tip = node
-	newPath.actions = append(newPath.actions, "visit "+node.label)
+	newPath.timeRemaining[tipIndex]--
+	newPath.previous[tipIndex] = path.tip[tipIndex] // Prevent going back to this node immediately
+	newPath.tip[tipIndex] = node
+	newPath.actions = append(newPath.actions, fmt.Sprintf("[%v] visit %s", tipIndex, node.label))
 	return newPath
 }
 
-func openValve(path *Path, node *Node) *Path {
-	if path.tip != node {
+func travelTo(path *Path, tipIndex int, node *Node) *Path {
+	newPath := path.clone()
+	newPath.timeRemaining[tipIndex] -= path.tip[tipIndex].distance[node.label]
+	newPath.previous[tipIndex] = path.tip[tipIndex] // Prevent going back to this node immediately
+	newPath.tip[tipIndex] = node
+	newPath.actions = append(newPath.actions, fmt.Sprintf("[%v] travel to %s", tipIndex, node.label))
+	return newPath
+}
+
+func openValve(path *Path, tipIndex int, node *Node) *Path {
+	if path.tip[tipIndex] != node {
 		panic(fmt.Sprintf("cannot open node %s, path: %s", node.label, path))
 	}
 	newPath := path.clone()
-	newPath.timeRemaining--
+	newPath.timeRemaining[tipIndex]--
 	newPath.valvesToOpen = removeNode(newPath.valvesToOpen, node)
-	newPath.previous = nil // It's ok to go back to the actual previous node if we just opened the tip
-	newPath.pressureReleased += node.flowRate * newPath.timeRemaining
-	newPath.actions = append(newPath.actions, "open "+node.label)
+	newPath.previous[tipIndex] = nil // It's ok to go back to the actual previous node if we just opened the tip
+	newPath.pressureReleased += node.flowRate * newPath.timeRemaining[tipIndex]
+	newPath.actions = append(newPath.actions, fmt.Sprintf("[%v] open %s", tipIndex, node.label))
 	return newPath
+}
+
+func (p *Path) timeLeft() int {
+	sum := 0
+	for i := 0; i < len(p.timeRemaining); i++ {
+		sum += p.timeRemaining[i]
+	}
+	return sum
 }
 
 // PathQueue implements a priority queue, see https://pkg.go.dev/container/heap
@@ -171,8 +198,14 @@ func (q *PathQueue) Pop() interface{} {
 	return path
 }
 
-func maximumPressureRelease(startPath *Path, timeLimit int) int {
-	startPath.timeRemaining = timeLimit
+func maximumPressureRelease(startPath *Path, timeLimit, workers int) int {
+	for i := 0; i < workers; i++ {
+		startPath.timeRemaining = append(startPath.timeRemaining, timeLimit)
+		startPath.previous = append(startPath.previous, nil)
+	}
+	for i := 1; i < workers; i++ {
+		startPath.tip = append(startPath.tip, startPath.tip[0])
+	}
 	queue := &PathQueue{startPath}
 	heap.Init(queue)
 
@@ -182,180 +215,70 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 	for queue.Len() > 0 {
 		iteration++
 		path := heap.Pop(queue).(*Path)
-		if path.timeRemaining == 0 || len(path.valvesToOpen) == 0 {
+		if path.timeLeft() == 0 || len(path.valvesToOpen) == 0 {
 			fmt.Printf("found path with pressure release %v after %v / %v iterations, paths in map: %v\n",
 				path.pressureReleased, time.Since(startTime), iteration, queue.Len())
 			fmt.Printf("path: %s\n", path)
 			return path.pressureReleased
 		}
 		if iteration%1000 == 0 {
-			fmt.Printf("iteration: %v, paths: %v, tip: (%v), pressure released: %v, potential: %v, elapsed minutes: %v\n",
-				iteration, queue.Len(), path.tip.label, path.pressureReleased, path.potential(), timeLimit-path.timeRemaining)
+			fmt.Printf("iteration: %v, paths: %v, pressure released: %v, potential: %v, elapsed minutes: %v\n",
+				iteration, queue.Len(), path.pressureReleased, path.potential(), timeLimit*workers-path.timeLeft())
 		}
 
-		for _, n := range path.tip.connectedNodes {
-			if n == path.previous {
-				// No immediate backtracking
-				continue
+		if workers == 1 {
+			for _, n := range path.tip[0].connectedNodes {
+				if n == path.previous[0] {
+					// No immediate backtracking
+					continue
+				}
+				pathToNode := explore(path, 0, n)
+				heap.Push(queue, pathToNode)
+				if pathToNode.canOpenValue(n, 0) {
+					heap.Push(queue, openValve(pathToNode, 0, n))
+				}
 			}
-			pathToNode := explore(path, n)
-			heap.Push(queue, pathToNode)
-			if pathToNode.canOpenValue(n) {
-				heap.Push(queue, openValve(pathToNode, n))
+		} else if workers == 2 {
+			for _, n1 := range path.tip[0].connectedNodes {
+				if n1 == path.previous[0] {
+					continue
+				}
+				nextPath := explore(path, 0, n1)
+				for _, n2 := range path.tip[1].connectedNodes {
+					if n2 == path.previous[1] {
+						continue
+					}
+					heap.Push(queue, explore(nextPath, 1, n2))
+				}
+				if nextPath.canOpenValue(nextPath.tip[1], 1) {
+					heap.Push(queue, openValve(nextPath, 1, nextPath.tip[1]))
+				}
+			}
+			if path.canOpenValue(path.tip[0], 0) {
+				nextPath := openValve(path, 0, path.tip[0])
+				for _, n2 := range path.tip[1].connectedNodes {
+					if n2 == path.previous[1] {
+						continue
+					}
+					heap.Push(queue, explore(nextPath, 1, n2))
+				}
+				if nextPath.canOpenValue(nextPath.tip[1], 1) {
+					heap.Push(queue, openValve(nextPath, 1, nextPath.tip[1]))
+				}
 			}
 		}
 	}
 	return 0
 }
 
-func sortNodes(valves []*Node, tip *Node, remainingTime int) {
-	sort.Slice(valves, func(i, j int) bool {
-		valueI := 0
-		valueJ := 0
-		if remainingTime > tip.distance[valves[i].label]+1 {
-			valueI = valves[i].flowRate * (remainingTime - tip.distance[valves[i].label] - 1)
-		}
-		if remainingTime > tip.distance[valves[j].label]+1 {
-			valueJ = valves[j].flowRate * (remainingTime - tip.distance[valves[j].label] - 1)
-		}
-		return valueI > valueJ
-	})
-}
-
-func bestNextNode(valves []*Node, tip *Node, remainingTime int) *Node {
-	if len(valves) == 0 {
-		return nil
-	}
-	sortNodes(valves, tip, remainingTime)
-	index := 0
-	for remainingTime <= tip.distance[valves[index].label]+1 {
-		index++
-		if index == len(valves) {
-			return nil
-		}
-	}
-	return valves[index]
-}
-
-type ValveDistribution struct {
-	pressureReleased      int
-	valvesRemaining       []*Node
-	myValves              []*Node
-	myTip                 *Node
-	myTimeRemaining       int
-	elephantValves        []*Node
-	elephantTip           *Node
-	elephantTimeRemaining int
-}
-
-func (d *ValveDistribution) clone() *ValveDistribution {
-	return &ValveDistribution{
-		pressureReleased:      d.pressureReleased,
-		valvesRemaining:       append([]*Node{}, d.valvesRemaining...),
-		myValves:              append([]*Node{}, d.myValves...),
-		myTip:                 d.myTip,
-		myTimeRemaining:       d.myTimeRemaining,
-		elephantValves:        append([]*Node{}, d.elephantValves...),
-		elephantTip:           d.elephantTip,
-		elephantTimeRemaining: d.elephantTimeRemaining,
-	}
-}
-
-func (d *ValveDistribution) assignToMe(valve *Node) *ValveDistribution {
-	result := d.clone()
-	result.myValves = append(result.myValves, valve)
-	result.valvesRemaining = removeNode(result.valvesRemaining, valve)
-	result.myTimeRemaining -= result.myTip.distance[valve.label] + 1
-	result.pressureReleased += result.myTimeRemaining * valve.flowRate
-	result.myTip = valve
-	return result
-}
-
-func (d *ValveDistribution) assignToElephant(valve *Node) *ValveDistribution {
-	result := d.clone()
-	result.elephantValves = append(result.elephantValves, valve)
-	result.valvesRemaining = removeNode(result.valvesRemaining, valve)
-	result.elephantTimeRemaining -= result.elephantTip.distance[valve.label] + 1
-	result.pressureReleased += result.elephantTimeRemaining * valve.flowRate
-	result.elephantTip = valve
-	return result
-}
-
-func maximumPressureReleaseWithElephant(startPath *Path, timeLimit int) int {
-	valves := append([]*Node{}, startPath.valvesToOpen...)
-	sortNodes(valves, startPath.tip, timeLimit)
-
-	startDistribution := &ValveDistribution{
-		valvesRemaining:       valves,
-		myTip:                 startPath.tip,
-		myTimeRemaining:       timeLimit,
-		elephantTip:           startPath.tip,
-		elephantTimeRemaining: timeLimit,
-	}
-	startDistribution = startDistribution.assignToMe(valves[0])
-	startDistribution = startDistribution.assignToElephant(valves[1])
-
-	queue := []*ValveDistribution{startDistribution}
-
-	bestDistribution := startDistribution
-
-	for len(queue) > 0 {
-		d := queue[0]
-		if d.pressureReleased > bestDistribution.pressureReleased {
-			bestDistribution = d
-		}
-		queue = queue[1:]
-		myBestNode := bestNextNode(d.valvesRemaining, d.myTip, d.myTimeRemaining)
-		if myBestNode != nil {
-			queue = append(queue, d.assignToMe(myBestNode))
-		}
-		elephantBestNode := bestNextNode(d.valvesRemaining, d.elephantTip, d.elephantTimeRemaining)
-		if elephantBestNode != nil {
-			queue = append(queue, d.assignToElephant(elephantBestNode))
-		}
-
-		//for _, valve := range d.valvesRemaining {
-		//	queue = append(queue, d.assignToMe(valve))
-		//	queue = append(queue, d.assignToElephant(valve))
-		//}
-
-		//sortNodes(d.valvesRemaining, d.myTip, d.myTimeRemaining)
-		//for i := 0; i < 3 && i < len(d.valvesRemaining); i++ {
-		//	queue = append(queue, d.assignToMe(d.valvesRemaining[i]))
-		//}
-		//sortNodes(d.valvesRemaining, d.elephantTip, d.elephantTimeRemaining)
-		//for i := 0; i < 3 && i < len(d.valvesRemaining); i++ {
-		//	queue = append(queue, d.assignToElephant(d.valvesRemaining[i]))
-		//}
-	}
-
-	for _, valve := range bestDistribution.myValves {
-		fmt.Printf("my valve: %s\n", valve.label)
-	}
-	for _, valve := range bestDistribution.elephantValves {
-		fmt.Printf("elephant valve: %s\n", valve.label)
-	}
-
-	fmt.Printf("combined pressure release: %v\n", bestDistribution.pressureReleased)
-	myPressureReleased := maximumPressureRelease(&Path{
-		valvesToOpen: bestDistribution.myValves,
-		tip:          startPath.tip,
-	}, timeLimit)
-	elephantPressureReleased := maximumPressureRelease(&Path{
-		valvesToOpen: bestDistribution.elephantValves,
-		tip:          startPath.tip,
-	}, timeLimit)
-	return myPressureReleased + elephantPressureReleased
-}
-
 func main() {
 	startTime := time.Now()
 	start := parseInput(loadInput("puzzle-input.txt"))
 	fmt.Printf("building node tree: %v\n", time.Since(startTime))
-	//	fmt.Printf("highest achievable pressure release within 30 minutes: %v\n", maximumPressureRelease(start, 30))
+	fmt.Printf("highest achievable pressure release within 30 minutes: %v\n", maximumPressureRelease(start, 30, 1))
 
 	startTime = time.Now()
-	fmt.Printf("highest achievable pressure release within 26 minutes with elephant: %v\n", maximumPressureReleaseWithElephant(start, 26))
+	fmt.Printf("highest achievable pressure release within 26 minutes with elephant: %v\n", maximumPressureRelease(start, 26, 2))
 }
 
 func parseInput(input string) *Path {
@@ -396,7 +319,7 @@ func parseInput(input string) *Path {
 		}
 	}
 	return &Path{
-		tip:          nodes["AA"],
+		tip:          []*Node{nodes["AA"]},
 		valvesToOpen: valvesToOpen,
 	}
 }
