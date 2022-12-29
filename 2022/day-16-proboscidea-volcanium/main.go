@@ -22,7 +22,7 @@ type NodePath struct {
 	tip     *Node
 }
 
-func findDistance(fromNode *Node, toNode *Node) int {
+func findDistance(fromNode, toNode *Node) int {
 	var pathQueue []*NodePath
 	for _, node := range fromNode.connectedNodes {
 		pathQueue = append(pathQueue, &NodePath{tip: node, visited: map[*Node]bool{node: true}})
@@ -319,6 +319,20 @@ func maximumPressureReleaseWithElephant(startPath *Path, timeLimit int) int {
 		if elephantBestNode != nil {
 			queue = append(queue, d.assignToElephant(elephantBestNode))
 		}
+
+		//for _, valve := range d.valvesRemaining {
+		//	queue = append(queue, d.assignToMe(valve))
+		//	queue = append(queue, d.assignToElephant(valve))
+		//}
+
+		//sortNodes(d.valvesRemaining, d.myTip, d.myTimeRemaining)
+		//for i := 0; i < 3 && i < len(d.valvesRemaining); i++ {
+		//	queue = append(queue, d.assignToMe(d.valvesRemaining[i]))
+		//}
+		//sortNodes(d.valvesRemaining, d.elephantTip, d.elephantTimeRemaining)
+		//for i := 0; i < 3 && i < len(d.valvesRemaining); i++ {
+		//	queue = append(queue, d.assignToElephant(d.valvesRemaining[i]))
+		//}
 	}
 
 	for _, valve := range bestDistribution.myValves {
@@ -328,14 +342,23 @@ func maximumPressureReleaseWithElephant(startPath *Path, timeLimit int) int {
 		fmt.Printf("elephant valve: %s\n", valve.label)
 	}
 
-	return bestDistribution.pressureReleased
+	//return bestDistribution.pressureReleased
+	myPressureReleased := maximumPressureRelease(&Path{
+		valvesToOpen: bestDistribution.myValves,
+		tip:          startPath.tip,
+	}, timeLimit)
+	elephantPressureReleased := maximumPressureRelease(&Path{
+		valvesToOpen: bestDistribution.elephantValves,
+		tip:          startPath.tip,
+	}, timeLimit)
+	return myPressureReleased + elephantPressureReleased
 }
 
 func main() {
 	startTime := time.Now()
 	start := parseInput(loadInput("puzzle-input.txt"))
 	fmt.Printf("building node tree: %v\n", time.Since(startTime))
-	fmt.Printf("highest achievable pressure release within 30 minutes: %v\n", maximumPressureRelease(start, 30))
+	//	fmt.Printf("highest achievable pressure release within 30 minutes: %v\n", maximumPressureRelease(start, 30))
 
 	startTime = time.Now()
 	fmt.Printf("highest achievable pressure release within 26 minutes with elephant: %v\n", maximumPressureReleaseWithElephant(start, 26))
