@@ -206,8 +206,8 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 
 func sortNodes(valves []*Node, tip *Node, remainingTime int) {
 	sort.Slice(valves, func(i, j int) bool {
-		valueI := valves[i].flowRate
-		valueJ := valves[j].flowRate
+		valueI := 0
+		valueJ := 0
 		if remainingTime > tip.distance[valves[i].label] {
 			valueI = valves[i].flowRate * (remainingTime - tip.distance[valves[i].label] - 1)
 		}
@@ -342,7 +342,7 @@ func maximumPressureReleaseWithElephant(startPath *Path, timeLimit int) int {
 		fmt.Printf("elephant valve: %s\n", valve.label)
 	}
 
-	//return bestDistribution.pressureReleased
+	fmt.Printf("combined pressure release: %v\n", bestDistribution.pressureReleased)
 	myPressureReleased := maximumPressureRelease(&Path{
 		valvesToOpen: bestDistribution.myValves,
 		tip:          startPath.tip,
