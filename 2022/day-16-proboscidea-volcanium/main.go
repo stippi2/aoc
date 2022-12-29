@@ -204,39 +204,129 @@ func maximumPressureRelease(startPath *Path, timeLimit int) int {
 	return 0
 }
 
-func sortNodes(valves []*Node, tip *Node) {
+func sortNodes(valves []*Node, tip *Node, remainingTime int) {
 	sort.Slice(valves, func(i, j int) bool {
-		return (valves[i].flowRate - tip.distance[valves[i].label]) > (valves[j].flowRate - tip.distance[valves[j].label])
+		valueI := valves[i].flowRate
+		valueJ := valves[j].flowRate
+		if remainingTime > tip.distance[valves[i].label] {
+			valueI = valves[i].flowRate * (remainingTime - tip.distance[valves[i].label] - 1)
+		}
+		if remainingTime > tip.distance[valves[j].label] {
+			valueJ = valves[j].flowRate * (remainingTime - tip.distance[valves[j].label] - 1)
+		}
+		return valueI > valueJ
 	})
 }
 
-func maximumPressureReleaseWithElephant(startPath *Path, timeLimit int) int {
-	var myValves []*Node
-	myTip := startPath.tip
-	var elephantValves []*Node
-	elephantTip := startPath.tip
-	valves := append([]*Node{}, startPath.valvesToOpen...)
-	index := 0
-	for len(valves) > 0 {
-		if index%2 == 0 {
-			sortNodes(valves, myTip)
-			myValves = append(myValves, valves[0])
-			myTip = valves[0]
-		} else {
-			sortNodes(valves, elephantTip)
-			elephantValves = append(elephantValves, valves[0])
-			elephantTip = valves[0]
-		}
-		index++
-		valves = valves[1:]
+func bestNextNode(valves []*Node, tip *Node, remainingTime int) *Node {
+	if len(valves) == 0 {
+		return nil
 	}
-	myPath := startPath.clone()
-	myPath.valvesToOpen = myValves
+	sortNodes(valves, tip, remainingTime)
+	index := 0
+	for remainingTime <= tip.distance[valves[index].label]+1 {
+		index++
+		if index == len(valves) {
+			return nil
+		}
+	}
+	return valves[index]
+}
 
-	elephantPath := startPath.clone()
-	elephantPath.valvesToOpen = elephantValves
+func removeNode(nodes []*Node, node *Node) []*Node {
+	var newNodes []*Node
+	for _, n := range nodes {
+		if n != node {
+			newNodes = append(newNodes, n)
+		}
+	}
+	return newNodes
+}
 
-	return maximumPressureRelease(myPath, timeLimit) + maximumPressureRelease(elephantPath, timeLimit)
+type ValveDistribution struct {
+	pressureReleased      int
+	valvesRemaining       []*Node
+	myValves              []*Node
+	myTip                 *Node
+	myTimeRemaining       int
+	elephantValves        []*Node
+	elephantTip           *Node
+	elephantTimeRemaining int
+}
+
+func (d *ValveDistribution) clone() *ValveDistribution {
+	return &ValveDistribution{
+		pressureReleased:      d.pressureReleased,
+		valvesRemaining:       append([]*Node{}, d.valvesRemaining...),
+		myValves:              append([]*Node{}, d.myValves...),
+		myTip:                 d.myTip,
+		myTimeRemaining:       d.myTimeRemaining,
+		elephantValves:        append([]*Node{}, d.elephantValves...),
+		elephantTip:           d.elephantTip,
+		elephantTimeRemaining: d.elephantTimeRemaining,
+	}
+}
+
+func (d *ValveDistribution) assignToMe(valve *Node) *ValveDistribution {
+	result := d.clone()
+	result.valvesRemaining = removeNode(result.valvesRemaining, valve)
+	result.myTimeRemaining -= result.myTip.distance[valve.label] + 1
+	result.pressureReleased += result.myTimeRemaining * valve.flowRate
+	result.myTip = valve
+	return result
+}
+
+func (d *ValveDistribution) assignToElephant(valve *Node) *ValveDistribution {
+	result := d.clone()
+	result.valvesRemaining = removeNode(result.valvesRemaining, valve)
+	result.elephantTimeRemaining -= result.elephantTip.distance[valve.label] + 1
+	result.pressureReleased += result.elephantTimeRemaining * valve.flowRate
+	result.elephantTip = valve
+	return result
+}
+
+func maximumPressureReleaseWithElephant(startPath *Path, timeLimit int) int {
+	valves := append([]*Node{}, startPath.valvesToOpen...)
+	sortNodes(valves, startPath.tip, timeLimit)
+
+	startDistribution := &ValveDistribution{
+		valvesRemaining:       valves,
+		myTip:                 startPath.tip,
+		myTimeRemaining:       timeLimit,
+		elephantTip:           startPath.tip,
+		elephantTimeRemaining: timeLimit,
+	}
+	startDistribution = startDistribution.assignToMe(valves[0])
+	startDistribution = startDistribution.assignToElephant(valves[1])
+
+	queue := []*ValveDistribution{startDistribution}
+
+	bestDistribution := startDistribution
+
+	for len(queue) > 0 {
+		d := queue[0]
+		if d.pressureReleased > bestDistribution.pressureReleased {
+			bestDistribution = d
+		}
+		queue = queue[1:]
+		myBestNode := bestNextNode(d.valvesRemaining, d.myTip, d.myTimeRemaining)
+		if myBestNode != nil {
+			queue = append(queue, d.assignToMe(myBestNode))
+		}
+		elephantBestNode := bestNextNode(d.valvesRemaining, d.elephantTip, d.elephantTimeRemaining)
+		if elephantBestNode != nil {
+			queue = append(queue, d.assignToElephant(elephantBestNode))
+		}
+	}
+
+	for _, valve := range bestDistribution.myValves {
+		fmt.Printf("my valve: %s\n", valve.label)
+	}
+	for _, valve := range bestDistribution.elephantValves {
+		fmt.Printf("elephant valve: %s\n", valve.label)
+	}
+
+	return bestDistribution.pressureReleased
 }
 
 func main() {
