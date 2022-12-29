@@ -269,6 +269,7 @@ func (d *ValveDistribution) clone() *ValveDistribution {
 
 func (d *ValveDistribution) assignToMe(valve *Node) *ValveDistribution {
 	result := d.clone()
+	result.myValves = append(result.myValves, valve)
 	result.valvesRemaining = removeNode(result.valvesRemaining, valve)
 	result.myTimeRemaining -= result.myTip.distance[valve.label] + 1
 	result.pressureReleased += result.myTimeRemaining * valve.flowRate
@@ -278,6 +279,7 @@ func (d *ValveDistribution) assignToMe(valve *Node) *ValveDistribution {
 
 func (d *ValveDistribution) assignToElephant(valve *Node) *ValveDistribution {
 	result := d.clone()
+	result.elephantValves = append(result.elephantValves, valve)
 	result.valvesRemaining = removeNode(result.valvesRemaining, valve)
 	result.elephantTimeRemaining -= result.elephantTip.distance[valve.label] + 1
 	result.pressureReleased += result.elephantTimeRemaining * valve.flowRate
