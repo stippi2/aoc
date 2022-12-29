@@ -212,10 +212,10 @@ func sortNodes(valves []*Node, tip *Node, remainingTime int) {
 	sort.Slice(valves, func(i, j int) bool {
 		valueI := 0
 		valueJ := 0
-		if remainingTime > tip.distance[valves[i].label] {
+		if remainingTime > tip.distance[valves[i].label]+1 {
 			valueI = valves[i].flowRate * (remainingTime - tip.distance[valves[i].label] - 1)
 		}
-		if remainingTime > tip.distance[valves[j].label] {
+		if remainingTime > tip.distance[valves[j].label]+1 {
 			valueJ = valves[j].flowRate * (remainingTime - tip.distance[valves[j].label] - 1)
 		}
 		return valueI > valueJ
