@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -29,7 +30,29 @@ func fromSnafu(s string) int {
 }
 
 func fromDecimal(value int) string {
-	return ""
+	quintal := strconv.FormatInt(int64(value), 5)
+	result := ""
+	transfer := uint8(0)
+	for i := len(quintal) - 1; i >= 0; i-- {
+		newTransfer := uint8(1)
+		digit := quintal[i] - '0' + transfer
+		if digit == 3 {
+			result = "=" + result
+		} else if digit == 4 {
+			result = "-" + result
+		} else if digit == 5 {
+			result = "0" + result
+			newTransfer = 2
+		} else {
+			result = string('0'+digit) + result
+			newTransfer = 0
+		}
+		transfer = newTransfer
+	}
+	if transfer != 0 {
+		result = string('0'+transfer) + result
+	}
+	return result
 }
 
 func sum(values []int) int {
@@ -42,7 +65,7 @@ func sum(values []int) int {
 
 func main() {
 	values := parseInput(loadInput("puzzle-input.txt"))
-	fmt.Printf("sum: %v\n", sum(values))
+	fmt.Printf("sum: %v\n", fromDecimal(sum(values)))
 }
 
 func parseInput(input string) []int {
