@@ -67,53 +67,24 @@ func (d *Droplet) countSurfacesAlongVector(p Pos, vector Pos) int {
 	return inOutFlips
 }
 
-func (d *Droplet) fillPocketsAlongVector(p Pos, vector Pos) {
-	inside := false
-	for d.isWithinBounds(p) {
-		if !inside && d.voxels[p] {
-			inside = true
-		} else if !d.voxels[p] && inside {
-			d.fill(p)
-		}
-		p = p.add(vector)
-	}
-}
-
-func (d *Droplet) fill(start Pos) {
-	if d.voxels[start] {
-		return
-	}
-	visited := make(map[Pos]bool)
-	queue := []Pos{start}
-	reachedOutside := false
-	for len(queue) > 0 {
-		tip := queue[0]
-		if !d.isWithinBounds(tip) {
-			reachedOutside = true
-			break
-		}
-		visited[tip] = true
-		queue = queue[1:]
-		nextPositions := []Pos{
-			tip.add(Pos{1, 0, 0}),
-			tip.add(Pos{-1, 0, 0}),
-			tip.add(Pos{0, 1, 0}),
-			tip.add(Pos{0, -1, 0}),
-			tip.add(Pos{0, 0, 1}),
-			tip.add(Pos{0, 0, -1}),
-		}
-		for _, pos := range nextPositions {
-			if !visited[pos] && !d.voxels[pos] {
-				queue = append(queue, pos)
-			}
+func (d *Droplet) surfaceArea() int {
+	area := 0
+	for x := d.minX; x <= d.maxX; x++ {
+		for y := d.minY; y <= d.maxY; y++ {
+			area += d.countSurfacesAlongVector(Pos{x, y, d.minZ}, Pos{0, 0, 1})
 		}
 	}
-	if !reachedOutside {
-		// Fill the interior
-		for pos := range visited {
-			d.voxels[pos] = true
+	for x := d.minX; x <= d.maxX; x++ {
+		for z := d.minZ; z <= d.maxZ; z++ {
+			area += d.countSurfacesAlongVector(Pos{x, d.minY, z}, Pos{0, 1, 0})
 		}
 	}
+	for y := d.minY; y <= d.maxY; y++ {
+		for z := d.minZ; z <= d.maxZ; z++ {
+			area += d.countSurfacesAlongVector(Pos{d.minX, y, z}, Pos{1, 0, 0})
+		}
+	}
+	return area
 }
 
 func (d *Droplet) getEnclosingVolume() *Droplet {
@@ -148,38 +119,13 @@ func (d *Droplet) getEnclosingVolume() *Droplet {
 	return result
 }
 
-func (d *Droplet) sweepVolume(callback func(start, vector Pos)) {
-	for x := d.minX; x <= d.maxX; x++ {
-		for y := d.minY; y <= d.maxY; y++ {
-			callback(Pos{x, y, d.minZ}, Pos{0, 0, 1})
-		}
-	}
-	for x := d.minX; x <= d.maxX; x++ {
-		for z := d.minZ; z <= d.maxZ; z++ {
-			callback(Pos{x, d.minY, z}, Pos{0, 1, 0})
-		}
-	}
-	for y := d.minY; y <= d.maxY; y++ {
-		for z := d.minZ; z <= d.maxZ; z++ {
-			callback(Pos{d.minX, y, z}, Pos{1, 0, 0})
-		}
-	}
-}
-
-func (d *Droplet) fillAllPockets() {
-	for x := d.minX; x <= d.maxX; x++ {
-		for y := d.minY; y <= d.maxY; y++ {
-			d.fillPocketsAlongVector(Pos{x, y, d.minZ}, Pos{0, 0, 1})
-		}
-	}
-}
-
-func (d *Droplet) surfaceArea() int {
-	area := 0
-	d.sweepVolume(func(start, vector Pos) {
-		area += d.countSurfacesAlongVector(start, vector)
-	})
-	return area
+func (d *Droplet) exteriorSurfaceArea() int {
+	enclosing := d.getEnclosingVolume()
+	exteriorArea := enclosing.surfaceArea()
+	exteriorArea -= 2 * (enclosing.maxX - enclosing.minX + 1) * (enclosing.maxY - enclosing.minY + 1)
+	exteriorArea -= 2 * (enclosing.maxX - enclosing.minX + 1) * (enclosing.maxZ - enclosing.minZ + 1)
+	exteriorArea -= 2 * (enclosing.maxY - enclosing.minY + 1) * (enclosing.maxZ - enclosing.minZ + 1)
+	return exteriorArea
 }
 
 func main() {
@@ -188,17 +134,7 @@ func main() {
 	fmt.Printf("part 1, surface area including trapped air: %v (%v)\n", droplet.surfaceArea(), time.Since(start))
 
 	start = time.Now()
-	droplet.fillAllPockets()
-	fmt.Printf("part 2, exterior surface area: %v (%v)\n", droplet.surfaceArea(), time.Since(start))
-
-	droplet = parseInput(loadInput("puzzle-input.txt"))
-	start = time.Now()
-	enclosing := droplet.getEnclosingVolume()
-	exteriorArea := enclosing.surfaceArea()
-	exteriorArea -= 2 * (enclosing.maxX - enclosing.minX + 1) * (enclosing.maxY - enclosing.minY + 1)
-	exteriorArea -= 2 * (enclosing.maxX - enclosing.minX + 1) * (enclosing.maxZ - enclosing.minZ + 1)
-	exteriorArea -= 2 * (enclosing.maxY - enclosing.minY + 1) * (enclosing.maxZ - enclosing.minZ + 1)
-	fmt.Printf("part 2, exterior surface area via enclosing surface: %v (%v)\n", exteriorArea, time.Since(start))
+	fmt.Printf("part 2, exterior surface area: %v (%v)\n", droplet.exteriorSurfaceArea(), time.Since(start))
 }
 
 func parseInput(input string) *Droplet {

@@ -38,18 +38,5 @@ func Test_getEnclosingVolume(t *testing.T) {
 
 func Test_part2(t *testing.T) {
 	droplet := parseInput(exampleInput)
-	droplet.fillAllPockets()
-	assert.Equal(t, 58, droplet.surfaceArea())
-}
-
-func Test_part2_enclosingVolume(t *testing.T) {
-	droplet := parseInput(exampleInput)
-
-	enclosing := droplet.getEnclosingVolume()
-	exteriorArea := enclosing.surfaceArea()
-	exteriorArea -= 2 * (enclosing.maxX - enclosing.minX + 1) * (enclosing.maxY - enclosing.minY + 1)
-	exteriorArea -= 2 * (enclosing.maxX - enclosing.minX + 1) * (enclosing.maxZ - enclosing.minZ + 1)
-	exteriorArea -= 2 * (enclosing.maxY - enclosing.minY + 1) * (enclosing.maxZ - enclosing.minZ + 1)
-
-	assert.Equal(t, 58, exteriorArea)
+	assert.Equal(t, 58, droplet.exteriorSurfaceArea())
 }
