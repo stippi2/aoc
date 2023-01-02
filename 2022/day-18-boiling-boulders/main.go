@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"time"
 )
 
 type Pos struct {
@@ -115,6 +116,38 @@ func (d *Droplet) fill(start Pos) {
 	}
 }
 
+func (d *Droplet) getEnclosingVolume() *Droplet {
+	result := &Droplet{
+		voxels: make(map[Pos]bool),
+		minX:   d.minX - 1,
+		maxX:   d.maxX + 1,
+		minY:   d.minY - 1,
+		maxY:   d.maxY + 1,
+		minZ:   d.minZ - 1,
+		maxZ:   d.maxZ + 1,
+	}
+	queue := []Pos{{result.minX, result.minY, result.minZ}}
+	for len(queue) > 0 {
+		tip := queue[len(queue)-1]
+		queue = queue[:len(queue)-1]
+		result.voxels[tip] = true
+		nextPositions := []Pos{
+			tip.add(Pos{1, 0, 0}),
+			tip.add(Pos{-1, 0, 0}),
+			tip.add(Pos{0, 1, 0}),
+			tip.add(Pos{0, -1, 0}),
+			tip.add(Pos{0, 0, 1}),
+			tip.add(Pos{0, 0, -1}),
+		}
+		for _, pos := range nextPositions {
+			if result.isWithinBounds(pos) && !result.voxels[pos] && !d.voxels[pos] {
+				queue = append(queue, pos)
+			}
+		}
+	}
+	return result
+}
+
 func (d *Droplet) sweepVolume(callback func(start, vector Pos)) {
 	for x := d.minX; x <= d.maxX; x++ {
 		for y := d.minY; y <= d.maxY; y++ {
@@ -134,9 +167,11 @@ func (d *Droplet) sweepVolume(callback func(start, vector Pos)) {
 }
 
 func (d *Droplet) fillAllPockets() {
-	d.sweepVolume(func(start, vector Pos) {
-		d.fillPocketsAlongVector(start, vector)
-	})
+	for x := d.minX; x <= d.maxX; x++ {
+		for y := d.minY; y <= d.maxY; y++ {
+			d.fillPocketsAlongVector(Pos{x, y, d.minZ}, Pos{0, 0, 1})
+		}
+	}
 }
 
 func (d *Droplet) surfaceArea() int {
@@ -149,10 +184,21 @@ func (d *Droplet) surfaceArea() int {
 
 func main() {
 	droplet := parseInput(loadInput("puzzle-input.txt"))
-	fmt.Printf("part 1, surface area including trapped air: %v\n", droplet.surfaceArea())
+	start := time.Now()
+	fmt.Printf("part 1, surface area including trapped air: %v (%v)\n", droplet.surfaceArea(), time.Since(start))
 
+	start = time.Now()
 	droplet.fillAllPockets()
-	fmt.Printf("part 2, exterior surface area: %v\n", droplet.surfaceArea())
+	fmt.Printf("part 2, exterior surface area: %v (%v)\n", droplet.surfaceArea(), time.Since(start))
+
+	droplet = parseInput(loadInput("puzzle-input.txt"))
+	start = time.Now()
+	enclosing := droplet.getEnclosingVolume()
+	exteriorArea := enclosing.surfaceArea()
+	exteriorArea -= 2 * (enclosing.maxX - enclosing.minX + 1) * (enclosing.maxY - enclosing.minY + 1)
+	exteriorArea -= 2 * (enclosing.maxX - enclosing.minX + 1) * (enclosing.maxZ - enclosing.minZ + 1)
+	exteriorArea -= 2 * (enclosing.maxY - enclosing.minY + 1) * (enclosing.maxZ - enclosing.minZ + 1)
+	fmt.Printf("part 2, exterior surface area via enclosing surface: %v (%v)\n", exteriorArea, time.Since(start))
 }
 
 func parseInput(input string) *Droplet {
