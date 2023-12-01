@@ -58,7 +58,6 @@ func main() {
 func parseInput(input string, tokens map[string]int) []int {
 	input = strings.TrimSpace(input)
 	lines := strings.Split(input, "\n")
-	fmt.Printf("Found %v lines\n", len(lines))
 	result := make([]int, len(lines))
 	for i, line := range lines {
 		var numbers []int = nil
