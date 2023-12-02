@@ -36,6 +36,26 @@ func (g *Game) addCubeSet(s string) {
 	g.cubes = append(g.cubes, cubeSet)
 }
 
+func (g *Game) requiredCubes() CubeSet {
+	requiredCubes := CubeSet{}
+	for _, cubeSet := range g.cubes {
+		if requiredCubes.red < cubeSet.red {
+			requiredCubes.red = cubeSet.red
+		}
+		if requiredCubes.green < cubeSet.green {
+			requiredCubes.green = cubeSet.green
+		}
+		if requiredCubes.blue < cubeSet.blue {
+			requiredCubes.blue = cubeSet.blue
+		}
+	}
+	return requiredCubes
+}
+
+func (c CubeSet) power() int {
+	return c.red * c.green * c.blue
+}
+
 func filter(games []Game, f func(Game) bool) []Game {
 	filtered := make([]Game, 0)
 	for _, game := range games {
@@ -70,6 +90,13 @@ func main() {
 	maxCubes := CubeSet{red: 12, green: 13, blue: 14}
 	possibleGames := getPossibleGames(games, maxCubes)
 	fmt.Printf("Possible games: %d\n", sumIds(possibleGames))
+
+	sumOfPowers := 0
+	for _, game := range games {
+		sumOfPowers += game.requiredCubes().power()
+	}
+
+	fmt.Printf("Power of all required cube sets: %d\n", sumOfPowers)
 }
 
 func parseInput(input string) []Game {
