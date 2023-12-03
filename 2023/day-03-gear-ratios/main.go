@@ -7,6 +7,19 @@ import (
 	"strings"
 )
 
+type Pos struct {
+	x int
+	y int
+}
+
+var gears = map[Pos][]int{}
+
+func addNumberToGear(number int, x, y int) {
+	gear := gears[Pos{x, y}]
+	gear = append(gear, number)
+	gears[Pos{x, y}] = gear
+}
+
 func typeOfSymbol(symbol uint8) string {
 	switch symbol {
 	case '.':
@@ -18,53 +31,55 @@ func typeOfSymbol(symbol uint8) string {
 	}
 }
 
+type Symbol struct {
+	symbol string
+	pos    Pos
+}
+
+func symbolAt(lines []string, x, y int) *Symbol {
+	if x < 0 || y < 0 || y >= len(lines) || x >= len(lines[y]) {
+		return nil
+	}
+	if typeOfSymbol(lines[y][x]) == "symbol" {
+		return &Symbol{string(lines[y][x]), Pos{x, y}}
+	}
+	return nil
+}
+
+func appendIfSymbol(symbols []Symbol, lines []string, x, y int) []Symbol {
+	symbol := symbolAt(lines, x, y)
+	if symbol != nil {
+		symbols = append(symbols, *symbol)
+	}
+	return symbols
+}
+
 func getPartValue(lines []string, startOfNumber, endOfNumber, y int) int {
 	number, _ := strconv.Atoi(lines[y][startOfNumber:endOfNumber])
-	fmt.Printf("Found number %d", number)
-	if number == 617 {
-		fmt.Printf("")
-	}
-
-	minX := startOfNumber - 1
-	if minX < 0 {
-		minX = 0
-	}
-	maxX := endOfNumber + 1
-	if maxX > len(lines[y]) {
-		maxX = len(lines[y])
-	}
+	var symbols []Symbol
 
 	if y > 0 {
-		for x := minX; x < maxX; x++ {
-			if typeOfSymbol(lines[y-1][x]) == "symbol" {
-				fmt.Printf(" - is part\n")
-				return number
-			}
+		for x := startOfNumber - 1; x <= endOfNumber; x++ {
+			symbols = appendIfSymbol(symbols, lines, x, y-1)
 		}
 	}
 	if y < len(lines)-1 {
-		for x := minX; x < maxX; x++ {
-			if typeOfSymbol(lines[y+1][x]) == "symbol" {
-				fmt.Printf(" - is part\n")
-				return number
-			}
+		for x := startOfNumber - 1; x <= endOfNumber; x++ {
+			symbols = appendIfSymbol(symbols, lines, x, y+1)
 		}
 	}
-	if startOfNumber > 0 {
-		if typeOfSymbol(lines[y][startOfNumber-1]) == "symbol" {
-			fmt.Printf(" - is part\n")
-			return number
-		}
-	}
-	if endOfNumber < len(lines[y]) {
-		if typeOfSymbol(lines[y][endOfNumber]) == "symbol" {
-			fmt.Printf(" - is part\n")
-			return number
-		}
-	}
+	symbols = appendIfSymbol(symbols, lines, startOfNumber-1, y)
+	symbols = appendIfSymbol(symbols, lines, endOfNumber, y)
 
-	fmt.Printf(" - NOT PART\n")
-	return 0
+	if len(symbols) == 0 {
+		return 0
+	}
+	for _, symbol := range symbols {
+		if symbol.symbol == "*" {
+			addNumberToGear(number, symbol.pos.x, symbol.pos.y)
+		}
+	}
+	return number
 }
 
 func addPartNumbers(lines []string) int {
@@ -96,6 +111,14 @@ func main() {
 	sumOfPowers := addPartNumbers(lines)
 
 	fmt.Printf("Sum of all part numbers: %d\n", sumOfPowers)
+
+	sumGearRatios := 0
+	for _, gear := range gears {
+		if len(gear) == 2 {
+			sumGearRatios += gear[0] * gear[1]
+		}
+	}
+	fmt.Printf("Sum of all gear ratios: %d\n", sumGearRatios)
 }
 
 func parseInput(input string) []string {

@@ -21,3 +21,16 @@ func Test_part1(t *testing.T) {
 	sumOfPowers := addPartNumbers(lines)
 	assert.Equal(t, 4361, sumOfPowers)
 }
+
+func Test_part2(t *testing.T) {
+	lines := parseInput(input)
+	addPartNumbers(lines)
+
+	sumGearRatios := 0
+	for _, gear := range gears {
+		if len(gear) == 2 {
+			sumGearRatios += gear[0] * gear[1]
+		}
+	}
+	assert.Equal(t, 467835, sumGearRatios)
+}
