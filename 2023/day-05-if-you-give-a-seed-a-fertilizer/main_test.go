@@ -45,7 +45,7 @@ func Test_partOne(t *testing.T) {
 	assert.Equal(t, 7, len(conversions))
 	toSoil := conversions["seed"]
 	assert.Equal(t, 2, len(toSoil.offsets))
-	assert.Equal(t, "soil", toSoil.targetName)
+	assert.Equal(t, "soil", toSoil.target)
 	assert.Equal(t, 0, toSoil.convert(0))
 	assert.Equal(t, 1, toSoil.convert(1))
 	assert.Equal(t, 48, toSoil.convert(48))
@@ -60,4 +60,6 @@ func Test_partOne(t *testing.T) {
 }
 
 func Test_partTwo(t *testing.T) {
+	seeds, conversions := parseInput(input)
+	assert.Equal(t, 46, partTwo(seeds, conversions))
 }
