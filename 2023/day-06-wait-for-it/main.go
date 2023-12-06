@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Race struct {
@@ -58,9 +59,14 @@ func partTwo(races []Race) int {
 }
 
 func main() {
+	now := time.Now()
 	races := parseInput(loadInput("puzzle-input.txt"))
-	fmt.Printf("Part 1: Ways to win: %d\n", partOne(races))
-	fmt.Printf("Part 2: Ways to win merged race: %d\n", partTwo(races))
+	part1 := partOne(races)
+	part2 := partTwo(races)
+	duration := time.Since(now)
+	fmt.Printf("Part 1: Ways to win: %d\n", part1)
+	fmt.Printf("Part 2: Ways to win merged race: %d\n", part2)
+	fmt.Printf("Time: %v\n", duration)
 }
 
 func toInts(input string) []int {
