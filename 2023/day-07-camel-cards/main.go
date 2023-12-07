@@ -52,72 +52,104 @@ var cardValuesWithJokers = map[string]int{
 }
 
 type HandAndBid struct {
-	hand       string
-	bid        int
-	typeOfHand string
+	hand                 string
+	bid                  int
+	typeOfHand           string
+	typeOfHandWithJokers string
 }
 
-func maxCount(cards map[string]int) int {
+func maxCount(cards map[string]int) (int, string) {
 	m := 0
-	for _, count := range cards {
-		m = max(m, count)
+	c := ""
+	for card, count := range cards {
+		if count > m {
+			m = count
+			c = card
+		}
 	}
-	return m
+	return m, c
 }
 
-func (h HandAndBid) getType() string {
-	if h.typeOfHand == "" {
+func (h HandAndBid) getType(withJokers bool) string {
+	typeOfHand := ""
+	if withJokers {
+		typeOfHand = h.typeOfHand
+	} else {
+		typeOfHand = h.typeOfHandWithJokers
+	}
+	if typeOfHand == "" {
 		cards := make(map[string]int)
 		for _, card := range h.hand {
 			cards[string(card)]++
 		}
+
+		if withJokers {
+			jokers := cards["J"]
+			if jokers > 0 {
+				delete(cards, "J")
+			}
+			_, bestCard := maxCount(cards)
+			cards[bestCard] += jokers
+		}
+
+		sameCardCount, _ := maxCount(cards)
+
 		switch len(cards) {
 		case 1:
-			h.typeOfHand = "FiveOfAKind"
+			typeOfHand = "FiveOfAKind"
 		case 2:
-			switch maxCount(cards) {
+			switch sameCardCount {
 			case 4:
-				h.typeOfHand = "FourOfAKind"
+				typeOfHand = "FourOfAKind"
 			case 3:
-				h.typeOfHand = "FullHouse"
+				typeOfHand = "FullHouse"
 			}
 		case 3:
-			switch maxCount(cards) {
+			switch sameCardCount {
 			case 3:
-				h.typeOfHand = "ThreeOfAKind"
+				typeOfHand = "ThreeOfAKind"
 			case 2:
-				h.typeOfHand = "TwoPair"
+				typeOfHand = "TwoPair"
 			}
 		case 4:
-			h.typeOfHand = "OnePair"
+			typeOfHand = "OnePair"
 		case 5:
-			h.typeOfHand = "HighCard"
+			typeOfHand = "HighCard"
+		}
+		if withJokers {
+			h.typeOfHand = typeOfHand
+		} else {
+			h.typeOfHandWithJokers = typeOfHand
 		}
 	}
-	return h.typeOfHand
+	return typeOfHand
 }
 
-func (h HandAndBid) getValue() int {
-	return typeOfHands[h.getType()]
+func (h HandAndBid) getValue(withJokers bool) int {
+	return typeOfHands[h.getType(withJokers)]
 }
 
-func (h HandAndBid) compare(other HandAndBid) int {
-	if h.getValue() == other.getValue() {
+func (h HandAndBid) compare(other HandAndBid, withJokers bool) int {
+	if h.getValue(withJokers) == other.getValue(withJokers) {
 		for i := 0; i < 5; i++ {
 			hCard := string(h.hand[i])
 			oCard := string(other.hand[i])
 			if hCard != oCard {
-				return cardValues[hCard] - cardValues[oCard]
+				if withJokers {
+					return cardValuesWithJokers[hCard] - cardValuesWithJokers[oCard]
+				} else {
+					return cardValues[hCard] - cardValues[oCard]
+				}
 			}
 		}
 		return 0
 	}
-	return h.getValue() - other.getValue()
+	return h.getValue(withJokers) - other.getValue(withJokers)
 }
 
-func partOne(hands []HandAndBid) int {
+func getTotalWinnings(hands []HandAndBid, withJokers bool) int {
 	sort.Slice(hands, func(i, j int) bool {
-		return hands[i].compare(hands[j]) <= 0
+		return hands[i].compare(hands[j], withJokers) <= 0
 	})
 	totalWinnings := 0
 	for i, hand := range hands {
@@ -126,16 +158,22 @@ func partOne(hands []HandAndBid) int {
 	return totalWinnings
 }
 
+func partOne(hands []HandAndBid) int {
+	return getTotalWinnings(hands, false)
+}
+
 func partTwo(hands []HandAndBid) int {
-	return 0
+	return getTotalWinnings(hands, true)
 }
 
 func main() {
 	now := time.Now()
 	handsAndBids := parseInput(loadInput("puzzle-input.txt"))
 	part1 := partOne(handsAndBids)
+	part2 := partTwo(handsAndBids)
 	duration := time.Since(now)
 	fmt.Printf("Part 1: Total winnings: %d\n", part1)
+	fmt.Printf("Part 2: Total winnings with jokers: %d\n", part2)
 	fmt.Printf("Time: %v\n", duration)
 }
 
