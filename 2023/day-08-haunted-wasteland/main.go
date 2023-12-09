@@ -95,7 +95,6 @@ func (np *NodePattern) findStopNode(n StopNode) *StopNode {
 }
 
 func partTwo(d *Directions, nodesMap map[string]*Node) int {
-
 	var startNodes []*NodePattern
 	for _, node := range nodesMap {
 		if strings.HasSuffix(node.name, "A") {
