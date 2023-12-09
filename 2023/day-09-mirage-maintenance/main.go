@@ -23,6 +23,7 @@ func (s *Sequence) append(value int) {
 func (s *Sequence) firstValue() int {
 	return s.values[0]
 }
+
 func (s *Sequence) prepend(value int) {
 	s.values = append([]int{value}, s.values...)
 }
