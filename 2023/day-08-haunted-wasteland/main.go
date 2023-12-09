@@ -27,8 +27,11 @@ func (d *Directions) next() string {
 	return string(next)
 }
 
-func partOne(d Directions, nodes map[string]*Node) int {
-	node := nodes["AAA"]
+func (d *Directions) reset() {
+	d.pos = 0
+}
+
+func followDirections(d *Directions, node *Node, stopCondition func(node *Node, steps int) bool) int {
 	steps := 0
 	for {
 		direction := d.next()
@@ -38,43 +41,91 @@ func partOne(d Directions, nodes map[string]*Node) int {
 			node = node.left
 		}
 		steps++
-		if node.name == "ZZZ" {
+		if stopCondition(node, steps) {
 			break
 		}
 	}
 	return steps
 }
 
-func partTwo(d Directions, nodesMap map[string]*Node) int {
-	var nodes []*Node
+func partOne(d *Directions, nodes map[string]*Node) int {
+	return followDirections(d, nodes["AAA"], func(node *Node, _ int) bool {
+		return node.name == "ZZZ"
+	})
+}
+
+func gcd(a, b int) int {
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
+}
+
+func lcm(a, b int) int {
+	return a * b / gcd(a, b)
+}
+
+func findLCM(numbers []int) int {
+	result := numbers[0]
+	for _, num := range numbers[1:] {
+		result = lcm(result, num)
+	}
+	return result
+}
+
+type StopNode struct {
+	name            string
+	posInDirections int
+	steps           int
+}
+
+type NodePattern struct {
+	startNode *Node
+	stopNodes []StopNode
+	steps     int
+}
+
+func (np *NodePattern) findStopNode(n StopNode) *StopNode {
+	for _, sn := range np.stopNodes {
+		if sn.name == n.name && sn.posInDirections == n.posInDirections {
+			return &sn
+		}
+	}
+	return nil
+}
+
+func partTwo(d *Directions, nodesMap map[string]*Node) int {
+
+	var startNodes []*NodePattern
 	for _, node := range nodesMap {
 		if strings.HasSuffix(node.name, "A") {
-			nodes = append(nodes, node)
+			startNodes = append(startNodes, &NodePattern{startNode: node})
 		}
 	}
-	steps := 0
-	for {
-		direction := d.next()
-		for i, node := range nodes {
-			if direction == "R" {
-				nodes[i] = node.right
-			} else {
-				nodes[i] = node.left
+	for _, np := range startNodes {
+		d.reset()
+		followDirections(d, np.startNode, func(node *Node, steps int) bool {
+			if strings.HasSuffix(node.name, "Z") {
+				stopNode := StopNode{name: node.name, posInDirections: d.pos, steps: steps}
+				earlierStopNode := np.findStopNode(stopNode)
+				if earlierStopNode == nil {
+					np.stopNodes = append(np.stopNodes, stopNode)
+				} else {
+					np.steps = earlierStopNode.steps
+					return true
+				}
 			}
-		}
-		steps++
-		allNodesAtZ := true
-		for _, node := range nodes {
-			if !strings.HasSuffix(node.name, "Z") {
-				allNodesAtZ = false
-				break
-			}
-		}
-		if allNodesAtZ {
-			break
-		}
+			return false
+		})
 	}
-	return steps
+
+	var steps []int
+	for _, np := range startNodes {
+		fmt.Printf("%s: steps: %d, stopNodes: %d\n", np.startNode.name, np.steps, len(np.stopNodes))
+		steps = append(steps, np.steps)
+	}
+
+	return findLCM(steps)
 }
 
 func main() {
@@ -88,7 +139,7 @@ func main() {
 	fmt.Printf("Time: %v\n", duration)
 }
 
-func parseInput(input string) (Directions, map[string]*Node) {
+func parseInput(input string) (*Directions, map[string]*Node) {
 	sections := strings.Split(input, "\n\n")
 	nodes := make(map[string]*Node)
 
@@ -106,7 +157,7 @@ func parseInput(input string) (Directions, map[string]*Node) {
 		node.right = nodes[connections[1]]
 	}
 
-	return Directions{directions: sections[0]}, nodes
+	return &Directions{directions: sections[0]}, nodes
 }
 
 func loadInput(filename string) string {
