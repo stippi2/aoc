@@ -21,6 +21,17 @@ AAA = (BBB, BBB)
 BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)`
 
+const input3 = `LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)`
+
 func Test_partOne(t *testing.T) {
 	directions, nodes := parseInput(input1)
 	assert.Equal(t, 2, partOne(directions, nodes))
@@ -30,6 +41,6 @@ func Test_partOne(t *testing.T) {
 }
 
 func Test_partTwo(t *testing.T) {
-	_, _ = parseInput(input1)
-	assert.Equal(t, 0, partTwo())
+	directions, nodes := parseInput(input3)
+	assert.Equal(t, 6, partTwo(directions, nodes))
 }

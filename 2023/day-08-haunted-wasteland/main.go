@@ -45,18 +45,46 @@ func partOne(d Directions, nodes map[string]*Node) int {
 	return steps
 }
 
-func partTwo() int {
-	return 0
+func partTwo(d Directions, nodesMap map[string]*Node) int {
+	var nodes []*Node
+	for _, node := range nodesMap {
+		if strings.HasSuffix(node.name, "A") {
+			nodes = append(nodes, node)
+		}
+	}
+	steps := 0
+	for {
+		direction := d.next()
+		for i, node := range nodes {
+			if direction == "R" {
+				nodes[i] = node.right
+			} else {
+				nodes[i] = node.left
+			}
+		}
+		steps++
+		allNodesAtZ := true
+		for _, node := range nodes {
+			if !strings.HasSuffix(node.name, "Z") {
+				allNodesAtZ = false
+				break
+			}
+		}
+		if allNodesAtZ {
+			break
+		}
+	}
+	return steps
 }
 
 func main() {
 	now := time.Now()
 	directions, nodes := parseInput(loadInput("puzzle-input.txt"))
 	part1 := partOne(directions, nodes)
-	part2 := partTwo()
+	part2 := partTwo(directions, nodes)
 	duration := time.Since(now)
-	fmt.Printf("Part 1: Steps requires to reach ZZZ; %d\n", part1)
-	fmt.Printf("Part 2: %d\n", part2)
+	fmt.Printf("Part 1: Steps required to reach ZZZ; %d\n", part1)
+	fmt.Printf("Part 2: Steps required to simultaneously reach **Z: %d\n", part2)
 	fmt.Printf("Time: %v\n", duration)
 }
 
