@@ -73,6 +73,7 @@ func (s *Sequence) extendLeft() int {
 	}
 	return s.firstValue()
 }
+
 func partOne(sequences []Sequence) int {
 	sum := 0
 	for i := range sequences {
