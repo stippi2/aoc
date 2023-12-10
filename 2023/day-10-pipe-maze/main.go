@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -16,6 +17,17 @@ type Map struct {
 type Pos struct {
 	x int
 	y int
+}
+
+func (m *Map) String() string {
+	var sb strings.Builder
+	for i, c := range m.data {
+		sb.WriteByte(c)
+		if i%m.width == m.width-1 {
+			sb.WriteByte('\n')
+		}
+	}
+	return sb.String()
 }
 
 func (m *Map) get(x, y int) byte {
@@ -45,10 +57,64 @@ func (m *Map) getNeighbors(x, y int) []Pos {
 		return []Pos{{x, y - 1}, {x, y + 1}}
 	case '-':
 		return []Pos{{x - 1, y}, {x + 1, y}}
-	case 'S':
+	case 'S', '.':
 		return []Pos{{x - 1, y}, {x + 1, y}, {x, y - 1}, {x, y + 1}}
 	}
 	return nil
+}
+
+func (m *Map) doubleSize() *Map {
+	newMap := &Map{
+		width:  m.width * 2,
+		height: m.height * 2,
+		data:   bytes.Repeat([]byte{'.'}, m.width*m.height*4),
+	}
+
+	for y := 0; y < m.height; y++ {
+		for x := 0; x < m.width; x++ {
+			current := m.get(x, y)
+			newX, newY := x*2, y*2
+			switch current {
+			case '|':
+				newMap.set(newX, newY, '|')
+				newMap.set(newX, newY+1, '|')
+				newMap.set(newX+1, newY, '.')
+				newMap.set(newX+1, newY+1, '.')
+			case '-':
+				newMap.set(newX, newY, '-')
+				newMap.set(newX, newY+1, '.')
+				newMap.set(newX+1, newY, '-')
+				newMap.set(newX+1, newY+1, '.')
+			case 'L':
+				newMap.set(newX, newY, 'L')
+				newMap.set(newX, newY+1, '.')
+				newMap.set(newX+1, newY, '-')
+				newMap.set(newX+1, newY+1, '.')
+			case 'J':
+				newMap.set(newX, newY, 'J')
+				newMap.set(newX, newY+1, '.')
+				newMap.set(newX+1, newY, '.')
+				newMap.set(newX+1, newY+1, '.')
+			case '7':
+				newMap.set(newX, newY, '7')
+				newMap.set(newX, newY+1, '|')
+				newMap.set(newX+1, newY, '.')
+				newMap.set(newX+1, newY+1, '.')
+			case 'F':
+				newMap.set(newX, newY, 'F')
+				newMap.set(newX, newY+1, '|')
+				newMap.set(newX+1, newY, '-')
+				newMap.set(newX+1, newY+1, '.')
+			case '.':
+				newMap.set(newX, newY, '.')
+				newMap.set(newX, newY+1, '.')
+				newMap.set(newX+1, newY, '.')
+				newMap.set(newX+1, newY+1, '.')
+			}
+		}
+	}
+
+	return newMap
 }
 
 func contains(positions []Pos, pos Pos) bool {
@@ -79,6 +145,21 @@ func (p *Path) tip() Pos {
 
 func (p *Path) previous() Pos {
 	return p.positions[len(p.positions)-2]
+}
+
+func (p *Path) direction() byte {
+	prev := p.previous()
+	tip := p.tip()
+	if prev.x == tip.x {
+		if prev.y < tip.y {
+			return 'v'
+		}
+		return '^'
+	}
+	if prev.x < tip.x {
+		return '>'
+	}
+	return '<'
 }
 
 func getPaths(m *Map) (start Pos, left, right *Path) {
@@ -113,15 +194,73 @@ func partOne(m *Map) int {
 	return len(left.positions) / 2
 }
 
-func partTwo() int {
-	return 0
+func (m *Map) fill(x, y int, tile byte) {
+	if m.get(x, y) != '.' {
+		return
+	}
+	queue := []Pos{{x, y}}
+	for len(queue) > 0 {
+		tip := queue[0]
+		queue = queue[1:]
+		neighbors := m.getNeighbors(tip.x, tip.y)
+		m.set(tip.x, tip.y, tile)
+		for _, n := range neighbors {
+			if m.get(n.x, n.y) == '.' {
+				queue = append(queue, n)
+			}
+		}
+	}
+}
+
+func partTwo(m *Map) int {
+	converted := &Map{
+		width:  m.width,
+		height: m.height,
+		data:   bytes.Repeat([]byte{'.'}, len(m.data)),
+	}
+	start, left, _ := getPaths(m)
+	for {
+		neighbors := m.getNeighbors(left.tip().x, left.tip().y)
+		for _, n := range neighbors {
+			if left.previous() != n {
+				left.positions = append(left.positions, n)
+				converted.set(n.x, n.y, m.get(n.x, n.y))
+				break
+			}
+		}
+		if left.tip() == start {
+			break
+		}
+	}
+
+	doubleSize := converted.doubleSize()
+	fmt.Printf("Converted:\n%s\n", doubleSize.String())
+
+	for x := 0; x < doubleSize.width; x++ {
+		doubleSize.fill(x, 0, 'O')
+		doubleSize.fill(x, doubleSize.height-1, 'O')
+	}
+	for y := 0; y < doubleSize.height; y++ {
+		doubleSize.fill(0, y, 'O')
+		doubleSize.fill(doubleSize.width-1, y, 'O')
+	}
+	fmt.Printf("Converted:\n%s\n", doubleSize.String())
+
+	inside := 0
+	for i := 0; i < len(doubleSize.data); i++ {
+		if doubleSize.data[i] == '.' {
+			inside++
+		}
+	}
+
+	return inside / 4
 }
 
 func main() {
 	now := time.Now()
 	m := parseInput(loadInput("puzzle-input.txt"))
 	part1 := partOne(m)
-	part2 := partTwo()
+	part2 := partTwo(m)
 	duration := time.Since(now)
 	fmt.Printf("Part 1: Longest distance to S: %d\n", part1)
 	fmt.Printf("Part 2: %d\n", part2)
