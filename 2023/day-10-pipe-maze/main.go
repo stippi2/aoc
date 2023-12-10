@@ -110,6 +110,11 @@ func (m *Map) doubleSize() *Map {
 				newMap.set(newX, newY+1, '.')
 				newMap.set(newX+1, newY, '.')
 				newMap.set(newX+1, newY+1, '.')
+			case 'S':
+				newMap.set(newX, newY, 'S')
+				newMap.set(newX, newY+1, 'S')
+				newMap.set(newX+1, newY, 'S')
+				newMap.set(newX+1, newY+1, 'S')
 			}
 		}
 	}
@@ -145,21 +150,6 @@ func (p *Path) tip() Pos {
 
 func (p *Path) previous() Pos {
 	return p.positions[len(p.positions)-2]
-}
-
-func (p *Path) direction() byte {
-	prev := p.previous()
-	tip := p.tip()
-	if prev.x == tip.x {
-		if prev.y < tip.y {
-			return 'v'
-		}
-		return '^'
-	}
-	if prev.x < tip.x {
-		return '>'
-	}
-	return '<'
 }
 
 func getPaths(m *Map) (start Pos, left, right *Path) {
@@ -213,18 +203,12 @@ func (m *Map) fill(x, y int, tile byte) {
 }
 
 func partTwo(m *Map) int {
-	converted := &Map{
-		width:  m.width,
-		height: m.height,
-		data:   bytes.Repeat([]byte{'.'}, len(m.data)),
-	}
 	start, left, _ := getPaths(m)
 	for {
 		neighbors := m.getNeighbors(left.tip().x, left.tip().y)
 		for _, n := range neighbors {
 			if left.previous() != n {
 				left.positions = append(left.positions, n)
-				converted.set(n.x, n.y, m.get(n.x, n.y))
 				break
 			}
 		}
@@ -233,27 +217,47 @@ func partTwo(m *Map) int {
 		}
 	}
 
-	doubleSize := converted.doubleSize()
-	fmt.Printf("Converted:\n%s\n", doubleSize.String())
+	// Get a cleaned up version of the map with just the loop
+	converted := &Map{
+		width:  m.width,
+		height: m.height,
+		data:   bytes.Repeat([]byte{'.'}, len(m.data)),
+	}
+	for _, p := range left.positions {
+		converted.set(p.x, p.y, m.get(p.x, p.y))
 
+	}
+
+	// Create a double-sized version, so we get gaps between the loop everywhere it touches itself
+	doubleSize := converted.doubleSize()
+
+	// Fill the gaps with 'O' from the outside edges
+	doubleSize.fill(doubleSize.width-1, doubleSize.height-1, 'O')
 	for x := 0; x < doubleSize.width; x++ {
 		doubleSize.fill(x, 0, 'O')
-		doubleSize.fill(x, doubleSize.height-1, 'O')
 	}
 	for y := 0; y < doubleSize.height; y++ {
 		doubleSize.fill(0, y, 'O')
-		doubleSize.fill(doubleSize.width-1, y, 'O')
 	}
-	fmt.Printf("Converted:\n%s\n", doubleSize.String())
 
+	// Transition the fills to the original size
+	for y := 0; y < doubleSize.height; y += 2 {
+		for x := 0; x < doubleSize.width; x += 2 {
+			if doubleSize.get(x, y) == 'O' {
+				converted.set(x/2, y/2, 'O')
+			}
+		}
+	}
+
+	// Count the remaining '.' inside the loop
 	inside := 0
-	for i := 0; i < len(doubleSize.data); i++ {
-		if doubleSize.data[i] == '.' {
+	for i := 0; i < len(converted.data); i++ {
+		if converted.data[i] == '.' {
 			inside++
 		}
 	}
 
-	return inside / 4
+	return inside
 }
 
 func main() {
