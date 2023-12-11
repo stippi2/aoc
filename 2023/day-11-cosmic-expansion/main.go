@@ -18,32 +18,6 @@ type Map struct {
 	galaxies []*Galaxy
 }
 
-func (m *Map) String() string {
-	var sb strings.Builder
-	for y := int64(0); y < m.height; y++ {
-		for x := int64(0); x < m.width; x++ {
-			if m.isEmptySpace(x, y) {
-				sb.WriteString(".")
-			} else {
-				sb.WriteString("#")
-			}
-		}
-		if y < m.height-1 {
-			sb.WriteString("\n")
-		}
-	}
-	return sb.String()
-}
-
-func (m *Map) isEmptySpace(x int64, y int64) bool {
-	for _, galaxy := range m.galaxies {
-		if galaxy.x == x && galaxy.y == y {
-			return false
-		}
-	}
-	return true
-}
-
 func (m *Map) isEmptySpaceY(y int64) bool {
 	for _, galaxy := range m.galaxies {
 		if galaxy.y == y {
@@ -67,11 +41,7 @@ func (m *Map) expandSpace(howMuch int64) {
 		if m.isEmptySpaceY(y) {
 			for _, galaxy := range m.galaxies {
 				if galaxy.y > y {
-					orig := galaxy.y
 					galaxy.y += howMuch
-					if galaxy.y < orig {
-						panic("overflow")
-					}
 				}
 			}
 			m.height += howMuch
@@ -82,11 +52,7 @@ func (m *Map) expandSpace(howMuch int64) {
 		if m.isEmptySpaceX(x) {
 			for _, galaxy := range m.galaxies {
 				if galaxy.x > x {
-					orig := galaxy.x
 					galaxy.x += howMuch
-					if galaxy.x < orig {
-						panic("overflow")
-					}
 				}
 			}
 			m.width += howMuch
@@ -109,16 +75,7 @@ func (m *Map) sumDistances() (int64, int) {
 		for _, otherGalaxy := range m.galaxies {
 			if galaxy != otherGalaxy {
 				pairs++
-				orig := distanceSum
-				distanceSum += abs(otherGalaxy.x - galaxy.x)
-				if distanceSum < orig {
-					panic("overflow")
-				}
-				orig = distanceSum
-				distanceSum += abs(otherGalaxy.y - galaxy.y)
-				if distanceSum < orig {
-					panic("overflow")
-				}
+				distanceSum += abs(otherGalaxy.x-galaxy.x) + abs(otherGalaxy.y-galaxy.y)
 			}
 		}
 	}
@@ -139,6 +96,7 @@ func main() {
 	now := time.Now()
 	m := parseInput(loadInput("puzzle-input.txt"))
 	part1, _ := partOne(m)
+	m = parseInput(loadInput("puzzle-input.txt"))
 	part2, _ := partTwo(m)
 	duration := time.Since(now)
 	fmt.Printf("Part 1: %d\n", part1)

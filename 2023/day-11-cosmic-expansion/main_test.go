@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -36,6 +37,32 @@ func Test_partOne(t *testing.T) {
 #....#.......`, m.String())
 	assert.Equal(t, 36, pairs)
 	assert.Equal(t, 374, distancesSum)
+}
+
+func (m *Map) String() string {
+	var sb strings.Builder
+	for y := int64(0); y < m.height; y++ {
+		for x := int64(0); x < m.width; x++ {
+			if m.isEmptySpace(x, y) {
+				sb.WriteString(".")
+			} else {
+				sb.WriteString("#")
+			}
+		}
+		if y < m.height-1 {
+			sb.WriteString("\n")
+		}
+	}
+	return sb.String()
+}
+
+func (m *Map) isEmptySpace(x int64, y int64) bool {
+	for _, galaxy := range m.galaxies {
+		if galaxy.x == x && galaxy.y == y {
+			return false
+		}
+	}
+	return true
 }
 
 func Test_expandSpace(t *testing.T) {
