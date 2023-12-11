@@ -163,21 +163,21 @@ func getLoop(m *Map) *Path {
 	if len(paths) != 2 {
 		panic("Expected two paths")
 	}
-	// Just decide for one way around the loop and call it "left"
-	left := paths[0]
+	// Just decide for one way around the loop
+	loop := paths[0]
 	for {
-		neighbors := m.getNeighbors(left.tip().x, left.tip().y)
+		neighbors := m.getNeighbors(loop.tip().x, loop.tip().y)
 		for _, n := range neighbors {
-			if left.previous() != n {
-				left.positions = append(left.positions, n)
+			if loop.previous() != n {
+				loop.positions = append(loop.positions, n)
 				break
 			}
 		}
-		if left.tip() == start {
+		if loop.tip() == start {
 			break
 		}
 	}
-	return left
+	return loop
 }
 
 func partOne(m *Map) int {
