@@ -109,7 +109,16 @@ func (m *Map) sumDistances() (int64, int) {
 		for _, otherGalaxy := range m.galaxies {
 			if galaxy != otherGalaxy {
 				pairs++
-				distanceSum += abs(otherGalaxy.x-galaxy.x) + abs(otherGalaxy.y-galaxy.y)
+				orig := distanceSum
+				distanceSum += abs(otherGalaxy.x - galaxy.x)
+				if distanceSum < orig {
+					panic("overflow")
+				}
+				orig = distanceSum
+				distanceSum += abs(otherGalaxy.y - galaxy.y)
+				if distanceSum < orig {
+					panic("overflow")
+				}
 			}
 		}
 	}
