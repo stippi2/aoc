@@ -152,22 +152,19 @@ func (p *Path) previous() Pos {
 	return p.positions[len(p.positions)-2]
 }
 
-func getPaths(m *Map) (start Pos, left, right *Path) {
-	start = m.getStart()
+func getLoop(m *Map) *Path {
+	start := m.getStart()
 	var paths []*Path
 	for _, n := range m.getNeighbors(start.x, start.y) {
-		if contains(m.getNeighbors(n.x, n.y), start) {
+		if m.get(n.x, n.y) != '.' && contains(m.getNeighbors(n.x, n.y), start) {
 			paths = append(paths, &Path{[]Pos{start, n}})
 		}
 	}
 	if len(paths) != 2 {
 		panic("Expected two paths")
 	}
-	return start, paths[0], paths[1]
-}
-
-func partOne(m *Map) int {
-	start, left, _ := getPaths(m)
+	// Just decide for one way around the loop and call it "left"
+	left := paths[0]
 	for {
 		neighbors := m.getNeighbors(left.tip().x, left.tip().y)
 		for _, n := range neighbors {
@@ -180,8 +177,12 @@ func partOne(m *Map) int {
 			break
 		}
 	}
+	return left
+}
 
-	return len(left.positions) / 2
+func partOne(m *Map) int {
+	loop := getLoop(m)
+	return len(loop.positions) / 2
 }
 
 func (m *Map) fill(x, y int, tile byte) {
@@ -203,19 +204,7 @@ func (m *Map) fill(x, y int, tile byte) {
 }
 
 func partTwo(m *Map) int {
-	start, left, _ := getPaths(m)
-	for {
-		neighbors := m.getNeighbors(left.tip().x, left.tip().y)
-		for _, n := range neighbors {
-			if left.previous() != n {
-				left.positions = append(left.positions, n)
-				break
-			}
-		}
-		if left.tip() == start {
-			break
-		}
-	}
+	loop := getLoop(m)
 
 	// Get a cleaned up version of the map with just the loop
 	converted := &Map{
@@ -223,7 +212,7 @@ func partTwo(m *Map) int {
 		height: m.height,
 		data:   bytes.Repeat([]byte{'.'}, len(m.data)),
 	}
-	for _, p := range left.positions {
+	for _, p := range loop.positions {
 		converted.set(p.x, p.y, m.get(p.x, p.y))
 
 	}
@@ -256,7 +245,6 @@ func partTwo(m *Map) int {
 			inside++
 		}
 	}
-
 	return inside
 }
 
