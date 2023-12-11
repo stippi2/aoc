@@ -207,18 +207,18 @@ func partTwo(m *Map) int {
 	loop := getLoop(m)
 
 	// Get a cleaned up version of the map with just the loop
-	converted := &Map{
+	cleanMap := &Map{
 		width:  m.width,
 		height: m.height,
 		data:   bytes.Repeat([]byte{'.'}, len(m.data)),
 	}
 	for _, p := range loop.positions {
-		converted.set(p.x, p.y, m.get(p.x, p.y))
+		cleanMap.set(p.x, p.y, m.get(p.x, p.y))
 
 	}
 
 	// Create a double-sized version, so we get gaps between the loop everywhere it touches itself
-	doubleSize := converted.doubleSize()
+	doubleSize := cleanMap.doubleSize()
 
 	// Fill the gaps with 'O' from the outside edges
 	doubleSize.fill(doubleSize.width-1, doubleSize.height-1, 'O')
@@ -233,15 +233,15 @@ func partTwo(m *Map) int {
 	for y := 0; y < doubleSize.height; y += 2 {
 		for x := 0; x < doubleSize.width; x += 2 {
 			if doubleSize.get(x, y) == 'O' {
-				converted.set(x/2, y/2, 'O')
+				cleanMap.set(x/2, y/2, 'O')
 			}
 		}
 	}
 
 	// Count the remaining '.' inside the loop
 	inside := 0
-	for i := 0; i < len(converted.data); i++ {
-		if converted.data[i] == '.' {
+	for i := 0; i < len(cleanMap.data); i++ {
+		if cleanMap.data[i] == '.' {
 			inside++
 		}
 	}
