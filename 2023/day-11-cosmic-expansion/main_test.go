@@ -49,8 +49,14 @@ func Test_expandSpace(t *testing.T) {
 
 func Test_partTwo(t *testing.T) {
 	m := parseInput(input)
-	m.expandSpace(99)
+	m.expandSpace(9)
 	distancesSum, pairs := m.sumDistances()
+	assert.Equal(t, 36, pairs)
+	assert.Equal(t, int64(1030), distancesSum)
+
+	m = parseInput(input)
+	m.expandSpace(99)
+	distancesSum, pairs = m.sumDistances()
 	assert.Equal(t, 36, pairs)
 	assert.Equal(t, int64(8410), distancesSum)
 }
