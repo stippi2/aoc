@@ -28,12 +28,6 @@ func Test_partOne(t *testing.T) {
 	assert.Equal(t, 4, rows[4].findSolutions())
 	assert.Equal(t, 10, rows[5].findSolutions())
 	assert.Equal(t, 21, partOne(rows))
-	//solutions := 0
-	//for key, value := range rows[5].solutions {
-	//	solutions += value
-	//	fmt.Printf("solution: %s -> %d\n", key, value)
-	//}
-	//fmt.Printf("solutions total: %d\n", solutions)
 }
 
 func Test_partTwo(t *testing.T) {
@@ -46,4 +40,12 @@ func Test_partTwo(t *testing.T) {
 	assert.Equal(t, 1, rows[0].findSolutions())
 	assert.Equal(t, 16, rows[3].findSolutions())
 	assert.Equal(t, 525152, findSolutions(rows))
+}
+
+func Test_partTwoPerformance(t *testing.T) {
+	rows := parseInput("????#????.??? 1,2,1,1")
+	rows[0].unfold()
+	assert.Equal(t, []byte("????#????.????????#????.????????#????.????????#????.????????#????.???"), rows[0].springs)
+	assert.Equal(t, []int{1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1}, rows[0].groups)
+	assert.Equal(t, 1, rows[0].findSolutions())
 }

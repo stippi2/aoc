@@ -15,140 +15,84 @@ type Row struct {
 	failures  map[string]bool
 }
 
-func (r *Row) maxSprings() int {
-	count := 0
-	for _, group := range r.groups {
-		count += group
-	}
-	return count
-}
-
-func (r *Row) countSprings() int {
-	count := 0
-	for _, spring := range r.springs {
-		if spring == '#' {
-			count++
-		}
-	}
-	return count
-}
-
-func (r *Row) countCandidates() int {
-	count := 0
-	for _, spring := range r.springs {
-		if spring == '?' {
-			count++
-		}
-	}
-	return count
-}
-
-func (r *Row) matches(springs []byte) bool {
-	count := 0
-	var groups []int
-	for _, spring := range springs {
-		if spring == '#' || spring == '?' {
-			count++
-		} else {
-			if count > 0 {
-				groups = append(groups, count)
-				count = 0
-			}
-		}
-	}
-	if count > 0 {
-		groups = append(groups, count)
-	}
-	if len(groups) != len(r.groups) {
+func equals(a, b []int) bool {
+	if len(a) != len(b) {
 		return false
 	}
-	for i := range groups {
-		if groups[i] != r.groups[i] {
+	for i := range a {
+		if b[i] != a[i] {
 			return false
 		}
 	}
 	return true
 }
 
-func copySprings(springs []byte) []byte {
-	c := make([]byte, len(springs))
-	copy(c, springs)
-	return c
+func finishGroup(groups []int, groupLength int) []int {
+	if groupLength > 0 {
+		return append(groups, groupLength)
+	}
+	return groups
 }
 
-func compress(springs []byte) string {
-	var compressed []string
-	for _, chunk := range strings.Split(string(springs), ".") {
-		if len(chunk) > 0 {
-			compressed = append(compressed, chunk)
+func (r *Row) countMatches(springs []byte, pos, groupLength int, groups []int) int {
+	//fmt.Printf("%s: found %d of %d matches\n", springs, len(groups), len(r.groups))
+	if groupLength > 0 {
+		// Check if there is a pending group when there should not be another one
+		if len(groups) == len(r.groups) {
+			return 0
+		}
+		// Check if current group length is already bigger than the next group
+		if groupLength > r.groups[len(groups)] {
+			return 0
 		}
 	}
-	result := strings.Join(compressed, ".")
-	return result
+	// If we reached the end, the groups must match
+	if pos == len(springs) {
+		if groupLength > 0 {
+			groups = append(groups, groupLength)
+		}
+		if equals(groups, r.groups) {
+			return 1
+		}
+		return 0
+	}
+
+	count := 0
+	field := springs[pos]
+	switch field {
+	case '?':
+		springs[pos] = '#'
+		count += r.countMatches(springs, pos+1, groupLength+1, groups)
+		springs[pos] = '.'
+		count += r.countMatches(springs, pos+1, 0, finishGroup(groups, groupLength))
+		springs[pos] = field
+	case '.':
+		count += r.countMatches(springs, pos+1, 0, finishGroup(groups, groupLength))
+	case '#':
+		count += r.countMatches(springs, pos+1, groupLength+1, groups)
+	}
+	return count
 }
 
-func (r *Row) generateSolutions(current []byte, remaining int, startIndex int, iteration *int) (int, int) {
-	*iteration++
-	if remaining == 0 {
-		if r.matches(current) {
-			//fmt.Printf("  found solution: %s\n", string(current))
-			return 1, 0
-		}
-		return 0, 1
-	}
-
-	compressed := compress(current)
-	if priorSolutions, ok := r.solutions[compressed]; ok {
-		fmt.Printf("  reusing solutions for current: %s (compressed: %s): %d\n", current, compressed, priorSolutions)
-		return priorSolutions, 0
-	}
-	if r.failures[compressed] {
-		// fmt.Printf("  skipping failure for compressed: %s\n", compressed)
-		return 0, 1
-	}
-
-	if *iteration%100000 == 0 {
-		fmt.Printf("  iteration %d, tesing %s\n", *iteration, string(current))
-	}
-
-	solutions := 0
-	failures := 0
-
-	for i := startIndex; i < len(current); i++ {
-		if current[i] == '?' {
-			current[i] = '.'
-			s, f := r.generateSolutions(current, remaining-1, i+1, iteration)
-			solutions += s
-			failures += f
-			current[i] = '?'
+func cleanSprings(springs []byte) []byte {
+	parts := strings.Split(string(springs), ".")
+	var result []string
+	for _, part := range parts {
+		if len(part) > 0 {
+			result = append(result, part)
 		}
 	}
-
-	if solutions > 0 && failures == 0 && r.matches([]byte(compressed)) {
-		// Only cache something if it had only solutions and no failures,
-		// and the compressed version contains only groups of the right size
-		fmt.Printf("  storing solutions for current: %s (compressed: %s): %d\n", current, compressed, solutions)
-		r.solutions[compressed] = solutions
-	}
-	if solutions == 0 && failures > 0 {
-		r.failures[compressed] = true
-	}
-
-	return solutions, failures
+	return []byte(strings.Join(result, "."))
 }
 
 func (r *Row) findSolutions() int {
-	iteration := 0
-	r.solutions = make(map[string]int)
-	r.failures = make(map[string]bool)
-	solutions, _ := r.generateSolutions(copySprings(r.springs), r.countCandidates()-(r.maxSprings()-r.countSprings()), 0, &iteration)
-	return solutions
+	return r.countMatches(cleanSprings(r.springs), 0, 0, nil)
 }
 
 func findSolutions(rows []*Row) int {
 	count := 0
-	for _, row := range rows {
-		//fmt.Printf("#### On row %d of %d\n", i, len(rows))
+	for i, row := range rows {
+		fmt.Printf("#### On row %d of %d\n", i+1, len(rows))
 		count += row.findSolutions()
 	}
 	return count
@@ -183,10 +127,10 @@ func main() {
 	now := time.Now()
 	rows := parseInput(loadInput("puzzle-input.txt"))
 	part1 := partOne(rows)
-	part2 := partTwo(rows)
-	duration := time.Since(now)
 	fmt.Printf("Part 1: %d\n", part1)
+	part2 := partTwo(rows)
 	fmt.Printf("Part 2: %d\n", part2)
+	duration := time.Since(now)
 	fmt.Printf("Time: %v\n", duration)
 }
 
