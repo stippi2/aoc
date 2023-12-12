@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -22,19 +21,19 @@ func Test_partOne(t *testing.T) {
 	assert.Equal(t, 6, len(rows))
 	assert.Equal(t, []int{1, 1, 3}, rows[0].groups)
 	assert.Equal(t, []byte("?#?#?#?#?#?#?#?"), rows[2].springs)
-	//assert.Equal(t, 1, rows[0].findSolutions())
-	//assert.Equal(t, 4, rows[1].findSolutions())
-	//assert.Equal(t, 1, rows[2].findSolutions())
-	//assert.Equal(t, 1, rows[3].findSolutions())
-	//assert.Equal(t, 4, rows[4].findSolutions())
+	assert.Equal(t, 1, rows[0].findSolutions())
+	assert.Equal(t, 4, rows[1].findSolutions())
+	assert.Equal(t, 1, rows[2].findSolutions())
+	assert.Equal(t, 1, rows[3].findSolutions())
+	assert.Equal(t, 4, rows[4].findSolutions())
 	assert.Equal(t, 10, rows[5].findSolutions())
-	// assert.Equal(t, 21, partOne(rows))
-	solutions := 0
-	for key, value := range rows[5].solutions {
-		solutions += value
-		fmt.Printf("solution: %s -> %d\n", key, value)
-	}
-	fmt.Printf("solutions total: %d\n", solutions)
+	assert.Equal(t, 21, partOne(rows))
+	//solutions := 0
+	//for key, value := range rows[5].solutions {
+	//	solutions += value
+	//	fmt.Printf("solution: %s -> %d\n", key, value)
+	//}
+	//fmt.Printf("solutions total: %d\n", solutions)
 }
 
 func Test_partTwo(t *testing.T) {

@@ -91,7 +91,7 @@ func (r *Row) generateSolutions(current []byte, remaining int, startIndex int, i
 	*iteration++
 	if remaining == 0 {
 		if r.matches(current) {
-			fmt.Printf("  found solution: %s\n", string(current))
+			//fmt.Printf("  found solution: %s\n", string(current))
 			return 1, 0
 		}
 		return 0, 1
@@ -99,15 +99,15 @@ func (r *Row) generateSolutions(current []byte, remaining int, startIndex int, i
 
 	compressed := compress(current)
 	if priorSolutions, ok := r.solutions[compressed]; ok {
-		fmt.Printf("  found solutions for compressed: %s, %d\n", compressed, priorSolutions)
+		fmt.Printf("  reusing solutions for current: %s (compressed: %s): %d\n", current, compressed, priorSolutions)
 		return priorSolutions, 0
 	}
 	if r.failures[compressed] {
-		fmt.Printf("  found failure for compressed: %s\n", compressed)
+		// fmt.Printf("  skipping failure for compressed: %s\n", compressed)
 		return 0, 1
 	}
 
-	if *iteration%10000 == 0 {
+	if *iteration%100000 == 0 {
 		fmt.Printf("  iteration %d, tesing %s\n", *iteration, string(current))
 	}
 
@@ -124,10 +124,13 @@ func (r *Row) generateSolutions(current []byte, remaining int, startIndex int, i
 		}
 	}
 
-	if solutions > 0 && failures == 0 {
-		// Only cache something if it had only solutions and no failures
+	if solutions > 0 && failures == 0 && r.matches([]byte(compressed)) {
+		// Only cache something if it had only solutions and no failures,
+		// and the compressed version contains only groups of the right size
+		fmt.Printf("  storing solutions for current: %s (compressed: %s): %d\n", current, compressed, solutions)
 		r.solutions[compressed] = solutions
-	} else if solutions == 0 && failures > 0 {
+	}
+	if solutions == 0 && failures > 0 {
 		r.failures[compressed] = true
 	}
 
