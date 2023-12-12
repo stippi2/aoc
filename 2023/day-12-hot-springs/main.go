@@ -15,62 +15,46 @@ type Row struct {
 	failures  map[string]bool
 }
 
-func equals(a, b []int) bool {
-	if len(a) != len(b) {
-		return false
+func (r *Row) countMatchesAtHash(springs []byte, pos, groupLength, groupsFound int) int {
+	if groupsFound+1 <= len(r.groups) && groupLength+1 <= r.groups[groupsFound] {
+		return r.countMatches(springs, pos+1, groupLength+1, groupsFound)
 	}
-	for i := range a {
-		if b[i] != a[i] {
-			return false
-		}
-	}
-	return true
+	return 0
 }
 
-func finishGroup(groups []int, groupLength int) []int {
-	if groupLength > 0 {
-		return append(groups, groupLength)
+func (r *Row) countMatchesAtDot(springs []byte, pos, groupLength, groupsFound int) int {
+	if groupLength == 0 {
+		return r.countMatches(springs, pos+1, 0, groupsFound)
 	}
-	return groups
+	if groupsFound+1 <= len(r.groups) && groupLength == r.groups[groupsFound] {
+		return r.countMatches(springs, pos+1, 0, groupsFound+1)
+	}
+	return 0
 }
 
-func (r *Row) countMatches(springs []byte, pos, groupLength int, groups []int) int {
-	//fmt.Printf("%s: found %d of %d matches\n", springs, len(groups), len(r.groups))
-	if groupLength > 0 {
-		// Check if there is a pending group when there should not be another one
-		if len(groups) == len(r.groups) {
-			return 0
-		}
-		// Check if current group length is already bigger than the next group
-		if groupLength > r.groups[len(groups)] {
-			return 0
-		}
-	}
-	// If we reached the end, the groups must match
+func (r *Row) countMatches(springs []byte, pos, groupLength, groupsFound int) int {
+	// If we reached the end, the groups sizes must match
 	if pos == len(springs) {
-		if groupLength > 0 {
-			groups = append(groups, groupLength)
+		if groupLength > 0 && r.groups[groupsFound] == groupLength {
+			groupsFound++
 		}
-		if equals(groups, r.groups) {
+		if groupsFound == len(r.groups) {
 			return 1
 		}
 		return 0
 	}
 
 	count := 0
-	field := springs[pos]
-	switch field {
-	case '?':
-		springs[pos] = '#'
-		count += r.countMatches(springs, pos+1, groupLength+1, groups)
-		springs[pos] = '.'
-		count += r.countMatches(springs, pos+1, 0, finishGroup(groups, groupLength))
-		springs[pos] = field
-	case '.':
-		count += r.countMatches(springs, pos+1, 0, finishGroup(groups, groupLength))
+	switch springs[pos] {
 	case '#':
-		count += r.countMatches(springs, pos+1, groupLength+1, groups)
+		count += r.countMatchesAtHash(springs, pos, groupLength, groupsFound)
+	case '.':
+		count += r.countMatchesAtDot(springs, pos, groupLength, groupsFound)
+	case '?':
+		count += r.countMatchesAtHash(springs, pos, groupLength, groupsFound)
+		count += r.countMatchesAtDot(springs, pos, groupLength, groupsFound)
 	}
+
 	return count
 }
 
@@ -86,7 +70,7 @@ func cleanSprings(springs []byte) []byte {
 }
 
 func (r *Row) findSolutions() int {
-	return r.countMatches(cleanSprings(r.springs), 0, 0, nil)
+	return r.countMatches(cleanSprings(r.springs), 0, 0, 0)
 }
 
 func findSolutions(rows []*Row) int {
