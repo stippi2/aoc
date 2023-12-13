@@ -9,14 +9,13 @@ import (
 )
 
 type Row struct {
-	springs   []byte
-	groups    []int
-	solutions map[string]int
-	failures  map[string]bool
+	springs []byte
+	groups  []int
 }
 
 func (r *Row) countMatchesAtHash(springs []byte, pos, groupLength, groupsFound int) int {
 	if groupsFound+1 <= len(r.groups) && groupLength+1 <= r.groups[groupsFound] {
+		// Only continue, if there are still more groups to be found, and if the current group is not already too long
 		return r.countMatches(springs, pos+1, groupLength+1, groupsFound)
 	}
 	return 0
@@ -24,9 +23,13 @@ func (r *Row) countMatchesAtHash(springs []byte, pos, groupLength, groupsFound i
 
 func (r *Row) countMatchesAtDot(springs []byte, pos, groupLength, groupsFound int) int {
 	if groupLength == 0 {
+		// (Dot at start of row, or after another dot)
+		// Not currently accumulating a group, just continue
 		return r.countMatches(springs, pos+1, 0, groupsFound)
 	}
 	if groupsFound+1 <= len(r.groups) && groupLength == r.groups[groupsFound] {
+		// (First dot after a group)
+		// Only continue, if there are still more groups to be found, and if the current group has the correct size
 		return r.countMatches(springs, pos+1, 0, groupsFound+1)
 	}
 	return 0
