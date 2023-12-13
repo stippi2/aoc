@@ -38,9 +38,9 @@ func (r *Row) countMatchesAtDot(springs []byte, pos, groupLength, groupsFound in
 func (r *Row) countMatches(springs []byte, pos, groupLength, groupsFound int) int {
 	// If we reached the end, the groups sizes must match
 	if pos == len(springs) {
-		if groupLength > 0 && r.groups[groupsFound] == groupLength {
-			groupsFound++
-		}
+		//if groupLength > 0 && r.groups[groupsFound] == groupLength {
+		//	groupsFound++
+		//}
 		if groupsFound == len(r.groups) {
 			return 1
 		}
@@ -69,7 +69,7 @@ func cleanSprings(springs []byte) []byte {
 			result = append(result, part)
 		}
 	}
-	return []byte(strings.Join(result, "."))
+	return []byte(strings.Join(result, ".") + ".")
 }
 
 func (r *Row) findSolutions() int {
