@@ -9,7 +9,6 @@ import (
 )
 
 type CacheKey struct {
-	springs     string
 	pos         int
 	groupLength int
 	groupsFound int
@@ -44,7 +43,7 @@ func (r *Row) countMatchesAtDot(springs []byte, pos, groupLength, groupsFound in
 }
 
 func (r *Row) countMatches(springs []byte, pos, groupLength, groupsFound int) int {
-	cacheKey := CacheKey{string(springs), pos, groupLength, groupsFound}
+	cacheKey := CacheKey{pos, groupLength, groupsFound}
 	if count, ok := r.cache[cacheKey]; ok {
 		return count
 	}
@@ -97,8 +96,7 @@ func (r *Row) findSolutions() int {
 
 func findSolutions(rows []*Row) int {
 	count := 0
-	for i, row := range rows {
-		fmt.Printf("#### On row %d of %d\n", i+1, len(rows))
+	for _, row := range rows {
 		count += row.findSolutions()
 		row.cache = nil
 	}
@@ -134,10 +132,10 @@ func main() {
 	now := time.Now()
 	rows := parseInput(loadInput("puzzle-input.txt"))
 	part1 := partOne(rows)
-	fmt.Printf("Part 1: %d\n", part1)
 	part2 := partTwo(rows)
-	fmt.Printf("Part 2: %d\n", part2)
 	duration := time.Since(now)
+	fmt.Printf("Part 1: %d\n", part1)
+	fmt.Printf("Part 2: %d\n", part2)
 	fmt.Printf("Time: %v\n", duration)
 }
 
