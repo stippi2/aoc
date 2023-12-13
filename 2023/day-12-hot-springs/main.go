@@ -8,9 +8,17 @@ import (
 	"time"
 )
 
+type CacheKey struct {
+	springs     string
+	pos         int
+	groupLength int
+	groupsFound int
+}
+
 type Row struct {
 	springs []byte
 	groups  []int
+	cache   map[CacheKey]int
 }
 
 func (r *Row) countMatchesAtHash(springs []byte, pos, groupLength, groupsFound int) int {
@@ -36,28 +44,36 @@ func (r *Row) countMatchesAtDot(springs []byte, pos, groupLength, groupsFound in
 }
 
 func (r *Row) countMatches(springs []byte, pos, groupLength, groupsFound int) int {
+	cacheKey := CacheKey{string(springs), pos, groupLength, groupsFound}
+	if count, ok := r.cache[cacheKey]; ok {
+		return count
+	}
+
+	count := 0
+
 	// If we reached the end, the groups sizes must match
 	if pos == len(springs) {
 		//if groupLength > 0 && r.groups[groupsFound] == groupLength {
 		//	groupsFound++
 		//}
 		if groupsFound == len(r.groups) {
-			return 1
+			count = 1
+		} else {
+			count = 0
 		}
-		return 0
+	} else {
+		switch springs[pos] {
+		case '#':
+			count += r.countMatchesAtHash(springs, pos, groupLength, groupsFound)
+		case '.':
+			count += r.countMatchesAtDot(springs, pos, groupLength, groupsFound)
+		case '?':
+			count += r.countMatchesAtHash(springs, pos, groupLength, groupsFound)
+			count += r.countMatchesAtDot(springs, pos, groupLength, groupsFound)
+		}
 	}
 
-	count := 0
-	switch springs[pos] {
-	case '#':
-		count += r.countMatchesAtHash(springs, pos, groupLength, groupsFound)
-	case '.':
-		count += r.countMatchesAtDot(springs, pos, groupLength, groupsFound)
-	case '?':
-		count += r.countMatchesAtHash(springs, pos, groupLength, groupsFound)
-		count += r.countMatchesAtDot(springs, pos, groupLength, groupsFound)
-	}
-
+	r.cache[cacheKey] = count
 	return count
 }
 
@@ -73,6 +89,7 @@ func cleanSprings(springs []byte) []byte {
 }
 
 func (r *Row) findSolutions() int {
+	r.cache = make(map[CacheKey]int)
 	return r.countMatches(cleanSprings(r.springs), 0, 0, 0)
 }
 
@@ -81,6 +98,7 @@ func findSolutions(rows []*Row) int {
 	for i, row := range rows {
 		fmt.Printf("#### On row %d of %d\n", i+1, len(rows))
 		count += row.findSolutions()
+		row.cache = nil
 	}
 	return count
 }
