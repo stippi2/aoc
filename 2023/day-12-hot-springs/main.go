@@ -53,6 +53,8 @@ func (r *Row) countMatches(springs []byte, pos, groupLength, groupsFound int) in
 
 	// If we reached the end, the groups sizes must match
 	if pos == len(springs) {
+		// The following check can be avoided by appending "." to the springs, see cleanSprings()
+		// It means we always arrive here with a closed group.
 		//if groupLength > 0 && r.groups[groupsFound] == groupLength {
 		//	groupsFound++
 		//}
