@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -37,7 +36,6 @@ func (m *Map) String() string {
 
 func Test_partOne(t *testing.T) {
 	m := parseInput(input)
-	fmt.Printf("Map:\n%s\n", m)
 	assert.Equal(t, 136, partOne(m))
 }
 

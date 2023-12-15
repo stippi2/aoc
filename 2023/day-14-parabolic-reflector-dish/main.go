@@ -19,6 +19,15 @@ type Map struct {
 	squareRocks map[Pos]bool
 }
 
+func addRoundRocksWeight(result, rowsToSouth, roundRocks int) int {
+	for roundRocks > 0 {
+		result += rowsToSouth
+		rowsToSouth--
+		roundRocks--
+	}
+	return result
+}
+
 func partOne(m *Map) int {
 	result := 0
 	for x := 0; x < m.width; x++ {
@@ -28,19 +37,38 @@ func partOne(m *Map) int {
 		for y < m.height {
 			if m.squareRocks[Pos{x, y}] {
 				rowsToSouth := m.height - yStart
-				weight := 0
-				if roundRocks > 0 {
-					fmt.Printf("x: %d, y: %d, found %d rocks, rows to south at first: %d", x, y, roundRocks, rowsToSouth)
-				}
+				result = addRoundRocksWeight(result, rowsToSouth, roundRocks)
+				roundRocks = 0
+				yStart = y + 1
+			} else if m.roundRocks[Pos{x, y}] {
+				roundRocks++
+			}
+			y++
+		}
+		rowsToSouth := m.height - yStart
+		result = addRoundRocksWeight(result, rowsToSouth, roundRocks)
+	}
+	return result
+}
+
+func (m *Map) tiltNorth() *Map {
+	result := &Map{
+		width:       m.width,
+		height:      m.height,
+		roundRocks:  map[Pos]bool{},
+		squareRocks: m.squareRocks,
+	}
+	for x := 0; x < m.width; x++ {
+		y := 0
+		yStart := y
+		roundRocks := 0
+		for y < m.height {
+			if m.squareRocks[Pos{x, y}] {
+				rowsToSouth := m.height - yStart
 				for roundRocks > 0 {
-					weight += rowsToSouth
 					rowsToSouth--
 					roundRocks--
 				}
-				if weight > 0 {
-					fmt.Printf(", weight: %d\n", weight)
-				}
-				result += weight
 				roundRocks = 0
 				yStart = y + 1
 			} else if m.roundRocks[Pos{x, y}] {
@@ -50,7 +78,6 @@ func partOne(m *Map) int {
 		}
 		rowsToSouth := m.height - yStart
 		for roundRocks > 0 {
-			result += rowsToSouth
 			rowsToSouth--
 			roundRocks--
 		}
