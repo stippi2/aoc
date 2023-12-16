@@ -12,24 +12,10 @@ type Pos struct {
 	y int
 }
 
-type PosAndDirection struct {
-	pos       Pos
-	direction Pos
-}
-
 type Map struct {
 	width  int
 	height int
 	tiles  map[Pos]byte
-}
-
-func contains(positions []PosAndDirection, pos PosAndDirection) bool {
-	for _, p := range positions {
-		if p == pos {
-			return true
-		}
-	}
-	return false
 }
 
 type VisitedTiles struct {
