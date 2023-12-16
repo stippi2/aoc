@@ -29,7 +29,9 @@ func (m *Map) String() string {
 				sb.WriteString(".")
 			}
 		}
-		sb.WriteString("\n")
+		if y < m.height-1 {
+			sb.WriteString("\n")
+		}
 	}
 	return sb.String()
 }
@@ -40,6 +42,39 @@ func Test_partOne(t *testing.T) {
 }
 
 func Test_partTwo(t *testing.T) {
-	_ = parseInput(input)
-	assert.Equal(t, 0, partTwo())
+	m := parseInput(input)
+	m.tiltCycle()
+	assert.Equal(t, `.....#....
+....#...O#
+...OO##...
+.OO#......
+.....OOO#.
+.O#...O#.#
+....O#....
+......OOOO
+#...O###..
+#..OO#....`, m.String())
+	m.tiltCycle()
+	assert.Equal(t, `.....#....
+....#...O#
+.....##...
+..O#......
+.....OOO#.
+.O#...O#.#
+....O#...O
+.......OOO
+#..OO###..
+#.OOO#...O`, m.String())
+	m.tiltCycle()
+	assert.Equal(t, `.....#....
+....#...O#
+.....##...
+..O#......
+.....OOO#.
+.O#...O#.#
+....O#...O
+.......OOO
+#...O###.O
+#.OOO#...O`, m.String())
+	assert.Equal(t, 64, partTwo(m))
 }
