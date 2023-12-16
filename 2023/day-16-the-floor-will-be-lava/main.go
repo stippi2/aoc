@@ -147,26 +147,51 @@ func (m *Map) traceLight(start, direction Pos, visitedTiles *VisitedTiles) {
 	}
 }
 
-func partOne(m *Map) int {
+func (m *Map) countEnergizedTiles(start, direction Pos) int {
 	visitedTiles := VisitedTiles{
 		north: make(map[Pos]bool),
 		south: make(map[Pos]bool),
 		east:  make(map[Pos]bool),
 		west:  make(map[Pos]bool),
 	}
-	m.traceLight(Pos{-1, 0}, Pos{1, 0}, &visitedTiles)
+	m.traceLight(start, direction, &visitedTiles)
 	return visitedTiles.countVisitedTiles()
 }
 
-func partTwo() int {
-	return 0
+func partOne(m *Map) int {
+	return m.countEnergizedTiles(Pos{-1, 0}, Pos{1, 0})
+}
+
+func partTwo(m *Map) int {
+	maxEnergizedTiles := 0
+	for y := 0; y < m.height; y++ {
+		energizedTilesEast := m.countEnergizedTiles(Pos{-1, y}, Pos{1, 0})
+		if energizedTilesEast > maxEnergizedTiles {
+			maxEnergizedTiles = energizedTilesEast
+		}
+		energizedTilesWest := m.countEnergizedTiles(Pos{m.width, y}, Pos{-1, 0})
+		if energizedTilesWest > maxEnergizedTiles {
+			maxEnergizedTiles = energizedTilesWest
+		}
+	}
+	for x := 0; x < m.width; x++ {
+		energizedTilesNorth := m.countEnergizedTiles(Pos{x, -1}, Pos{0, 1})
+		if energizedTilesNorth > maxEnergizedTiles {
+			maxEnergizedTiles = energizedTilesNorth
+		}
+		energizedTilesSouth := m.countEnergizedTiles(Pos{x, m.height}, Pos{0, -1})
+		if energizedTilesSouth > maxEnergizedTiles {
+			maxEnergizedTiles = energizedTilesSouth
+		}
+	}
+	return maxEnergizedTiles
 }
 
 func main() {
 	now := time.Now()
 	m := parseInput(loadInput("puzzle-input.txt"))
 	part1 := partOne(m)
-	part2 := partTwo()
+	part2 := partTwo(m)
 	duration := time.Since(now)
 	fmt.Printf("Part 1: %d\n", part1)
 	fmt.Printf("Part 2: %d\n", part2)
