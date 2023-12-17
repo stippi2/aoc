@@ -26,6 +26,13 @@ func Test_partOne(t *testing.T) {
 }
 
 func Test_partTwo(t *testing.T) {
-	_ = parseInput(input)
-	assert.Equal(t, 0, partTwo())
+	m := parseInput(input)
+	assert.Equal(t, 94, partTwo(m))
+
+	//	m := parseInput(`111111111111
+	//999999999991
+	//999999999991
+	//999999999991
+	//999999999991`)
+	//	assert.Equal(t, 71, partTwo(m))
 }

@@ -29,39 +29,6 @@ type Path struct {
 	goingStraightCounter int
 
 	distanceToTarget int
-	positions        []Pos
-}
-
-func (p *Path) String() string {
-	xMax := 0
-	yMax := 0
-	for _, pos := range p.positions {
-		if pos.x > xMax {
-			xMax = pos.x
-		}
-		if pos.y > yMax {
-			yMax = pos.y
-		}
-	}
-	var sb strings.Builder
-	for y := 0; y <= yMax; y++ {
-		for x := 0; x <= xMax; x++ {
-			onPath := false
-			for _, pos := range p.positions {
-				if x == pos.x && y == pos.y {
-					onPath = true
-					break
-				}
-			}
-			if onPath {
-				sb.WriteByte('X')
-			} else {
-				sb.WriteByte('.')
-			}
-		}
-		sb.WriteByte('\n')
-	}
-	return sb.String()
 }
 
 // PathQueue implements a priority queue, see https://pkg.go.dev/container/heap
@@ -91,45 +58,50 @@ type Move struct {
 	goingStraightCounter int
 }
 
-func possibleMoves(m *Map, path *Path) []Move {
+type Crucible struct {
+	minStraight int
+	maxStraight int
+}
+
+func (c *Crucible) possibleMoves(m *Map, path *Path) []Move {
 	var moves []Move
 	var candidates []Move
 	switch path.direction {
 	case 0:
 		candidates = []Move{
-			{'E', Pos{path.tip.x + 1, path.tip.y}, 0},
-			{'S', Pos{path.tip.x, path.tip.y + 1}, 0},
+			{'E', Pos{path.tip.x + c.minStraight, path.tip.y}, c.minStraight},
+			{'S', Pos{path.tip.x, path.tip.y + c.minStraight}, c.minStraight},
 		}
 	case 'N':
 		candidates = []Move{
 			{'N', Pos{path.tip.x, path.tip.y - 1}, path.goingStraightCounter + 1},
-			{'E', Pos{path.tip.x + 1, path.tip.y}, 0},
-			{'W', Pos{path.tip.x - 1, path.tip.y}, 0},
+			{'E', Pos{path.tip.x + c.minStraight, path.tip.y}, c.minStraight},
+			{'W', Pos{path.tip.x - c.minStraight, path.tip.y}, c.minStraight},
 		}
 	case 'E':
 		candidates = []Move{
 			{'E', Pos{path.tip.x + 1, path.tip.y}, path.goingStraightCounter + 1},
-			{'N', Pos{path.tip.x, path.tip.y - 1}, 0},
-			{'S', Pos{path.tip.x, path.tip.y + 1}, 0},
+			{'N', Pos{path.tip.x, path.tip.y - c.minStraight}, c.minStraight},
+			{'S', Pos{path.tip.x, path.tip.y + c.minStraight}, c.minStraight},
 		}
 	case 'W':
 		candidates = []Move{
 			{'W', Pos{path.tip.x - 1, path.tip.y}, path.goingStraightCounter + 1},
-			{'N', Pos{path.tip.x, path.tip.y - 1}, 0},
-			{'S', Pos{path.tip.x, path.tip.y + 1}, 0},
+			{'N', Pos{path.tip.x, path.tip.y - c.minStraight}, c.minStraight},
+			{'S', Pos{path.tip.x, path.tip.y + c.minStraight}, c.minStraight},
 		}
 	case 'S':
 		candidates = []Move{
 			{'S', Pos{path.tip.x, path.tip.y + 1}, path.goingStraightCounter + 1},
-			{'E', Pos{path.tip.x + 1, path.tip.y}, 0},
-			{'W', Pos{path.tip.x - 1, path.tip.y}, 0},
+			{'E', Pos{path.tip.x + c.minStraight, path.tip.y}, c.minStraight},
+			{'W', Pos{path.tip.x - c.minStraight, path.tip.y}, c.minStraight},
 		}
 	}
 	for _, candidate := range candidates {
 		if candidate.pos.x < 0 || candidate.pos.x >= m.width || candidate.pos.y < 0 || candidate.pos.y >= m.height {
 			continue
 		}
-		if candidate.goingStraightCounter > 2 {
+		if candidate.goingStraightCounter > c.maxStraight {
 			continue
 		}
 		moves = append(moves, candidate)
@@ -137,7 +109,7 @@ func possibleMoves(m *Map, path *Path) []Move {
 	return moves
 }
 
-func findPathQueue(m *Map, start, end Pos) int {
+func findPathQueue(m *Map, start, end Pos, crucible *Crucible) int {
 	startPath := &Path{
 		tip: start,
 	}
@@ -166,7 +138,6 @@ func findPathQueue(m *Map, start, end Pos) int {
 		iteration++
 		path := heap.Pop(queue).(*Path)
 		if path.tip == end {
-			fmt.Printf("found end after %v iterations, paths in queue: %v\n", iteration, queue.Len())
 			fmt.Printf("found end after %v / %v iterations, paths in map: %v\n", time.Since(startTime),
 				iteration, queue.Len())
 			return path.heatLoss
@@ -179,12 +150,31 @@ func findPathQueue(m *Map, start, end Pos) int {
 				iteration, queue.Len(), path.tip.x, path.tip.y, path.heatLoss)
 		}
 
-		moves := possibleMoves(m, path)
+		moves := crucible.possibleMoves(m, path)
 
 		// For each of the possible directions, create a new path that includes the point taken
 		// If that path is better than the path already stored to reach the new point, replace it
 		for _, move := range moves {
-			heatLoss := path.heatLoss + m.getHeatLoss(move.pos.x, move.pos.y)
+			diffX := move.pos.x - path.tip.x
+			diffY := move.pos.y - path.tip.y
+			heatLoss := path.heatLoss
+			if diffX > 0 {
+				for x := path.tip.x + 1; x <= move.pos.x; x++ {
+					heatLoss += m.getHeatLoss(x, move.pos.y)
+				}
+			} else if diffX < 0 {
+				for x := path.tip.x - 1; x >= move.pos.x; x-- {
+					heatLoss += m.getHeatLoss(x, move.pos.y)
+				}
+			} else if diffY > 0 {
+				for y := path.tip.y + 1; y <= move.pos.y; y++ {
+					heatLoss += m.getHeatLoss(move.pos.x, y)
+				}
+			} else if diffY < 0 {
+				for y := path.tip.y - 1; y >= move.pos.y; y-- {
+					heatLoss += m.getHeatLoss(move.pos.x, y)
+				}
+			}
 
 			pathKey := PathKey{
 				pos:                  move.pos,
@@ -194,15 +184,11 @@ func findPathQueue(m *Map, start, end Pos) int {
 			pathToNext := pathMap[pathKey]
 
 			if pathToNext == nil || heatLoss < pathToNext.heatLoss {
-				positions := make([]Pos, len(path.positions)+1)
-				copy(positions, path.positions)
-				positions[len(positions)-1] = move.pos
 				pathToNext = &Path{
 					direction:            move.direction,
 					tip:                  move.pos,
 					goingStraightCounter: move.goingStraightCounter,
 					heatLoss:             heatLoss,
-					positions:            positions,
 				}
 				pathMap[pathKey] = pathToNext
 				heap.Push(queue, pathToNext)
@@ -213,18 +199,20 @@ func findPathQueue(m *Map, start, end Pos) int {
 }
 
 func partOne(m *Map) int {
-	return findPathQueue(m, Pos{0, 0}, Pos{m.width - 1, m.height - 1})
+	crucible := &Crucible{1, 3}
+	return findPathQueue(m, Pos{0, 0}, Pos{m.width - 1, m.height - 1}, crucible)
 }
 
-func partTwo() int {
-	return 0
+func partTwo(m *Map) int {
+	crucible := &Crucible{4, 10}
+	return findPathQueue(m, Pos{0, 0}, Pos{m.width - 1, m.height - 1}, crucible)
 }
 
 func main() {
 	now := time.Now()
 	m := parseInput(loadInput("puzzle-input.txt"))
 	part1 := partOne(m)
-	part2 := partTwo()
+	part2 := partTwo(m)
 	duration := time.Since(now)
 	fmt.Printf("Part 1: %d\n", part1)
 	fmt.Printf("Part 2: %d\n", part2)
