@@ -27,8 +27,6 @@ type Path struct {
 	tip                  Pos
 	heatLoss             int
 	goingStraightCounter int
-
-	distanceToTarget int
 }
 
 // PathQueue implements a priority queue, see https://pkg.go.dev/container/heap
