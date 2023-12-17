@@ -14,10 +14,6 @@ type Map struct {
 	data   []uint8
 }
 
-func (m *Map) offset(x, y int) int {
-	return y*m.width + x
-}
-
 func (m *Map) getHeatLoss(x, y int) int {
 	return int(m.data[y*m.width+x])
 }
