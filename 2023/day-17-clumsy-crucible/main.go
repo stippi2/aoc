@@ -118,12 +118,7 @@ func findPathQueue(m *Map, start, end Pos, crucible *Crucible) int {
 		goingStraightCounter int
 	}
 
-	visited := make(map[byte]map[Pos]bool)
-	visited['N'] = make(map[Pos]bool)
-	visited['S'] = make(map[Pos]bool)
-	visited['E'] = make(map[Pos]bool)
-	visited['W'] = make(map[Pos]bool)
-
+	// This map stores for a given position, direction, and how many tiles we went straight the best path to reach that position
 	pathMap := make(map[PathKey]*Path)
 
 	queue := &PathQueue{startPath}
@@ -139,9 +134,6 @@ func findPathQueue(m *Map, start, end Pos, crucible *Crucible) int {
 			fmt.Printf("found end after %v / %v iterations, paths in map: %v\n", time.Since(startTime),
 				iteration, queue.Len())
 			return path.heatLoss
-		}
-		if path.direction != 0 {
-			visited[path.direction][path.tip] = true
 		}
 		if iteration%100000 == 0 {
 			fmt.Printf("iteration: %v, paths: %v, tip: (%v, %v), heat loss: %v\n",
