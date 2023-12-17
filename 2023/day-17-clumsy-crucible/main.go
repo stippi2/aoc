@@ -212,13 +212,6 @@ func findPathQueue(m *Map, start, end Pos) int {
 	return -1
 }
 
-func abs(i int) int {
-	if i < 0 {
-		return -i
-	}
-	return i
-}
-
 func partOne(m *Map) int {
 	return findPathQueue(m, Pos{0, 0}, Pos{m.width - 1, m.height - 1})
 }
