@@ -25,10 +25,10 @@ func Test_partOne(t *testing.T) {
 	assert.Equal(t, byte('R'), instructions[0].direction)
 	assert.Equal(t, 6, instructions[0].cubeCount)
 	assert.Equal(t, "70c710", instructions[0].edgeColor)
-	assert.Equal(t, 62, partOne(instructions))
+	assert.Equal(t, int64(62), partOne(instructions))
 }
 
 func Test_partTwo(t *testing.T) {
-	_ = parseInput(input)
-	assert.Equal(t, 0, partTwo())
+	instructions := parseInput(input)
+	assert.Equal(t, int64(952408144115), partTwo(instructions))
 }

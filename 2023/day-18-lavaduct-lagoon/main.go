@@ -21,7 +21,7 @@ type Point struct {
 
 type LavaLagoon struct {
 	points    []Point
-	edgeCubes int
+	edgeCubes int64
 }
 
 func (l *LavaLagoon) buildEdgePartOne(instructions []Instruction) {
@@ -39,12 +39,35 @@ func (l *LavaLagoon) buildEdgePartOne(instructions []Instruction) {
 		case 'R':
 			cursor.x += float64(instruction.cubeCount)
 		}
-		l.edgeCubes += instruction.cubeCount
+		l.edgeCubes += int64(instruction.cubeCount)
 		l.points = append(l.points, cursor)
 	}
 }
 
-func (l *LavaLagoon) area() int {
+func (l *LavaLagoon) buildEdgePartTwo(instructions []Instruction) {
+	cursor := Point{0, 0}
+	l.points = []Point{cursor}
+	l.edgeCubes = 1
+	for _, instruction := range instructions {
+		distance, _ := strconv.ParseInt(instruction.edgeColor[:5], 16, 64)
+		direction := instruction.edgeColor[5]
+		// 0 means R, 1 means D, 2 means L, and 3 means U
+		switch direction {
+		case '3':
+			cursor.y -= float64(distance)
+		case '1':
+			cursor.y += float64(distance)
+		case '2':
+			cursor.x -= float64(distance)
+		case '0':
+			cursor.x += float64(distance)
+		}
+		l.edgeCubes += distance
+		l.points = append(l.points, cursor)
+	}
+}
+
+func (l *LavaLagoon) area() int64 {
 	n := len(l.points)
 	if n < 3 {
 		return 0
@@ -56,24 +79,26 @@ func (l *LavaLagoon) area() int {
 	}
 	area += (l.points[n-1].x * l.points[0].y) - (l.points[0].x * l.points[n-1].y)
 
-	return int(math.Abs(area/2.0)) + (l.edgeCubes)/2 + 1
+	return int64(math.Abs(area/2.0)) + (l.edgeCubes)/2 + 1
 }
 
-func partOne(instructions []Instruction) int {
+func partOne(instructions []Instruction) int64 {
 	lagoon := LavaLagoon{}
 	lagoon.buildEdgePartOne(instructions)
 	return lagoon.area()
 }
 
-func partTwo() int {
-	return 0
+func partTwo(instructions []Instruction) int64 {
+	lagoon := LavaLagoon{}
+	lagoon.buildEdgePartTwo(instructions)
+	return lagoon.area()
 }
 
 func main() {
 	now := time.Now()
 	instructions := parseInput(loadInput("puzzle-input.txt"))
 	part1 := partOne(instructions)
-	part2 := partTwo()
+	part2 := partTwo(instructions)
 	duration := time.Since(now)
 	fmt.Printf("Part 1: %d\n", part1)
 	fmt.Printf("Part 2: %d\n", part2)
