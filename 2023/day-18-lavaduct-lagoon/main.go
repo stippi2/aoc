@@ -80,6 +80,13 @@ func (l *LavaLagoon) area() int64 {
 	}
 	area += (l.points[n-1].x * l.points[0].y) - (l.points[0].x * l.points[n-1].y)
 
+	// The edge cubes increase the area in the following way:
+	// For most of the edge cubes, one half is within the area of the polygon,
+	// the other is outside of it. So we need to add one half of the edge cubes.
+	// For the corner cubes, they contribute either 3/4 or 1/4, depending on whether they are an inner or outer edge.
+	// Their number almost evens out.
+	// But regardless of how many corner cubes there are, to form a closed area,
+	// we must account for 4 additional quarters of a cube.
 	return int64(math.Abs(area/2.0)) + (l.edgeCubes)/2 + 1
 }
 
