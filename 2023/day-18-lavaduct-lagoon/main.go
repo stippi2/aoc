@@ -73,6 +73,7 @@ func (l *LavaLagoon) area() int64 {
 		return 0
 	}
 
+	// Shoelace formula
 	area := 0.0
 	for i := 0; i < n-1; i++ {
 		area += (l.points[i].x * l.points[i+1].y) - (l.points[i+1].x * l.points[i].y)
