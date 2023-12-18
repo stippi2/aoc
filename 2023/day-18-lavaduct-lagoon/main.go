@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -14,130 +15,53 @@ type Instruction struct {
 	edgeColor string
 }
 
-type Pos struct {
-	x, y int
+type Point struct {
+	x, y float64
 }
 
 type LavaLagoon struct {
-	xMin, xMax, yMin, yMax int
-	width, height          int
-	bitmap                 []byte
+	points    []Point
+	edgeCubes int
 }
 
-func abs(v int) int {
-	if v < 0 {
-		return -v
-	}
-	return v
-}
-
-func (l *LavaLagoon) allocateBitmap(instructions []Instruction) {
-	cursor := Pos{0, 0}
+func (l *LavaLagoon) buildEdgePartOne(instructions []Instruction) {
+	cursor := Point{0, 0}
+	l.points = []Point{cursor}
+	l.edgeCubes = 1
 	for _, instruction := range instructions {
 		switch instruction.direction {
 		case 'U':
-			cursor.y -= instruction.cubeCount
+			cursor.y -= float64(instruction.cubeCount)
 		case 'D':
-			cursor.y += instruction.cubeCount
+			cursor.y += float64(instruction.cubeCount)
 		case 'L':
-			cursor.x -= instruction.cubeCount
+			cursor.x -= float64(instruction.cubeCount)
 		case 'R':
-			cursor.x += instruction.cubeCount
+			cursor.x += float64(instruction.cubeCount)
 		}
-		l.xMin = min(l.xMin, cursor.x)
-		l.yMin = min(l.yMin, cursor.y)
-		l.xMax = max(l.xMax, cursor.x)
-		l.yMax = max(l.yMax, cursor.y)
-	}
-	l.width = l.xMax - l.xMin + 1
-	l.height = l.yMax - l.yMin + 1
-	l.bitmap = make([]byte, l.width*l.height)
-}
-
-func (l *LavaLagoon) dig(pos Pos) {
-	pos.x -= l.xMin
-	pos.y -= l.yMin
-	l.bitmap[pos.y*l.width+pos.x] = 1
-}
-
-func (l *LavaLagoon) isDug(pos Pos) bool {
-	pos.x -= l.xMin
-	pos.y -= l.yMin
-	return l.bitmap[pos.y*l.width+pos.x] == 1
-}
-
-func (l *LavaLagoon) buildEdge(instructions []Instruction) {
-	cursor := Pos{0, 0}
-	for _, instruction := range instructions {
-		start := cursor
-		switch instruction.direction {
-		case 'U':
-			cursor.y -= instruction.cubeCount
-		case 'D':
-			cursor.y += instruction.cubeCount
-		case 'L':
-			cursor.x -= instruction.cubeCount
-		case 'R':
-			cursor.x += instruction.cubeCount
-		}
-		if cursor.x == start.x {
-			step := (cursor.y - start.y) / abs(cursor.y-start.y)
-			for {
-				l.dig(start)
-				start.y += step
-				if start.y == cursor.y {
-					break
-				}
-			}
-		} else {
-			step := (cursor.x - start.x) / abs(cursor.x-start.x)
-			for {
-				l.dig(start)
-				start.x += step
-				if start.x == cursor.x {
-					break
-				}
-			}
-		}
-	}
-}
-
-func (l *LavaLagoon) fill() {
-	start := Pos{1, 1}
-	queue := []Pos{start}
-	for len(queue) > 0 {
-		pos := queue[len(queue)-1]
-		queue = queue[:len(queue)-1]
-		l.dig(pos)
-		neighbors := []Pos{
-			{pos.x + 1, pos.y},
-			{pos.x - 1, pos.y},
-			{pos.x, pos.y + 1},
-			{pos.x, pos.y - 1},
-		}
-		for _, n := range neighbors {
-			if !l.isDug(n) {
-				queue = append(queue, n)
-			}
-		}
+		l.edgeCubes += instruction.cubeCount
+		l.points = append(l.points, cursor)
 	}
 }
 
 func (l *LavaLagoon) area() int {
-	area := 0
-	for _, cube := range l.bitmap {
-		if cube == 1 {
-			area++
-		}
+	n := len(l.points)
+	if n < 3 {
+		return 0
 	}
-	return area
+
+	area := 0.0
+	for i := 0; i < n-1; i++ {
+		area += (l.points[i].x * l.points[i+1].y) - (l.points[i+1].x * l.points[i].y)
+	}
+	area += (l.points[n-1].x * l.points[0].y) - (l.points[0].x * l.points[n-1].y)
+
+	return int(math.Abs(area/2.0)) + (l.edgeCubes)/2 + 1
 }
 
 func partOne(instructions []Instruction) int {
 	lagoon := LavaLagoon{}
-	lagoon.allocateBitmap(instructions)
-	lagoon.buildEdge(instructions)
-	lagoon.fill()
+	lagoon.buildEdgePartOne(instructions)
 	return lagoon.area()
 }
 
