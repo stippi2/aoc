@@ -62,7 +62,6 @@ type Crucible struct {
 }
 
 func (c *Crucible) possibleMoves(m *Map, path *Path) []Move {
-	var moves []Move
 	var candidates []Move
 	switch path.direction {
 	case 0:
@@ -95,6 +94,7 @@ func (c *Crucible) possibleMoves(m *Map, path *Path) []Move {
 			{'W', Pos{path.tip.x - c.minStraight, path.tip.y}, c.minStraight},
 		}
 	}
+	var moves []Move
 	for _, candidate := range candidates {
 		if candidate.pos.x < 0 || candidate.pos.x >= m.width || candidate.pos.y < 0 || candidate.pos.y >= m.height {
 			continue
