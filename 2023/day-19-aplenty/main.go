@@ -85,11 +85,43 @@ type Part struct {
 	x, m, a, s int
 }
 
-func partOne(workflows []Workflow, parts []Part) int {
-	return 0
+func partOne(workflows map[string]*Workflow, parts []Part) int {
+	var accepted []Part
+
+	for _, part := range parts {
+		workflow := workflows["in"]
+		decisionMade := false
+		for {
+			for _, rule := range workflow.rules {
+				applied, targetWorkflow := rule.apply(part)
+				if applied {
+					switch targetWorkflow {
+					case "A":
+						accepted = append(accepted, part)
+						decisionMade = true
+					case "R":
+						decisionMade = true
+					default:
+						workflow = workflows[targetWorkflow]
+					}
+					break
+				}
+			}
+			if decisionMade {
+				break
+			}
+		}
+	}
+
+	sumProperties := 0
+	for _, part := range accepted {
+		sumProperties += part.x + part.m + part.a + part.s
+	}
+
+	return sumProperties
 }
 
-func partTwo(workflows []Workflow, parts []Part) int {
+func partTwo(workflows map[string]*Workflow, parts []Part) int {
 	return 0
 }
 
@@ -160,11 +192,12 @@ func parsePart(input string) Part {
 	return part
 }
 
-func parseInput(input string) ([]Workflow, []Part) {
+func parseInput(input string) (map[string]*Workflow, []Part) {
 	sections := strings.Split(input, "\n\n")
-	var workflows []Workflow
+	workflows := make(map[string]*Workflow)
 	for _, line := range strings.Split(sections[0], "\n") {
-		workflows = append(workflows, parseWorkflow(line))
+		workflow := parseWorkflow(line)
+		workflows[workflow.name] = &workflow
 	}
 	var parts []Part
 	for _, line := range strings.Split(sections[1], "\n") {
