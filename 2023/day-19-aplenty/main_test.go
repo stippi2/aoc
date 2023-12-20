@@ -29,6 +29,6 @@ func Test_partOne(t *testing.T) {
 }
 
 func Test_partTwo(t *testing.T) {
-	workflows, parts := parseInput(input)
-	assert.Equal(t, 167409079868000, partTwo(workflows, parts))
+	workflows, _ := parseInput(input)
+	assert.Equal(t, 167409079868000, partTwo(workflows))
 }
