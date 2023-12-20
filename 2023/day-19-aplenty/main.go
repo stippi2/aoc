@@ -29,14 +29,6 @@ func (rs *RangeSet) clone() *RangeSet {
 	}}
 }
 
-func (rs *RangeSet) String() string {
-	return fmt.Sprintf("x: %d-%d, m: %d-%d, a: %d-%d, s: %d-%d",
-		rs.ranges["x"].min, rs.ranges["x"].max,
-		rs.ranges["m"].min, rs.ranges["m"].max,
-		rs.ranges["a"].min, rs.ranges["a"].max,
-		rs.ranges["s"].min, rs.ranges["s"].max)
-}
-
 type Rule interface {
 	apply(part Part) (bool, string)
 	applyToRangeSet(rangeSet *RangeSet) (bool, string)
@@ -50,23 +42,8 @@ type GreaterThanRule struct {
 }
 
 func (gtr GreaterThanRule) apply(part Part) (bool, string) {
-	switch gtr.property {
-	case "x":
-		if part.x > gtr.value {
-			return true, gtr.targetWorkflow
-		}
-	case "m":
-		if part.m > gtr.value {
-			return true, gtr.targetWorkflow
-		}
-	case "a":
-		if part.a > gtr.value {
-			return true, gtr.targetWorkflow
-		}
-	case "s":
-		if part.s > gtr.value {
-			return true, gtr.targetWorkflow
-		}
+	if part.properties[gtr.property] > gtr.value {
+		return true, gtr.targetWorkflow
 	}
 	return false, ""
 }
@@ -92,23 +69,8 @@ type LessThanRule struct {
 }
 
 func (ltr LessThanRule) apply(part Part) (bool, string) {
-	switch ltr.property {
-	case "x":
-		if part.x < ltr.value {
-			return true, ltr.targetWorkflow
-		}
-	case "m":
-		if part.m < ltr.value {
-			return true, ltr.targetWorkflow
-		}
-	case "a":
-		if part.a < ltr.value {
-			return true, ltr.targetWorkflow
-		}
-	case "s":
-		if part.s < ltr.value {
-			return true, ltr.targetWorkflow
-		}
+	if part.properties[ltr.property] < ltr.value {
+		return true, ltr.targetWorkflow
 	}
 	return false, ""
 }
@@ -148,7 +110,7 @@ type Workflow struct {
 }
 
 type Part struct {
-	x, m, a, s int
+	properties map[string]int
 }
 
 func partOne(workflows map[string]*Workflow, parts []Part) int {
@@ -181,7 +143,9 @@ func partOne(workflows map[string]*Workflow, parts []Part) int {
 
 	sumProperties := 0
 	for _, part := range accepted {
-		sumProperties += part.x + part.m + part.a + part.s
+		for _, value := range part.properties {
+			sumProperties += value
+		}
 	}
 
 	return sumProperties
@@ -218,9 +182,7 @@ func partTwo(workflows map[string]*Workflow) int {
 	}}
 
 	acceptedRangeSets := assembleAcceptedRanges(workflows, "in", rangeSet)
-	for _, rs := range acceptedRangeSets {
-		fmt.Printf("%s\n", rs)
-	}
+
 	sum := 0
 	for _, rs := range acceptedRangeSets {
 		fmt.Printf("%s\n", rs)
@@ -284,19 +246,10 @@ func parsePart(input string) Part {
 	//{x=787,m=2655,a=1222,s=2876}
 	input = strings.Trim(input, "{}")
 	properties := strings.Split(input, ",")
-	part := Part{}
+	part := Part{properties: make(map[string]int)}
 	for _, property := range properties {
 		kv := strings.Split(property, "=")
-		switch kv[0] {
-		case "x":
-			part.x, _ = strconv.Atoi(kv[1])
-		case "m":
-			part.m, _ = strconv.Atoi(kv[1])
-		case "a":
-			part.a, _ = strconv.Atoi(kv[1])
-		case "s":
-			part.s, _ = strconv.Atoi(kv[1])
-		}
+		part.properties[kv[0]], _ = strconv.Atoi(kv[1])
 	}
 	return part
 }
