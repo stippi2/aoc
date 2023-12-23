@@ -5,7 +5,8 @@ import (
 	"testing"
 )
 
-const input = `#.#####################
+const input = `
+#.#####################
 #.......#########...###
 #######.#########.#.###
 ###.....#.>.>.###.#.###
@@ -36,5 +37,5 @@ func Test_partOne(t *testing.T) {
 
 func Test_partTwo(t *testing.T) {
 	m := parseInput(input)
-	assert.Equal(t, 0, partTwo(m))
+	assert.Equal(t, 154, partTwo(m))
 }
