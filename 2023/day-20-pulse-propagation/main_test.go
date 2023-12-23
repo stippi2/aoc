@@ -36,6 +36,6 @@ func Test_partOneOutputExample(t *testing.T) {
 }
 
 func Test_partTwo(t *testing.T) {
-	_ = parseInput(input1)
-	assert.Equal(t, 0, partTwo())
+	moduleConfiguration := parseInput(input1)
+	assert.Equal(t, 0, partTwo(moduleConfiguration))
 }

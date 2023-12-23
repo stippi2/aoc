@@ -122,7 +122,7 @@ func (m *ModuleConfiguration) processPulses(pulses []Pulse) {
 		} else {
 			m.pulsesLow++
 		}
-		//fmt.Printf("%s\n", pulse)
+		fmt.Printf("%s\n", pulse)
 		module := m.modules[pulse.to]
 		if module == nil {
 			if !pulse.isHigh {
@@ -145,20 +145,24 @@ func partOne(m *ModuleConfiguration) int {
 }
 
 func partTwo(m *ModuleConfiguration) int {
-	for i := 0; i < 100000000; i++ {
-		m.pushButton()
-	}
+	m.pushButton()
+	fmt.Println("-----")
+	m.pushButton()
+	fmt.Println("-----")
+	m.pushButton()
+	fmt.Println("-----")
+	m.pushButton()
 	return m.pulsesLow * m.pulsesHigh
 }
 
 func main() {
 	now := time.Now()
 	moduleConfiguration := parseInput(loadInput("puzzle-input.txt"))
-	part1 := partOne(moduleConfiguration)
-	moduleConfiguration = parseInput(loadInput("puzzle-input.txt"))
+	//part1 := partOne(moduleConfiguration)
+	//moduleConfiguration = parseInput(loadInput("puzzle-input.txt"))
 	part2 := partTwo(moduleConfiguration)
 	duration := time.Since(now)
-	fmt.Printf("Part 1: %d\n", part1)
+	//fmt.Printf("Part 1: %d\n", part1)
 	fmt.Printf("Part 2: %d\n", part2)
 	fmt.Printf("Time: %v\n", duration)
 }
