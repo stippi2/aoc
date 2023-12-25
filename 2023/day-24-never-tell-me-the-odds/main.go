@@ -55,22 +55,6 @@ func isFutureIntersection(h Hailstone, intersection Vector) bool {
 	return scalarProduct > 0
 }
 
-func calculateMeetingPoint2D(a, b Hailstone) (Vector, bool) {
-	// Check if the velocities lead to a meeting point
-	if a.velocity.x-b.velocity.x == 0 || a.velocity.y-b.velocity.y == 0 {
-		return Vector{}, false
-	}
-
-	t := (b.position.x - a.position.x) / (a.velocity.x - b.velocity.x)
-	ty := (b.position.y - a.position.y) / (a.velocity.y - b.velocity.y)
-	// Check if there is a time when the hailstones meet
-	if t-ty > 0.0000001 || t-ty < -0.0000001 {
-		return Vector{}, false
-	}
-
-	return Vector{a.position.x + a.velocity.x*t, a.position.y + a.velocity.y*t, 0}, true
-}
-
 func partOne(hailstones []Hailstone, minX, maxX float64) int {
 	// Find the intersections of all pairs of hailstones
 	count := 0
