@@ -84,20 +84,20 @@ func testRemoval(slabs []SandSlab, index int) int {
 	return settle(slabsCopy, index)
 }
 
-func validate(slabs []SandSlab) bool {
-	for i := 0; i < len(slabs); i++ {
-		slab := slabs[i]
-		if slab.x1 > slab.x2 || slab.y1 > slab.y2 || slab.z1 > slab.z2 {
-			return false
-		}
-		for j := i + 1; j < len(slabs); j++ {
-			if slabs[i].intersects(slabs[j]) {
-				return false
-			}
-		}
-	}
-	return true
-}
+//func validate(slabs []SandSlab) bool {
+//	for i := 0; i < len(slabs); i++ {
+//		slab := slabs[i]
+//		if slab.x1 > slab.x2 || slab.y1 > slab.y2 || slab.z1 > slab.z2 {
+//			return false
+//		}
+//		for j := i + 1; j < len(slabs); j++ {
+//			if slabs[i].intersects(slabs[j]) {
+//				return false
+//			}
+//		}
+//	}
+//	return true
+//}
 
 func partOne(slabs []SandSlab) int {
 	settle(slabs, 0)
@@ -122,9 +122,9 @@ func partTwo(slabs []SandSlab) int {
 func main() {
 	now := time.Now()
 	slabs := parseInput(loadInput("puzzle-input.txt"))
-	if !validate(slabs) {
-		panic("invalid input")
-	}
+	//if !validate(slabs) {
+	//	panic("invalid input")
+	//}
 	part1 := partOne(slabs)
 	part2 := partTwo(slabs)
 	duration := time.Since(now)
