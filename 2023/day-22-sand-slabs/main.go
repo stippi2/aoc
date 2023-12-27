@@ -47,8 +47,10 @@ func sort(slabs []SandSlab) {
 	})
 }
 
-func settle(slabs []SandSlab, index int) {
+func settle(slabs []SandSlab, index int) int {
+	fallenBricks := 0
 	for i := index; i < len(slabs); i++ {
+		z1 := slabs[i].z1
 		for {
 			if slabs[i].z1 == 1 {
 				break
@@ -67,38 +69,64 @@ func settle(slabs []SandSlab, index int) {
 				break
 			}
 		}
+		if slabs[i].z1 != z1 {
+			fallenBricks++
+		}
 	}
+	return fallenBricks
 }
 
-func testRemoval(slabs []SandSlab, index int) bool {
+func testRemoval(slabs []SandSlab, index int) int {
+	// Make a copy of the slabs with the slab at index removed
 	slabsCopy := make([]SandSlab, len(slabs)-1)
 	copy(slabsCopy, slabs[:index])
 	copy(slabsCopy[index:], slabs[index+1:])
-	height := slabsCopy[len(slabsCopy)-1].z2
-	settle(slabsCopy, index)
-	return slabsCopy[len(slabsCopy)-1].z2 == height
+	return settle(slabsCopy, index)
+}
+
+func validate(slabs []SandSlab) bool {
+	for i := 0; i < len(slabs); i++ {
+		slab := slabs[i]
+		if slab.x1 > slab.x2 || slab.y1 > slab.y2 || slab.z1 > slab.z2 {
+			return false
+		}
+		for j := i + 1; j < len(slabs); j++ {
+			if slabs[i].intersects(slabs[j]) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func partOne(slabs []SandSlab) int {
 	settle(slabs, 0)
 	count := 0
 	for i := 0; i < len(slabs); i++ {
-		if testRemoval(slabs, i) {
+		if testRemoval(slabs, i) == 0 {
 			count++
 		}
 	}
 	return count
 }
 
-func partTwo() int {
-	return 0
+func partTwo(slabs []SandSlab) int {
+	settle(slabs, 0)
+	count := 0
+	for i := 0; i < len(slabs); i++ {
+		count += testRemoval(slabs, i)
+	}
+	return count
 }
 
 func main() {
 	now := time.Now()
 	slabs := parseInput(loadInput("puzzle-input.txt"))
+	if !validate(slabs) {
+		panic("invalid input")
+	}
 	part1 := partOne(slabs)
-	part2 := partTwo()
+	part2 := partTwo(slabs)
 	duration := time.Since(now)
 	fmt.Printf("Part 1: %d\n", part1)
 	fmt.Printf("Part 2: %d\n", part2)

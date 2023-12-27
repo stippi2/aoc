@@ -21,6 +21,6 @@ func Test_partOne(t *testing.T) {
 }
 
 func Test_partTwo(t *testing.T) {
-	_ = parseInput(input)
-	assert.Equal(t, 0, partTwo())
+	slabs := parseInput(input)
+	assert.Equal(t, 7, partTwo(slabs))
 }
