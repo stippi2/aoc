@@ -1,38 +1,36 @@
 use crate::read_input;
 
-fn is_safe_report(mut levels: Vec<i64>) -> bool {
+fn is_safe_report(levels: &[i64]) -> bool {
     if levels.len() < 2 {
         return false;
     }
-
-    let mut last_num = levels.remove(0);
 
     #[derive(PartialEq)]
     enum Direction {
         Up,
         Down,
-        None,
     }
 
-    let mut direction = Direction::None;
+    let mut direction: Option<Direction> = None;
 
-    for num in levels {
-        let diff = num - last_num;
+    for window in levels.windows(2) {
+        let diff = window[1] - window[0];
         if diff.abs() > 3 || diff.abs() == 0 {
             return false;
         }
-        if direction == Direction::None {
-            if diff > 0 {
-                direction = Direction::Up;
-            } else if diff < 0 {
-                direction = Direction::Down;
+
+        match direction {
+            None => {
+                direction = Some(if diff > 0 {
+                    Direction::Up
+                } else {
+                    Direction::Down
+                });
             }
-        } else if diff > 0 && direction == Direction::Down {
-            return false;
-        } else if diff < 0 && direction == Direction::Up {
-            return false;
+            Some(Direction::Up) if diff < 0 => return false,
+            Some(Direction::Down) if diff > 0 => return false,
+            _ => {}
         }
-        last_num = num;
     }
     true
 }
@@ -48,7 +46,7 @@ pub fn part1() -> i64 {
             .map(|x| x.parse::<i64>().unwrap())
             .collect();
 
-        if is_safe_report(levels.clone()) {
+        if is_safe_report(&levels) {
             sum += 1;
         }
     }
@@ -68,7 +66,7 @@ pub fn part2() -> i64 {
             .collect();
 
         // Check if the report is already save
-        if is_safe_report(levels.clone()) {
+        if is_safe_report(&levels) {
             sum += 1;
             continue;
         }
@@ -76,7 +74,7 @@ pub fn part2() -> i64 {
         for i in 0..levels.len() {
             let mut levels = levels.clone();
             levels.remove(i);
-            if is_safe_report(levels.clone()) {
+            if is_safe_report(&levels) {
                 sum += 1;
                 break;
             }
