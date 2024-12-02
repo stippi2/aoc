@@ -7,24 +7,29 @@ fn is_safe_report(mut levels: Vec<i64>) -> bool {
 
     let mut last_num = levels.remove(0);
 
-    let mut direction: Option<String> = None;
-    let direction_up = Some("up".to_string());
-    let direction_down = Some("down".to_string());
+    #[derive(PartialEq)]
+    enum Direction {
+        Up,
+        Down,
+        None,
+    }
+
+    let mut direction = Direction::None;
 
     for num in levels {
         let diff = num - last_num;
         if diff.abs() > 3 || diff.abs() == 0 {
             return false;
         }
-        if direction == None {
+        if direction == Direction::None {
             if diff > 0 {
-                direction = direction_up.clone();
+                direction = Direction::Up;
             } else if diff < 0 {
-                direction = direction_down.clone();
+                direction = Direction::Down;
             }
-        } else if diff > 0 && direction == direction_down {
+        } else if diff > 0 && direction == Direction::Down {
             return false;
-        } else if diff < 0 && direction == direction_up {
+        } else if diff < 0 && direction == Direction::Up {
             return false;
         }
         last_num = num;
