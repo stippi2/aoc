@@ -1,6 +1,9 @@
 use advent_of_code_2024::*;
 use std::time::Instant;
 
+pub mod day01;
+pub mod day02;
+
 fn main() {
     let day = std::env::args()
         .nth(1)
@@ -14,6 +17,11 @@ fn main() {
             println!("Day 01");
             println!("Part 1: {}", day01::part1());
             println!("Part 2: {}", day01::part2());
+        }
+        2 => {
+            println!("Day 02");
+            println!("Part 1: {}", day02::part1());
+            println!("Part 2: {}", day02::part2());
         }
         _ => println!("Day {} not implemented yet", day),
     }
