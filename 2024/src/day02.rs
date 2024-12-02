@@ -65,7 +65,7 @@ pub fn part2() -> i64 {
             .map(|x| x.parse::<i64>().unwrap())
             .collect();
 
-        // Check if the report is already save
+        // Check if the report is already safe
         if is_safe_report(&levels) {
             sum += 1;
             continue;
