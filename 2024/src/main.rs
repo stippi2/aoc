@@ -4,6 +4,7 @@ use std::time::Instant;
 pub mod day01;
 pub mod day02;
 pub mod day03;
+pub mod day04;
 
 fn main() {
     let day = std::env::args()
@@ -28,6 +29,11 @@ fn main() {
             println!("Day 03");
             println!("Part 1: {}", day03::part1());
             println!("Part 2: {}", day03::part2());
+        }
+        4 => {
+            println!("Day 04");
+            println!("Part 1: {}", day04::part1());
+            println!("Part 2: {}", day04::part2());
         }
         _ => println!("Day {} not implemented yet", day),
     }
