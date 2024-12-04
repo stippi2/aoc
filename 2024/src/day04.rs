@@ -1,49 +1,4 @@
-use crate::read_input;
-
-struct Grid {
-    data: Vec<char>,
-    width: usize,
-    height: usize,
-}
-
-impl Grid {
-    fn new(width: usize, height: usize) -> Self {
-        Grid {
-            data: vec![' '; width * height],
-            width,
-            height,
-        }
-    }
-
-    fn from(input: String) -> Self {
-        let height = input.lines().count();
-        let width = input.lines().next().map(|line| line.len()).unwrap_or(0);
-        let mut grid = Grid::new(width, height);
-        for (y, line) in input.lines().enumerate() {
-            for (x, letter) in line.char_indices() {
-                grid.set(x, y, letter);
-            }
-        }
-        grid
-    }
-
-    fn get(&self, x: i32, y: i32) -> Option<&char> {
-        if x >= 0 && x < self.width as i32 && y >= 0 && y < self.height as i32 {
-            Some(&self.data[y as usize * self.width + x as usize])
-        } else {
-            None
-        }
-    }
-
-    fn set(&mut self, x: usize, y: usize, value: char) -> bool {
-        if x < self.width && y < self.height {
-            self.data[y * self.width + x] = value;
-            true
-        } else {
-            false
-        }
-    }
-}
+use crate::{read_input, Grid};
 
 const DIRECTIONS: [(i32, i32); 8] = [
     (-1, 0),
@@ -56,7 +11,7 @@ const DIRECTIONS: [(i32, i32); 8] = [
     (1, 1),
 ];
 
-fn count_matches(grid: &Grid, start_x: i32, start_y: i32, word: &String) -> i64 {
+fn count_matches(grid: &Grid<char>, start_x: i32, start_y: i32, word: &String) -> i64 {
     let mut matches = 0;
     for direction in DIRECTIONS {
         let mut x = start_x + direction.0;
@@ -86,13 +41,13 @@ fn count_matches(grid: &Grid, start_x: i32, start_y: i32, word: &String) -> i64 
 }
 
 fn sum_words(input: String, word: String) -> i64 {
-    let grid = Grid::from(input);
+    let grid = Grid::from_string(&input);
 
     let mut sum = 0;
 
     if let Some(first_letter) = word.chars().next() {
-        for y in 0..grid.height {
-            for x in 0..grid.width {
+        for y in 0..grid.height() {
+            for x in 0..grid.width() {
                 if let Some(letter) = grid.get(x as i32, y as i32) {
                     if *letter == first_letter {
                         sum += count_matches(&grid, x as i32, y as i32, &word);
@@ -110,13 +65,13 @@ pub fn part1() -> i64 {
 }
 
 fn sum_crossings(input: String) -> i64 {
-    let grid = Grid::from(input);
+    let grid = Grid::from_string(&input);
 
     let mut sum = 0;
     let middle = 'A';
 
-    for y in 1..grid.height - 1 {
-        for x in 1..grid.width - 1 {
+    for y in 1..grid.height() - 1 {
+        for x in 1..grid.width() - 1 {
             if let (Some(&letter), Some(&lt), Some(&rt), Some(&lb), Some(&rb)) = (
                 grid.get(x as i32, y as i32),
                 grid.get(x as i32 - 1, y as i32 - 1),
