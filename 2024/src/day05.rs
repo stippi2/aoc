@@ -1,4 +1,5 @@
 use crate::read_input;
+use std::cmp::Ordering;
 
 fn parse_input(input: String) -> Option<(Vec<Vec<i64>>, Vec<Vec<i64>>)> {
     let mut rules: Vec<Vec<i64>> = Vec::new();
@@ -34,8 +35,9 @@ fn parse_input(input: String) -> Option<(Vec<Vec<i64>>, Vec<Vec<i64>>)> {
     }
 }
 
-fn sum_middles(rules: &Vec<Vec<i64>>, page_sequences: &Vec<Vec<i64>>) -> i64 {
-    let mut sum = 0;
+fn sum_middles(rules: &Vec<Vec<i64>>, page_sequences: &Vec<Vec<i64>>) -> (i64, i64) {
+    let mut sum_valid = 0;
+    let mut sum_invalid = 0;
     for page_sequence in page_sequences {
         let mut is_valid = true;
         for rule in rules {
@@ -55,18 +57,43 @@ fn sum_middles(rules: &Vec<Vec<i64>>, page_sequences: &Vec<Vec<i64>>) -> i64 {
             }
         }
         if is_valid {
-            println!("Non-violating sequence: {:?}", page_sequence);
             if let Some(middle_number) = page_sequence.get(page_sequence.len() / 2) {
-                sum += middle_number;
+                sum_valid += middle_number;
+            }
+        } else {
+            let mut corrected_sequence = page_sequence.clone();
+            corrected_sequence.sort_by(|a, b| {
+                let pair = vec![*a, *b];
+                // Jetzt müssen wir in rules suchen nach einem Vec,
+                // das dieselben Zahlen enthält (egal in welcher Reihenfolge)
+                if let Some(rule) = rules.iter().find(|r| **r == pair) {
+                    if rule[0] == *a {
+                        Ordering::Less
+                    } else {
+                        Ordering::Greater
+                    }
+                } else {
+                    Ordering::Equal
+                }
+            });
+            if let Some(middle_number) = corrected_sequence.get(corrected_sequence.len() / 2) {
+                sum_invalid += middle_number;
             }
         }
     }
-    sum
+    (sum_valid, sum_invalid)
 }
 
 fn sum_correct_page_sequences(input: String) -> i64 {
     match parse_input(input) {
-        Some((rules, page_sequences)) => sum_middles(&rules, &page_sequences),
+        Some((rules, page_sequences)) => sum_middles(&rules, &page_sequences).0,
+        None => 0,
+    }
+}
+
+fn sum_incorrect_page_sequences(input: String) -> i64 {
+    match parse_input(input) {
+        Some((rules, page_sequences)) => sum_middles(&rules, &page_sequences).1,
         None => 0,
     }
 }
@@ -76,7 +103,7 @@ pub fn part1() -> i64 {
 }
 
 pub fn part2() -> i64 {
-    0
+    sum_incorrect_page_sequences(read_input(5))
 }
 
 #[cfg(test)]
@@ -116,5 +143,40 @@ mod tests {
             97,13,75,29,47"#,
         );
         assert_eq!(sum_correct_page_sequences(input), 143 as i64);
+    }
+
+    #[test]
+    fn example_part2() {
+        let input = String::from(
+            r#"47|53
+            97|13
+            97|61
+            97|47
+            75|29
+            61|13
+            75|53
+            29|13
+            97|29
+            53|29
+            61|53
+            97|53
+            61|29
+            47|13
+            75|47
+            97|75
+            47|61
+            75|61
+            47|29
+            75|13
+            53|13
+
+            75,47,61,53,29
+            97,61,53,29,13
+            75,29,13
+            75,97,47,61,53
+            61,13,29
+            97,13,75,29,47"#,
+        );
+        assert_eq!(sum_incorrect_page_sequences(input), 123 as i64);
     }
 }
