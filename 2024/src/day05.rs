@@ -35,16 +35,13 @@ fn parse_input(input: String) -> Option<(Vec<Vec<i64>>, Vec<Vec<i64>>)> {
 }
 
 fn sum_middles(rules: &Vec<Vec<i64>>, page_sequences: &Vec<Vec<i64>>) -> i64 {
-    println!("Rules: {:?}", rules);
-    println!("Page sequecnes: {:?}", page_sequences);
-
     let mut sum = 0;
     for page_sequence in page_sequences {
         let mut is_valid = true;
         for rule in rules {
             let mut found_pages = Vec::new();
-            for page_number in rule {
-                if let Some(_index) = page_sequence.iter().position(|&x| x == *page_number) {
+            for page_number in page_sequence {
+                if let Some(_index) = rule.iter().position(|&x| x == *page_number) {
                     found_pages.push(*page_number);
                 }
             }
@@ -53,15 +50,13 @@ fn sum_middles(rules: &Vec<Vec<i64>>, page_sequences: &Vec<Vec<i64>>) -> i64 {
                 if found_pages != *rule {
                     // If the found numbers are in the same sequence as in the rule, the rule is not violated.
                     is_valid = false;
-                    println!("rule violated: {:?} -> {:?}", rule, found_pages);
                 } else {
-                    println!("rule not violated: {:?} -> {:?}", rule, found_pages);
                 }
             }
         }
         if is_valid {
             println!("Non-violating sequence: {:?}", page_sequence);
-            if let Some(middle_number) = page_sequence.get(page_sequence.len() / 2 + 1) {
+            if let Some(middle_number) = page_sequence.get(page_sequence.len() / 2) {
                 sum += middle_number;
             }
         }
@@ -77,7 +72,7 @@ fn sum_correct_page_sequences(input: String) -> i64 {
 }
 
 pub fn part1() -> i64 {
-    sum_correct_page_sequences(read_input(4))
+    sum_correct_page_sequences(read_input(5))
 }
 
 pub fn part2() -> i64 {
