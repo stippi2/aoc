@@ -64,8 +64,6 @@ fn sum_middles(rules: &Vec<Vec<i64>>, page_sequences: &Vec<Vec<i64>>) -> (i64, i
             let mut corrected_sequence = page_sequence.clone();
             corrected_sequence.sort_by(|a, b| {
                 let pair = vec![*a, *b];
-                // Jetzt müssen wir in rules suchen nach einem Vec,
-                // das dieselben Zahlen enthält (egal in welcher Reihenfolge)
                 if let Some(rule) = rules.iter().find(|r| **r == pair) {
                     if rule[0] == *a {
                         Ordering::Less
