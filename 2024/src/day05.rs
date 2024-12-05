@@ -47,13 +47,10 @@ fn sum_middles(rules: &Vec<Vec<i64>>, page_sequences: &Vec<Vec<i64>>) -> (i64, i
                     found_pages.push(*page_number);
                 }
             }
-            if found_pages.len() == rule.len() {
-                // If we found all numbers of the rule, the rule is effective.
-                if found_pages != *rule {
-                    // If the found numbers are in the same sequence as in the rule, the rule is not violated.
-                    is_valid = false;
-                } else {
-                }
+            // If we found all numbers of the rule, the rule is effective.
+            // If the found numbers are not in the same order as in the rule, the rule is violated.
+            if found_pages.len() == rule.len() && found_pages != *rule {
+                is_valid = false;
             }
         }
         if is_valid {
