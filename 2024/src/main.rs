@@ -6,6 +6,7 @@ pub mod day02;
 pub mod day03;
 pub mod day04;
 pub mod day05;
+pub mod day06;
 
 fn main() {
     let day = std::env::args()
@@ -40,6 +41,11 @@ fn main() {
             println!("Day 05");
             println!("Part 1: {}", day05::part1());
             println!("Part 2: {}", day05::part2());
+        }
+        6 => {
+            println!("Day 06");
+            println!("Part 1: {}", day06::part1());
+            println!("Part 2: {}", day06::part2());
         }
         _ => println!("Day {} not implemented yet", day),
     }

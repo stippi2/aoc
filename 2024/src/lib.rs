@@ -64,6 +64,19 @@ impl<T: Clone> Grid<T> {
     }
 }
 
+impl<T: Clone + PartialEq> Grid<T> {
+    pub fn find(&self, target: &T) -> Option<(i32, i32)> {
+        self.iter_coords()
+            .find(|&(x, y)| self.get(x, y).map_or(false, |v| v == target))
+    }
+
+    pub fn find_all(&self, target: &T) -> Vec<(i32, i32)> {
+        self.iter_coords()
+            .filter(|&(x, y)| self.get(x, y).map_or(false, |v| v == target))
+            .collect()
+    }
+}
+
 // Special implementation for char grids (common in AoC)
 impl Grid<char> {
     pub fn from_string(input: &str) -> Self {
@@ -93,6 +106,25 @@ impl<T: Display> Display for Grid<T> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Vec2 {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl Vec2 {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+
+    pub fn add(&self, other: &Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -115,5 +147,29 @@ mod tests {
         grid.set(1, 1, 2);
         assert_eq!(grid.get(0, 0), Some(&1));
         assert_eq!(grid.get(1, 1), Some(&2));
+    }
+
+    #[test]
+    fn test_find_char() {
+        let input = "ABC\nDEF\nGHI";
+        let grid = Grid::from_string(input);
+
+        // Find first occurrence
+        assert_eq!(grid.find(&'E'), Some((1, 1)));
+        assert_eq!(grid.find(&'X'), None);
+    }
+
+    #[test]
+    fn test_find_all_chars() {
+        let input = "ABA\nBAB\nABA";
+        let grid = Grid::from_string(input);
+
+        // Find all occurrences of 'A'
+        let a_positions = grid.find_all(&'A');
+        assert_eq!(a_positions.len(), 4);
+        assert!(a_positions.contains(&(0, 0)));
+        assert!(a_positions.contains(&(2, 0)));
+        assert!(a_positions.contains(&(0, 2)));
+        assert!(a_positions.contains(&(2, 2)));
     }
 }
