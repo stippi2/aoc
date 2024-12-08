@@ -24,6 +24,9 @@ func concatInts(a, b int64) int64 {
 }
 
 func solve(result, value int64, sequence []int64, includeConcatination bool) bool {
+	if value > result {
+		return false
+	}
 	if len(sequence) == 0 {
 		return result == value
 	}

@@ -45,6 +45,14 @@ func Max[T ~int | ~float64](a, b T) T {
 	return b
 }
 
+// Abs returns the absolute of a value
+func Abs[T ~int | ~float64](v T) T {
+	if v > 0 {
+		return v
+	}
+	return -v
+}
+
 type Vec2 struct {
 	X int
 	Y int
@@ -54,6 +62,18 @@ type Grid struct {
 	width  int
 	height int
 	data   []byte
+}
+
+func NewGrid(input string) *Grid {
+	lines := strings.Split(strings.TrimSpace(input), "\n")
+	width := len(lines[0])
+	height := len(lines)
+	grid := Grid{
+		width:  width,
+		height: height,
+		data:   make([]byte, width*height),
+	}
+	return &grid
 }
 
 func (m *Grid) String() string {
