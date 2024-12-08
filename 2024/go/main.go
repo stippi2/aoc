@@ -25,8 +25,8 @@ func main() {
 		fmt.Printf("Part 1: %v\n", day07.Part1())
 		fmt.Printf("Part 2: %v\n", day07.Part2())
 	default:
-		fmt.Printf("Tag %d ist noch nicht implementiert\n", *day)
+		fmt.Printf("Day %d is not yet implemented\n", *day)
 	}
 
-	fmt.Printf("Zeit: %v\n", time.Since(start))
+	fmt.Printf("Time: %v\n", time.Since(start))
 }
