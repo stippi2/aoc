@@ -50,13 +50,13 @@ type Vec2 struct {
 	Y int
 }
 
-type Map struct {
+type Grid struct {
 	width  int
 	height int
 	data   []byte
 }
 
-func (m *Map) String() string {
+func (m *Grid) String() string {
 	var sb strings.Builder
 	for i, c := range m.data {
 		sb.WriteByte(c)
@@ -67,22 +67,22 @@ func (m *Map) String() string {
 	return sb.String()
 }
 
-func (m *Map) Width() int {
+func (m *Grid) Width() int {
 	return m.width
 }
 
-func (m *Map) Height() int {
+func (m *Grid) Height() int {
 	return m.height
 }
 
-func (m *Map) Get(x, y int) byte {
+func (m *Grid) Get(x, y int) byte {
 	if x < 0 || x >= m.width || y < 0 || y >= m.height {
 		return ' '
 	}
 	return m.data[y*m.width+x]
 }
 
-func (m *Map) Set(x, y int, tile byte) {
+func (m *Grid) Set(x, y int, tile byte) {
 	offset := y*m.width + x
 	m.data[offset] = tile
 }
