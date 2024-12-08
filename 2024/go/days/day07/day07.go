@@ -13,48 +13,58 @@ type Calibration struct {
 	sequence []int64
 }
 
-func solve(result, value int64, sequence []int64) bool {
+func concatInts(a, b int64) int64 {
+	multiplier := int64(1)
+	temp := b
+	for temp > 0 {
+		multiplier *= 10
+		temp /= 10
+	}
+	return a*multiplier + b
+}
+
+func solve(result, value int64, sequence []int64, includeConcatination bool) bool {
 	if len(sequence) == 0 {
 		return result == value
 	}
 	next := sequence[0]
-	if value+next < value || value*next < value {
-		log.Fatal("Integer overflow")
+	if solve(result, value+next, sequence[1:], includeConcatination) {
+		return true
 	}
-	return solve(result, value+next, sequence[1:]) || solve(result, value*next, sequence[1:])
+	if solve(result, value*next, sequence[1:], includeConcatination) {
+		return true
+	}
+	if includeConcatination && solve(result, concatInts(value, next), sequence[1:], includeConcatination) {
+		return true
+	}
+	return false
 }
 
-func (c *Calibration) validate() bool {
-	return solve(c.result, c.sequence[0], c.sequence[1:])
+func (c *Calibration) validate(includeConcatination bool) bool {
+	return solve(c.result, c.sequence[0], c.sequence[1:], includeConcatination)
 }
 
-func sumValidCalibrations(inputLines []string) int64 {
+func sumValidCalibrations(inputLines []string, includeConcatination bool) int64 {
 	var sum int64 = 0
 	calibrations := parseInput(inputLines)
-	fmt.Printf("Found %v calibrations\n", len(calibrations))
 	for _, c := range calibrations {
-		if c.validate() {
-			oldSum := sum
+		if c.validate(includeConcatination) {
 			sum += c.result
-			if oldSum > sum {
-				log.Fatal("Integer overflow")
-			}
 		}
 	}
 	return sum
 }
 
 func Part1() interface{} {
-	inputLines, err := lib.ReadInputLines(7)
-	if err != nil {
-		log.Fatalf("Failed to read input from day 7")
-	}
-	sum := sumValidCalibrations(inputLines)
+	inputLines, _ := lib.ReadInputLines(7)
+	sum := sumValidCalibrations(inputLines, false)
 	return fmt.Sprintf("Sum of valid calibrations: %v", sum)
 }
 
 func Part2() interface{} {
-	return "Not implemented"
+	inputLines, _ := lib.ReadInputLines(7)
+	sum := sumValidCalibrations(inputLines, true)
+	return fmt.Sprintf("Sum of valid calibrations: %v", sum)
 }
 
 func parseInput(lines []string) []Calibration {
