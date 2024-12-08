@@ -25,28 +25,13 @@ func solve(result, value int64, sequence []int64) bool {
 }
 
 func (c *Calibration) validate() bool {
-	var product int64 = 1
-	for _, value := range c.sequence {
-		product *= value
-	}
-	if product < c.result {
-		return false
-	}
-
-	var sum int64 = 0
-	for _, value := range c.sequence {
-		sum += value
-	}
-	if sum > c.result {
-		return false
-	}
-
 	return solve(c.result, c.sequence[0], c.sequence[1:])
 }
 
 func sumValidCalibrations(inputLines []string) int64 {
 	var sum int64 = 0
 	calibrations := parseInput(inputLines)
+	fmt.Printf("Found %v calibrations\n", len(calibrations))
 	for _, c := range calibrations {
 		if c.validate() {
 			oldSum := sum
