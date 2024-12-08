@@ -8,10 +8,11 @@ import (
 )
 
 func Test_parseInput(t *testing.T) {
-	calibrations := parseInput([]string{"42: 40 2", "3: 1 2"})
+	calibrations := parseInput([]string{"42: 40 2", "3: 1 2", "79325232924618: 907 466 857 34 3 618"})
 	expected := []Calibration{
 		{result: 42, sequence: []int64{40, 2}},
 		{result: 3, sequence: []int64{1, 2}},
+		{result: int64(79325232924618), sequence: []int64{907, 466, 857, 34, 3, 618}},
 	}
 	assert.Equal(t, expected, calibrations)
 }
@@ -26,5 +27,5 @@ func Test_sumValidCalibrations(t *testing.T) {
 192: 17 8 14
 21037: 9 7 18 13
 292: 11 6 16 20`, "\n")
-	assert.Equal(t, 3749, sumValidCalibrations(inputLines))
+	assert.Equal(t, int64(3749), sumValidCalibrations(inputLines))
 }

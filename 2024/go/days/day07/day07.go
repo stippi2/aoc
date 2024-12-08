@@ -13,8 +13,35 @@ type Calibration struct {
 	sequence []int64
 }
 
+func solve(result, value int64, sequence []int64) bool {
+	if len(sequence) == 0 {
+		return result == value
+	}
+	next := sequence[0]
+	if value+next < value || value*next < value {
+		log.Fatal("Integer overflow")
+	}
+	return solve(result, value+next, sequence[1:]) || solve(result, value*next, sequence[1:])
+}
+
 func (c *Calibration) validate() bool {
-	return true
+	var product int64 = 1
+	for _, value := range c.sequence {
+		product *= value
+	}
+	if product < c.result {
+		return false
+	}
+
+	var sum int64 = 0
+	for _, value := range c.sequence {
+		sum += value
+	}
+	if sum > c.result {
+		return false
+	}
+
+	return solve(c.result, c.sequence[0], c.sequence[1:])
 }
 
 func sumValidCalibrations(inputLines []string) int64 {
@@ -22,7 +49,11 @@ func sumValidCalibrations(inputLines []string) int64 {
 	calibrations := parseInput(inputLines)
 	for _, c := range calibrations {
 		if c.validate() {
+			oldSum := sum
 			sum += c.result
+			if oldSum > sum {
+				log.Fatal("Integer overflow")
+			}
 		}
 	}
 	return sum
@@ -34,7 +65,7 @@ func Part1() interface{} {
 		log.Fatalf("Failed to read input from day 7")
 	}
 	sum := sumValidCalibrations(inputLines)
-	return fmt.Sprint("Sum of valid calibrations: %ld", sum)
+	return fmt.Sprintf("Sum of valid calibrations: %v", sum)
 }
 
 func Part2() interface{} {
