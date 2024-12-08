@@ -20,5 +20,9 @@ const example = `............
 ............`
 
 func Test_countAntiNodes(t *testing.T) {
-	assert.Equal(t, int64(14), countAntiNodes(example))
+	assert.Equal(t, 14, countAntiNodes(example, false))
+}
+
+func Test_countAntiNodesRepeating(t *testing.T) {
+	assert.Equal(t, 34, countAntiNodes(example, true))
 }
