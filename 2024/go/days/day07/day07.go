@@ -37,7 +37,7 @@ func solve(result, value int64, sequence []int64, includeConcatination bool) boo
 	if solve(result, value*next, sequence[1:], includeConcatination) {
 		return true
 	}
-	if includeConcatination && solve(result, concatInts(value, next), sequence[1:], includeConcatination) {
+	if includeConcatination && solve(result, concatInts(value, next), sequence[1:], true) {
 		return true
 	}
 	return false
