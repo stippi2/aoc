@@ -58,6 +58,10 @@ type Vec2 struct {
 	Y int
 }
 
+func (v *Vec2) String() string {
+	return fmt.Sprintf("(%d, %d)", v.X, v.Y)
+}
+
 type Grid struct {
 	width  int
 	height int
@@ -81,33 +85,39 @@ func NewGrid(input string) *Grid {
 	return &grid
 }
 
-func (m *Grid) String() string {
+func (g *Grid) String() string {
 	var sb strings.Builder
-	for i, c := range m.data {
+	for i, c := range g.data {
 		sb.WriteByte(c)
-		if i%m.width == m.width-1 {
+		if i%g.width == g.width-1 {
 			sb.WriteByte('\n')
 		}
 	}
 	return sb.String()
 }
 
-func (m *Grid) Width() int {
-	return m.width
+func (g *Grid) Width() int {
+	return g.width
 }
 
-func (m *Grid) Height() int {
-	return m.height
+func (g *Grid) Height() int {
+	return g.height
 }
 
-func (m *Grid) Get(x, y int) byte {
-	if x < 0 || x >= m.width || y < 0 || y >= m.height {
+func (g *Grid) Get(x, y int) byte {
+	if !g.Contains(x, y) {
 		return ' '
 	}
-	return m.data[y*m.width+x]
+	return g.data[y*g.width+x]
 }
 
-func (m *Grid) Set(x, y int, tile byte) {
-	offset := y*m.width + x
-	m.data[offset] = tile
+func (g *Grid) Set(x, y int, tile byte) {
+	if g.Contains(x, y) {
+		offset := y*g.width + x
+		g.data[offset] = tile
+	}
+}
+
+func (g *Grid) Contains(x, y int) bool {
+	return x >= 0 && x < g.width && y >= 0 && y < g.height
 }
