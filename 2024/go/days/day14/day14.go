@@ -58,6 +58,36 @@ func Part1() any {
 	return computeSafetyFactor(strings.TrimSpace(input), 101, 103, 100)
 }
 
+func stepAndPrint(input string, width, height int) int {
+	var robots []*robot
+	for _, line := range strings.Split(strings.TrimSpace(input), "\n") {
+		var r robot
+		matches, _ := fmt.Sscanf(line, "p=%d,%d v=%d,%d", &r.pos.X, &r.pos.Y, &r.vel.X, &r.vel.Y)
+		if matches != 4 {
+			panic("Failed to parse robot")
+
+		}
+		robots = append(robots, &r)
+	}
+	seconds := 0
+	grid := lib.NewGridFilled(width, height, '.')
+
+	for {
+		seconds++
+		grid.Fill('.')
+		for _, r := range robots {
+			r.simulate(width, height, 1)
+			grid.Set(r.pos.X, r.pos.Y, '#')
+		}
+		if grid.ContainsString("##########") {
+			fmt.Printf("seconds: %v\n%v\n", seconds, grid)
+			break
+		}
+	}
+	return seconds
+}
+
 func Part2() any {
-	return "Not implemented"
+	input, _ := lib.ReadInput(14)
+	return stepAndPrint(strings.TrimSpace(input), 101, 103)
 }

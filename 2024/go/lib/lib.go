@@ -85,6 +85,28 @@ func NewGrid(input string) *Grid {
 	return &grid
 }
 
+func NewGridFilled(width, height int, fill byte) *Grid {
+	grid := Grid{
+		width:  width,
+		height: height,
+		data:   make([]byte, width*height),
+	}
+	grid.Fill(fill)
+	return &grid
+}
+
+func (g *Grid) Fill(fill byte) {
+	for y := 0; y < g.height; y++ {
+		for x := 0; x < g.width; x++ {
+			g.Set(x, y, fill)
+		}
+	}
+}
+
+func (g *Grid) ContainsString(s string) bool {
+	return strings.Contains(string(g.data), s)
+}
+
 func (g *Grid) String() string {
 	var sb strings.Builder
 	for i, c := range g.data {
