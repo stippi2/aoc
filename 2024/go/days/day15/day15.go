@@ -12,10 +12,10 @@ func parseInput(input string) (warehouse *lib.Grid, movements string) {
 	return
 }
 
-func findRobot(grid *lib.Grid) lib.Vec2 {
-	for y := 0; y < grid.Height(); y++ {
-		for x := 0; x < grid.Width(); x++ {
-			if grid.Get(x, y) == '@' {
+func findRobot(warehouse *lib.Grid) lib.Vec2 {
+	for y := 0; y < warehouse.Height(); y++ {
+		for x := 0; x < warehouse.Width(); x++ {
+			if warehouse.Get(x, y) == '@' {
 				return lib.Vec2{X: x, Y: y}
 			}
 		}
@@ -23,9 +23,9 @@ func findRobot(grid *lib.Grid) lib.Vec2 {
 	panic("did not find robot")
 }
 
-func moveThing(from, to lib.Vec2, grid *lib.Grid) {
-	grid.Set(to.X, to.Y, grid.Get(from.X, from.Y))
-	grid.Set(from.X, from.Y, '.')
+func moveThing(from, to lib.Vec2, warehouse *lib.Grid) {
+	warehouse.Set(to.X, to.Y, warehouse.Get(from.X, from.Y))
+	warehouse.Set(from.X, from.Y, '.')
 }
 
 func moveRobotSimple(robot, direction lib.Vec2, warehouse *lib.Grid) lib.Vec2 {
@@ -61,7 +61,7 @@ func sumBoxLocations(warehouse *lib.Grid, box byte) int {
 	return sum
 }
 
-type MoveFunc func(robot, direction lib.Vec2, warehose *lib.Grid) lib.Vec2
+type MoveFunc func(robot, direction lib.Vec2, warehouse *lib.Grid) lib.Vec2
 
 func predictRobotMovements(warehouse *lib.Grid, movements string, moveRobot MoveFunc) {
 	robot := findRobot(warehouse)
