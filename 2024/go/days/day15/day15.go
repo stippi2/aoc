@@ -16,8 +16,30 @@ func findRobot(grid *lib.Grid) lib.Vec2 {
 	panic("did not find robot")
 }
 
-func moveRobot(pos, direction lib.Vec2, grid *lib.Grid) lib.Vec2 {
-	return pos
+func moveThing(from, to lib.Vec2, grid *lib.Grid) {
+	grid.Set(to.X, to.Y, grid.Get(from.X, from.Y))
+	grid.Set(from.X, from.Y, '.')
+}
+
+func moveRobot(robot, direction lib.Vec2, grid *lib.Grid) lib.Vec2 {
+	test := robot.Add(direction)
+	for {
+		if grid.Get(test.X, test.Y) == '#' {
+			// Hit a wall, robot cannot move
+			return robot
+		}
+		if grid.Get(test.X, test.Y) == '.' {
+			// Found a free space in the direction the robot wants to move
+			break
+		}
+		test = test.Add(direction)
+	}
+	// Move whatever is before the robot to the empty space
+	newRobot := robot.Add(direction)
+	moveThing(newRobot, test, grid)
+	// Move the robot
+	moveThing(robot, newRobot, grid)
+	return newRobot
 }
 
 func sumBoxLocations(grid *lib.Grid) int {
@@ -56,7 +78,8 @@ func predictRobotMovements(input string) int {
 }
 
 func Part1() any {
-	return "Not implemented"
+	input, _ := lib.ReadInput(15)
+	return predictRobotMovements(input)
 }
 
 func Part2() any {

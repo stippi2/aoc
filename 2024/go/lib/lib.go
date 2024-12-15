@@ -62,6 +62,10 @@ func (v *Vec2) String() string {
 	return fmt.Sprintf("(%d, %d)", v.X, v.Y)
 }
 
+func (v *Vec2) Add(o Vec2) Vec2 {
+	return Vec2{X: v.X + o.X, Y: v.Y + o.Y}
+}
+
 type Grid struct {
 	width  int
 	height int

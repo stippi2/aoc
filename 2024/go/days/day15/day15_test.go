@@ -41,5 +41,5 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^`
 
 func Test_part1(t *testing.T) {
 	assert.Equal(t, 2028, predictRobotMovements(exampleSmall))
-	//assert.Equal(t, 10092, predictRobotMovements(exampleLarge))
+	assert.Equal(t, 10092, predictRobotMovements(exampleLarge))
 }
