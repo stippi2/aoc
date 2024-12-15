@@ -21,7 +21,24 @@ func Test_part1(t *testing.T) {
 	assert.Equal(t, 4*10+4*8+4*10+3*8+1*4, calculateRegionPrice(`AAAA
 BBCD
 BBCC
-EEEC`))
+EEEC`, false))
 
-	assert.Equal(t, 1930, calculateRegionPrice(example))
+	assert.Equal(t, 1930, calculateRegionPrice(example, false))
+}
+
+func Test_part2(t *testing.T) {
+	assert.Equal(t, 236, calculateRegionPrice(`EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE`, true))
+
+	assert.Equal(t, 368, calculateRegionPrice(`AAAAAA
+AAABBA
+AAABBA
+ABBAAA
+ABBAAA
+AAAAAA`, true))
+
+	//assert.Equal(t, 1206, calculateRegionPrice(example, true))
 }
