@@ -2,8 +2,16 @@ package day15
 
 import (
 	"aoc/2024/go/lib"
+	"fmt"
 	"strings"
 )
+
+func parseInput(input string) (warehouse *lib.Grid, movements string) {
+	parts := strings.Split(strings.TrimSpace(input), "\n\n")
+	warehouse = lib.NewGrid(parts[0])
+	movements = strings.ReplaceAll(parts[1], "\n", "")
+	return
+}
 
 func findRobot(grid *lib.Grid) lib.Vec2 {
 	for y := 0; y < grid.Height(); y++ {
@@ -21,7 +29,7 @@ func moveThing(from, to lib.Vec2, grid *lib.Grid) {
 	grid.Set(from.X, from.Y, '.')
 }
 
-func moveRobot(robot, direction lib.Vec2, grid *lib.Grid) lib.Vec2 {
+func moveRobotSimple(robot, direction lib.Vec2, grid *lib.Grid) lib.Vec2 {
 	test := robot.Add(direction)
 	for {
 		if grid.Get(test.X, test.Y) == '#' {
@@ -42,11 +50,11 @@ func moveRobot(robot, direction lib.Vec2, grid *lib.Grid) lib.Vec2 {
 	return newRobot
 }
 
-func sumBoxLocations(grid *lib.Grid) int {
+func sumBoxLocations(warehouse *lib.Grid, box byte) int {
 	sum := 0
-	for y := 0; y < grid.Height(); y++ {
-		for x := 0; x < grid.Width(); x++ {
-			if grid.Get(x, y) == 'O' {
+	for y := 0; y < warehouse.Height(); y++ {
+		for x := 0; x < warehouse.Width(); x++ {
+			if warehouse.Get(x, y) == box {
 				sum += 100*y + x
 			}
 		}
@@ -54,34 +62,39 @@ func sumBoxLocations(grid *lib.Grid) int {
 	return sum
 }
 
-func predictRobotMovements(input string) int {
-	parts := strings.Split(strings.TrimSpace(input), "\n\n")
-	grid := lib.NewGrid(parts[0])
-	movements := strings.ReplaceAll(parts[1], "\n", "")
+type MoveFunc func(robot, direction lib.Vec2, warehose *lib.Grid) lib.Vec2
 
-	robot := findRobot(grid)
+func predictRobotMovements(input string, moveRobot MoveFunc, box byte) int {
+	warehouse, movements := parseInput(input)
+	robot := findRobot(warehouse)
 
 	for _, movement := range movements {
 		switch movement {
 		case '^':
-			robot = moveRobot(robot, lib.Vec2{X: 0, Y: -1}, grid)
+			robot = moveRobot(robot, lib.Vec2{X: 0, Y: -1}, warehouse)
 		case '<':
-			robot = moveRobot(robot, lib.Vec2{X: -1, Y: 0}, grid)
+			robot = moveRobot(robot, lib.Vec2{X: -1, Y: 0}, warehouse)
 		case '>':
-			robot = moveRobot(robot, lib.Vec2{X: 1, Y: 0}, grid)
+			robot = moveRobot(robot, lib.Vec2{X: 1, Y: 0}, warehouse)
 		case 'v':
-			robot = moveRobot(robot, lib.Vec2{X: 0, Y: 1}, grid)
+			robot = moveRobot(robot, lib.Vec2{X: 0, Y: 1}, warehouse)
 		}
 	}
 
-	return sumBoxLocations(grid)
+	return sumBoxLocations(warehouse, box)
 }
 
 func Part1() any {
 	input, _ := lib.ReadInput(15)
-	return predictRobotMovements(input)
+	return predictRobotMovements(input, moveRobotSimple, 'O')
 }
 
 func Part2() any {
+	input, _ := lib.ReadInput(15)
+	input = strings.ReplaceAll(input, "#", "##")
+	input = strings.ReplaceAll(input, "O", "[]")
+	input = strings.ReplaceAll(input, ".", "..")
+	input = strings.ReplaceAll(input, "@", "@.")
+	fmt.Print(input)
 	return "Not implemented"
 }
