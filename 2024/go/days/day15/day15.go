@@ -2,7 +2,6 @@ package day15
 
 import (
 	"aoc/2024/go/lib"
-	"fmt"
 	"strings"
 )
 
@@ -29,14 +28,14 @@ func moveThing(from, to lib.Vec2, grid *lib.Grid) {
 	grid.Set(from.X, from.Y, '.')
 }
 
-func moveRobotSimple(robot, direction lib.Vec2, grid *lib.Grid) lib.Vec2 {
+func moveRobotSimple(robot, direction lib.Vec2, warehouse *lib.Grid) lib.Vec2 {
 	test := robot.Add(direction)
 	for {
-		if grid.Get(test.X, test.Y) == '#' {
+		if warehouse.Get(test.X, test.Y) == '#' {
 			// Hit a wall, robot cannot move
 			return robot
 		}
-		if grid.Get(test.X, test.Y) == '.' {
+		if warehouse.Get(test.X, test.Y) == '.' {
 			// Found a free space in the direction the robot wants to move
 			break
 		}
@@ -44,9 +43,9 @@ func moveRobotSimple(robot, direction lib.Vec2, grid *lib.Grid) lib.Vec2 {
 	}
 	// Move whatever is before the robot to the empty space
 	newRobot := robot.Add(direction)
-	moveThing(newRobot, test, grid)
+	moveThing(newRobot, test, warehouse)
 	// Move the robot
-	moveThing(robot, newRobot, grid)
+	moveThing(robot, newRobot, warehouse)
 	return newRobot
 }
 
@@ -64,8 +63,7 @@ func sumBoxLocations(warehouse *lib.Grid, box byte) int {
 
 type MoveFunc func(robot, direction lib.Vec2, warehose *lib.Grid) lib.Vec2
 
-func predictRobotMovements(input string, moveRobot MoveFunc, box byte) int {
-	warehouse, movements := parseInput(input)
+func predictRobotMovements(warehouse *lib.Grid, movements string, moveRobot MoveFunc) {
 	robot := findRobot(warehouse)
 
 	for _, movement := range movements {
@@ -80,21 +78,97 @@ func predictRobotMovements(input string, moveRobot MoveFunc, box byte) int {
 			robot = moveRobot(robot, lib.Vec2{X: 0, Y: 1}, warehouse)
 		}
 	}
+}
 
+func predictRobotMovementsFromInput(input string, moveRobot MoveFunc, box byte) int {
+	warehouse, movements := parseInput(input)
+	predictRobotMovements(warehouse, movements, moveRobot)
 	return sumBoxLocations(warehouse, box)
 }
 
 func Part1() any {
 	input, _ := lib.ReadInput(15)
-	return predictRobotMovements(input, moveRobotSimple, 'O')
+	return predictRobotMovementsFromInput(input, moveRobotSimple, 'O')
 }
 
-func Part2() any {
-	input, _ := lib.ReadInput(15)
+func canMove(pos, direction lib.Vec2, warehouse *lib.Grid) bool {
+	pos = pos.Add(direction)
+	slot := warehouse.Get(pos.X, pos.Y)
+	if slot == '.' {
+		return true
+	}
+	if direction.Y != 0 {
+		// up/down
+		if slot == '[' {
+			return canMove(pos, direction, warehouse) &&
+				canMove(pos.Add(lib.Vec2{X: 1, Y: 0}), direction, warehouse)
+		}
+		if slot == ']' {
+			return canMove(pos.Add(lib.Vec2{X: -1, Y: 0}), direction, warehouse) &&
+				canMove(pos, direction, warehouse)
+		}
+	} else {
+		// left/right
+		for {
+			pos = pos.Add(direction)
+			if warehouse.Get(pos.X, pos.Y) == '#' {
+				// Hit a wall, robot cannot move
+				return false
+			}
+			if warehouse.Get(pos.X, pos.Y) == '.' {
+				// Found a free space in the direction the robot wants to move
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func move(pos, direction lib.Vec2, warehouse *lib.Grid) {
+	slot := warehouse.Get(pos.X, pos.Y)
+	if slot == '[' {
+		if direction.Y != 0 {
+			otherHalf := pos.Add(lib.Vec2{X: 1, Y: 0})
+			move(otherHalf.Add(direction), direction, warehouse)
+			moveThing(otherHalf, otherHalf.Add(direction), warehouse)
+		}
+		move(pos.Add(direction), direction, warehouse)
+		moveThing(pos, pos.Add(direction), warehouse)
+	}
+	if slot == ']' {
+		if direction.Y != 0 {
+			// Redirect to first half
+			otherHalf := pos.Add(lib.Vec2{X: -1, Y: 0})
+			move(otherHalf, direction, warehouse)
+		} else {
+			move(pos.Add(direction), direction, warehouse)
+			moveThing(pos, pos.Add(direction), warehouse)
+		}
+	}
+}
+
+func moveRobotWide(robot, direction lib.Vec2, warehouse *lib.Grid) lib.Vec2 {
+	if !canMove(robot, direction, warehouse) {
+		return robot
+	}
+	// Move all the boxes recursively
+	newRobot := robot.Add(direction)
+	move(newRobot, direction, warehouse)
+	// Move the robot
+	moveThing(robot, newRobot, warehouse)
+	return newRobot
+}
+
+func widenWarehouse(input string) string {
 	input = strings.ReplaceAll(input, "#", "##")
 	input = strings.ReplaceAll(input, "O", "[]")
 	input = strings.ReplaceAll(input, ".", "..")
 	input = strings.ReplaceAll(input, "@", "@.")
-	fmt.Print(input)
-	return "Not implemented"
+	return input
+}
+
+func Part2() any {
+	input, _ := lib.ReadInput(15)
+	input = widenWarehouse(input)
+	return predictRobotMovementsFromInput(input, moveRobotWide, '[')
 }
