@@ -2,6 +2,7 @@ package day16
 
 import (
 	"aoc/2024/go/lib"
+	"fmt"
 	"math"
 	"strings"
 )
@@ -10,75 +11,90 @@ type Reindeer struct {
 	score    int
 	facing   string
 	position lib.Vec2
-	visited  map[lib.Vec2]bool
 }
 
-func (r *Reindeer) clone() *Reindeer {
+func (r *Reindeer) clone(position lib.Vec2, facing string, grid *lib.Grid) *Reindeer {
+	if grid.Get(position.X, position.Y) == '#' {
+		return nil
+	}
 	c := &Reindeer{
 		score:    r.score,
-		facing:   r.facing,
-		position: r.position,
-		visited:  make(map[lib.Vec2]bool),
-	}
-	for key, value := range r.visited {
-		c.visited[key] = value
+		facing:   facing,
+		position: position,
 	}
 	return c
 }
 
-func (r *Reindeer) forward() *Reindeer {
-	c := r.clone()
-	switch r.facing {
+func nextPosition(position lib.Vec2, facing string) lib.Vec2 {
+	nextPosition := position
+	switch facing {
 	case "up":
-		c.position.Y--
+		nextPosition.Y--
 	case "down":
-		c.position.Y++
+		nextPosition.Y++
 	case "left":
-		c.position.X--
+		nextPosition.X--
 	case "right":
-		c.position.X++
+		nextPosition.X++
 	}
-	c.score += 1
-	c.visited[r.position] = true
-	return c
+	return nextPosition
 }
 
-func (r *Reindeer) left() *Reindeer {
-	c := r.clone()
-	switch r.facing {
+func (r *Reindeer) forward(grid *lib.Grid) *Reindeer {
+	nextPosition := nextPosition(r.position, r.facing)
+	if c := r.clone(nextPosition, r.facing, grid); c != nil {
+		c.score += 1
+		return c
+	}
+	return nil
+}
+
+func (r *Reindeer) left(grid *lib.Grid) *Reindeer {
+	facing := r.facing
+	switch facing {
 	case "up":
-		c.facing = "left"
+		facing = "left"
 	case "down":
-		c.facing = "right"
+		facing = "right"
 	case "left":
-		c.facing = "down"
+		facing = "down"
 	case "right":
-		c.facing = "up"
+		facing = "up"
 	}
-	c.score += 1000
-	return c
+	nextPosition := nextPosition(r.position, facing)
+	if c := r.clone(nextPosition, facing, grid); c != nil {
+		c.score += 1000
+		c.position = r.position
+		return c
+	}
+	return nil
 }
 
-func (r *Reindeer) right() *Reindeer {
-	c := r.clone()
-	switch r.facing {
+func (r *Reindeer) right(grid *lib.Grid) *Reindeer {
+	facing := r.facing
+	switch facing {
 	case "up":
-		c.facing = "right"
+		facing = "right"
 	case "down":
-		c.facing = "left"
+		facing = "left"
 	case "left":
-		c.facing = "up"
+		facing = "up"
 	case "right":
-		c.facing = "down"
+		facing = "down"
 	}
-	c.score += 1000
-	return c
+	nextPosition := nextPosition(r.position, facing)
+	if c := r.clone(nextPosition, facing, grid); c != nil {
+		c.score += 1000
+		c.position = r.position
+		return c
+	}
+	return nil
 }
 
-func findStart(grid *lib.Grid) lib.Vec2 {
+func findPosition(grid *lib.Grid, value byte) lib.Vec2 {
 	for y := 0; y < grid.Height(); y++ {
 		for x := 0; x < grid.Width(); x++ {
-			if grid.Get(x, y) == 'S' {
+			if grid.Get(x, y) == value {
 				return lib.Vec2{X: x, Y: y}
 			}
 		}
@@ -88,18 +104,47 @@ func findStart(grid *lib.Grid) lib.Vec2 {
 
 func findLowestScore(input string) int {
 	grid := lib.NewGrid(input)
+
 	queue := []*Reindeer{
 		{
 			score:    0,
 			facing:   "right",
-			position: findStart(grid),
-			visited:  make(map[lib.Vec2]bool),
+			position: findPosition(grid, 'S'),
 		},
 	}
-	lowestScore := math.MinInt
+
+	visited := make(map[string]map[lib.Vec2]*Reindeer)
+	for _, facing := range []string{"up", "down", "left", "right"} {
+		visited[facing] = make(map[lib.Vec2]*Reindeer)
+	}
+	visited[queue[0].facing][queue[0].position] = queue[0]
+
+	goal := findPosition(grid, 'E')
+	lowestScore := math.MaxInt
 
 	for len(queue) > 0 {
+		reindeer := queue[len(queue)-1]
+		queue = queue[:len(queue)-1]
+		if reindeer.position == goal && reindeer.score < lowestScore {
+			fmt.Printf("found goal! score: %d\n", reindeer.score)
+			lowestScore = reindeer.score
+		}
 
+		nextReindeers := []*Reindeer{
+			reindeer.left(grid),
+			reindeer.right(grid),
+			reindeer.forward(grid),
+		}
+
+		for _, nextReindeer := range nextReindeers {
+			if nextReindeer != nil {
+				otherReindeer := visited[nextReindeer.facing][nextReindeer.position]
+				if otherReindeer == nil || otherReindeer.score > nextReindeer.score {
+					queue = append(queue, nextReindeer)
+					visited[nextReindeer.facing][nextReindeer.position] = nextReindeer
+				}
+			}
+		}
 	}
 
 	return lowestScore
