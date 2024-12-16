@@ -11,6 +11,7 @@ type Reindeer struct {
 	score    int
 	facing   string
 	position lib.Vec2
+	visited  map[lib.Vec2]bool
 }
 
 func (r *Reindeer) clone(position lib.Vec2, facing string, grid *lib.Grid) *Reindeer {
@@ -21,6 +22,10 @@ func (r *Reindeer) clone(position lib.Vec2, facing string, grid *lib.Grid) *Rein
 		score:    r.score,
 		facing:   facing,
 		position: position,
+		visited:  make(map[lib.Vec2]bool),
+	}
+	for key, value := range r.visited {
+		c.visited[key] = value
 	}
 	return c
 }
@@ -44,6 +49,8 @@ func (r *Reindeer) forward(grid *lib.Grid) *Reindeer {
 	nextPosition := nextPosition(r.position, r.facing)
 	if c := r.clone(nextPosition, r.facing, grid); c != nil {
 		c.score += 1
+		c.visited[r.position] = true
+		c.visited[c.position] = true
 		return c
 	}
 	return nil
@@ -102,7 +109,7 @@ func findPosition(grid *lib.Grid, value byte) lib.Vec2 {
 	panic("Did not find start position")
 }
 
-func findLowestScore(input string) int {
+func findLowestScore(input string, expectScore int) (int, int) {
 	grid := lib.NewGrid(input)
 
 	queue := []*Reindeer{
@@ -120,14 +127,31 @@ func findLowestScore(input string) int {
 	visited[queue[0].facing][queue[0].position] = queue[0]
 
 	goal := findPosition(grid, 'E')
-	lowestScore := math.MaxInt
+	lowestScore := expectScore
+	bestPositions := make(map[lib.Vec2]bool)
 
 	for len(queue) > 0 {
 		reindeer := queue[len(queue)-1]
 		queue = queue[:len(queue)-1]
-		if reindeer.position == goal && reindeer.score < lowestScore {
-			fmt.Printf("found goal! score: %d\n", reindeer.score)
-			lowestScore = reindeer.score
+		if reindeer.position == goal {
+			if reindeer.score < lowestScore {
+				for v := range bestPositions {
+					delete(bestPositions, v)
+				}
+				for v := range reindeer.visited {
+					bestPositions[v] = true
+				}
+				fmt.Printf("found goal! score: %d\n", reindeer.score)
+				lowestScore = reindeer.score
+			} else if reindeer.score == lowestScore {
+				fmt.Printf("found goal again! score: %d\n", reindeer.score)
+				for v := range reindeer.visited {
+					bestPositions[v] = true
+				}
+			}
+		}
+		if reindeer.score > lowestScore {
+			continue
 		}
 
 		nextReindeers := []*Reindeer{
@@ -137,9 +161,9 @@ func findLowestScore(input string) int {
 		}
 
 		for _, nextReindeer := range nextReindeers {
-			if nextReindeer != nil {
+			if nextReindeer != nil && lowestScore >= nextReindeer.score {
 				otherReindeer := visited[nextReindeer.facing][nextReindeer.position]
-				if otherReindeer == nil || otherReindeer.score > nextReindeer.score {
+				if otherReindeer == nil || otherReindeer.score >= nextReindeer.score {
 					queue = append(queue, nextReindeer)
 					visited[nextReindeer.facing][nextReindeer.position] = nextReindeer
 				}
@@ -147,14 +171,15 @@ func findLowestScore(input string) int {
 		}
 	}
 
-	return lowestScore
+	return lowestScore, len(bestPositions)
 }
 
 func Part1() any {
 	input, _ := lib.ReadInput(16)
-	return findLowestScore(strings.TrimSpace(input))
+	lowestScore, bestPositions := findLowestScore(strings.TrimSpace(input), math.MaxInt)
+	return fmt.Sprintf("lowest Score: %d, best positions: %d", lowestScore, bestPositions)
 }
 
 func Part2() any {
-	return "Not implemented"
+	return "see above"
 }
