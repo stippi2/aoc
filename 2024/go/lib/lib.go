@@ -108,7 +108,13 @@ func (g *Grid) Fill(fill byte) {
 }
 
 func (g *Grid) ContainsString(s string) bool {
-	return strings.Contains(string(g.data), s)
+	for y := 0; y < g.height; y++ {
+		line := string(g.data[y*g.width : (y+1)*g.width])
+		if strings.Contains(line, s) {
+			return true
+		}
+	}
+	return false
 }
 
 func (g *Grid) String() string {
