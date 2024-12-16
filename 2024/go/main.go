@@ -12,6 +12,7 @@ import (
 	"aoc/2024/go/days/day10"
 	"aoc/2024/go/days/day11"
 	"aoc/2024/go/days/day12"
+	"aoc/2024/go/days/day13"
 	"aoc/2024/go/days/day14"
 	"aoc/2024/go/days/day15"
 	"aoc/2024/go/days/day16"
@@ -48,6 +49,9 @@ func main() {
 	case 12:
 		fmt.Printf("Part 1: %v\n", day12.Part1())
 		fmt.Printf("Part 2: %v\n", day12.Part2())
+	case 13:
+		fmt.Printf("Part 1: %v\n", day13.Part1())
+		fmt.Printf("Part 2: %v\n", day13.Part2())
 	case 14:
 		fmt.Printf("Part 1: %v\n", day14.Part1())
 		fmt.Printf("Part 2: %v\n", day14.Part2())

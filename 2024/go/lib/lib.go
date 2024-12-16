@@ -12,7 +12,7 @@ func ReadInput(day int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(data), nil
+	return strings.TrimSpace(string(data)), nil
 }
 
 // ReadInputLines reads the input and splits it into lines
@@ -21,7 +21,7 @@ func ReadInputLines(day int) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return strings.Split(strings.TrimSpace(content), "\n"), nil
+	return strings.Split(content, "\n"), nil
 }
 
 // GetInputPath returns the path to the input file
