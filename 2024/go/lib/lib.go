@@ -147,3 +147,34 @@ func (g *Grid) Set(x, y int, tile byte) {
 func (g *Grid) Contains(x, y int) bool {
 	return x >= 0 && x < g.width && y >= 0 && y < g.height
 }
+
+// Item represents any type that has a weight for priority queue ordering
+type Item interface {
+	Weight() float64
+}
+
+// PriorityQueue implements a generic priority queue
+type PriorityQueue[T Item] []T
+
+func (pq *PriorityQueue[T]) Len() int { return len(*pq) }
+
+func (pq *PriorityQueue[T]) Less(i, j int) bool {
+	return (*pq)[i].Weight() < (*pq)[j].Weight()
+}
+
+func (pq *PriorityQueue[T]) Swap(i, j int) {
+	(*pq)[i], (*pq)[j] = (*pq)[j], (*pq)[i]
+}
+
+func (pq *PriorityQueue[T]) Push(x interface{}) {
+	item := x.(T)
+	*pq = append(*pq, item)
+}
+
+func (pq *PriorityQueue[T]) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	*pq = old[0 : n-1]
+	return item
+}

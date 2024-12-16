@@ -2,6 +2,7 @@ package day16
 
 import (
 	"aoc/2024/go/lib"
+	"container/heap"
 	"fmt"
 	"math"
 	"strings"
@@ -12,6 +13,10 @@ type Reindeer struct {
 	facing   string
 	position lib.Vec2
 	visited  map[lib.Vec2]bool
+}
+
+func (r *Reindeer) Weight() float64 {
+	return float64(r.score)
 }
 
 func (r *Reindeer) clone(position lib.Vec2, facing string, grid *lib.Grid) *Reindeer {
@@ -106,33 +111,34 @@ func findPosition(grid *lib.Grid, value byte) lib.Vec2 {
 			}
 		}
 	}
-	panic("Did not find start position")
+	panic(fmt.Sprintf("Did not find '%v' position", value))
 }
 
 func findLowestScore(input string, expectScore int) (int, int) {
 	grid := lib.NewGrid(input)
 
-	queue := []*Reindeer{
-		{
-			score:    0,
-			facing:   "right",
-			position: findPosition(grid, 'S'),
-		},
+	start := &Reindeer{
+		score:    0,
+		facing:   "right",
+		position: findPosition(grid, 'S'),
 	}
+
+	pq := &lib.PriorityQueue[*Reindeer]{}
+	heap.Init(pq)
+	pq.Push(start)
 
 	visited := make(map[string]map[lib.Vec2]*Reindeer)
 	for _, facing := range []string{"up", "down", "left", "right"} {
 		visited[facing] = make(map[lib.Vec2]*Reindeer)
 	}
-	visited[queue[0].facing][queue[0].position] = queue[0]
+	visited[start.facing][start.position] = start
 
 	goal := findPosition(grid, 'E')
 	lowestScore := expectScore
 	bestPositions := make(map[lib.Vec2]bool)
 
-	for len(queue) > 0 {
-		reindeer := queue[len(queue)-1]
-		queue = queue[:len(queue)-1]
+	for pq.Len() > 0 {
+		reindeer := heap.Pop(pq).(*Reindeer)
 		if reindeer.position == goal {
 			if reindeer.score < lowestScore {
 				for v := range bestPositions {
@@ -164,7 +170,7 @@ func findLowestScore(input string, expectScore int) (int, int) {
 			if nextReindeer != nil && lowestScore >= nextReindeer.score {
 				otherReindeer := visited[nextReindeer.facing][nextReindeer.position]
 				if otherReindeer == nil || otherReindeer.score >= nextReindeer.score {
-					queue = append(queue, nextReindeer)
+					pq.Push(nextReindeer)
 					visited[nextReindeer.facing][nextReindeer.position] = nextReindeer
 				}
 			}
