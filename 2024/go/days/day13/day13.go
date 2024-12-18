@@ -30,53 +30,45 @@ func parseInput(input string) []ClawMachine {
 	return clawMachines
 }
 
-func calculateMinTokens(machine ClawMachine) int {
-	maxA := lib.Min(
-		(machine.prize.X+machine.buttonA.X-1)/machine.buttonA.X,
-		(machine.prize.Y+machine.buttonA.Y-1)/machine.buttonA.Y)
-	maxB := lib.Min(
-		(machine.prize.X+machine.buttonB.X-1)/machine.buttonB.X,
-		(machine.prize.Y+machine.buttonB.Y-1)/machine.buttonB.Y)
-	type ButtonPresses struct {
-		countA int
-		countB int
-	}
-	var solutions []ButtonPresses
-	for i := 0; i <= maxA; i++ {
-		for j := 0; j <= maxB; j++ {
-			if machine.buttonA.X*i+machine.buttonB.X*j == machine.prize.X &&
-				machine.buttonA.Y*i+machine.buttonB.Y*j == machine.prize.Y {
-				solutions = append(solutions, ButtonPresses{countA: i, countB: j})
-			}
-		}
-	}
-	if len(solutions) == 0 {
+func calculateMinTokensSmart(machine ClawMachine) int {
+	// D = A_x*B_y - A_y*B_x
+	determinant := machine.buttonA.X*machine.buttonB.Y - machine.buttonA.Y*machine.buttonB.X
+	if determinant == 0 {
+		fmt.Printf("Determinant is 0\n")
 		return 0
 	}
-	minTokens := math.MaxInt
-	for _, solution := range solutions {
-		tokens := solution.countA*3 + solution.countB
-		if tokens < minTokens {
-			minTokens = tokens
-		}
+	// a = (X_p*B_y - Y_p*B_x)/D
+	// b = (A_x*Y_p - A_y*X_p)/D
+	countA := float64(machine.prize.X*machine.buttonB.Y-machine.prize.Y*machine.buttonB.X) / float64(determinant)
+	countB := float64(machine.buttonA.X*machine.prize.Y-machine.buttonA.Y*machine.prize.X) / float64(determinant)
+	if math.Round(countA) != countA || math.Round(countB) != countB {
+		fmt.Printf("Non integer result A: %.4f, B: %.4f\n", countA, countB)
+		return 0
 	}
-	return minTokens
+	if countA < 0 || countB < 0 {
+		fmt.Printf("Negative results A: %.4f, B: %.4f\n", countA, countB)
+		return 0
+	}
+	return int(countA)*3 + int(countB)
 }
 
-func calculateMinTokensForMaxPrizes(input string) int {
+func calculateMinTokensForMaxPrizes(input string, prizeOffset int) int {
 	machines := parseInput(input)
 	sumTokens := 0
 	for _, machine := range machines {
-		sumTokens += calculateMinTokens(machine)
+		machine.prize.X += prizeOffset
+		machine.prize.Y += prizeOffset
+		sumTokens += calculateMinTokensSmart(machine)
 	}
 	return sumTokens
 }
 
 func Part1() any {
 	input, _ := lib.ReadInput(13)
-	return calculateMinTokensForMaxPrizes(input)
+	return calculateMinTokensForMaxPrizes(input, 0)
 }
 
 func Part2() any {
-	return "Not implemented"
+	input, _ := lib.ReadInput(13)
+	return calculateMinTokensForMaxPrizes(input, 10000000000000)
 }

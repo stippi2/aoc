@@ -53,6 +53,25 @@ func Abs[T ~int | ~float64](v T) T {
 	return -v
 }
 
+// GCD finds the greatest common divisor
+func GCD(a, b int) int {
+	a = Abs(a)
+	b = Abs(b)
+
+	// GCD(0,b) = b, GCD(a,0) = a
+	if a == 0 {
+		return b
+	}
+	if b == 0 {
+		return a
+	}
+
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
+}
+
 type Vec2 struct {
 	X int
 	Y int

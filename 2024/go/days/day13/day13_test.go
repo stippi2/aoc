@@ -23,5 +23,5 @@ Button B: X+27, Y+71
 Prize: X=18641, Y=10279`
 
 func Test_part1(t *testing.T) {
-	assert.Equal(t, 480, calculateMinTokensForMaxPrizes(example))
+	assert.Equal(t, 480, calculateMinTokensForMaxPrizes(example, 0))
 }
