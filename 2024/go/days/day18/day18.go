@@ -47,7 +47,6 @@ func findShortestPath(input string, gridSize, simulationLength int) int {
 		path := heap.Pop(pq).(*Path)
 		if path.tip == goal {
 			if path.length < shortestPath {
-				fmt.Printf("found goal! length: %d\n", path.length)
 				shortestPath = path.length
 			}
 		}
@@ -82,5 +81,17 @@ func Part1() any {
 }
 
 func Part2() any {
-	return "Not implemented"
+	input, _ := lib.ReadInput(18)
+	memoryBytes := strings.Split(input, "\n")
+	maxSimulationLength := len(memoryBytes)
+	minSimulationLength := 1024
+	for maxSimulationLength > minSimulationLength {
+		simulationLength := minSimulationLength + (maxSimulationLength-minSimulationLength)/2
+		if findShortestPath(input, 71, simulationLength) != math.MaxInt {
+			minSimulationLength = simulationLength
+		} else {
+			maxSimulationLength = simulationLength - 1
+		}
+	}
+	return memoryBytes[maxSimulationLength]
 }
