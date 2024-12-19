@@ -10,16 +10,17 @@ import (
 
 type Path struct {
 	tip    lib.Vec2
+	goal   lib.Vec2
 	length int
 }
 
 func (p *Path) Weight() float64 {
-	return float64(p.length)
+	xDist := p.goal.X - p.tip.X
+	yDist := p.goal.Y - p.tip.Y
+	return float64(p.length) + float64(lib.Abs(xDist)+lib.Abs(yDist))
 }
 
 func findShortestPath(input string, gridSize, simulationLength int) int {
-	grid := lib.NewGridFilled(gridSize, gridSize, '.')
-
 	currupted := make(map[lib.Vec2]bool)
 	for i, line := range strings.Split(input, "\n") {
 		if i == simulationLength {
@@ -28,10 +29,7 @@ func findShortestPath(input string, gridSize, simulationLength int) int {
 		var pos lib.Vec2
 		_, _ = fmt.Sscanf(line, "%d,%d", &pos.X, &pos.Y)
 		currupted[pos] = true
-		grid.Set(pos.X, pos.Y, '#')
 	}
-
-	fmt.Print(grid.String())
 
 	start := &Path{tip: lib.Vec2{X: 0, Y: 0}}
 	goal := lib.Vec2{X: gridSize - 1, Y: gridSize - 1}
@@ -47,7 +45,6 @@ func findShortestPath(input string, gridSize, simulationLength int) int {
 
 	for pq.Len() > 0 {
 		path := heap.Pop(pq).(*Path)
-		visited[path.tip] = path.length
 		if path.tip == goal {
 			if path.length < shortestPath {
 				fmt.Printf("found goal! length: %d\n", path.length)
@@ -69,7 +66,8 @@ func findShortestPath(input string, gridSize, simulationLength int) int {
 			if next.X >= 0 && next.X < gridSize && next.Y >= 0 && next.Y < gridSize && !currupted[next] {
 				previous, found := visited[next]
 				if !found || previous > path.length+1 {
-					pq.Push(&Path{tip: next, length: path.length + 1})
+					visited[next] = path.length + 1
+					heap.Push(pq, &Path{tip: next, goal: goal, length: path.length + 1})
 				}
 			}
 		}
@@ -80,7 +78,7 @@ func findShortestPath(input string, gridSize, simulationLength int) int {
 
 func Part1() any {
 	input, _ := lib.ReadInput(18)
-	return findShortestPath(input, 71, 1000)
+	return findShortestPath(input, 71, 1024)
 }
 
 func Part2() any {
