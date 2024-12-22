@@ -18,6 +18,10 @@ import (
 	"aoc/2024/go/days/day16"
 	"aoc/2024/go/days/day17"
 	"aoc/2024/go/days/day18"
+	"aoc/2024/go/days/day19"
+	"aoc/2024/go/days/day20"
+	"aoc/2024/go/days/day21"
+	"aoc/2024/go/days/day22"
 )
 
 func main() {
@@ -68,6 +72,18 @@ func main() {
 	case 18:
 		fmt.Printf("Part 1: %v\n", day18.Part1())
 		fmt.Printf("Part 2: %v\n", day18.Part2())
+	case 19:
+		fmt.Printf("Part 1: %v\n", day19.Part1())
+		fmt.Printf("Part 2: %v\n", day19.Part2())
+	case 20:
+		fmt.Printf("Part 1: %v\n", day20.Part1())
+		fmt.Printf("Part 2: %v\n", day20.Part2())
+	case 21:
+		fmt.Printf("Part 1: %v\n", day21.Part1())
+		fmt.Printf("Part 2: %v\n", day21.Part2())
+	case 22:
+		fmt.Printf("Part 1: %v\n", day22.Part1())
+		fmt.Printf("Part 2: %v\n", day22.Part2())
 	default:
 		fmt.Printf("Day %d is not yet implemented\n", *day)
 	}

@@ -61,7 +61,7 @@ func (c *Computer) runInstruction() bool {
 		fmt.Printf("bxc\n")
 		c.B = c.B ^ c.C
 	case 5: // out
-		fmt.Printf("out %v\n", c.comboOperand(operand))
+		fmt.Printf("out %v\n", c.comboOperand(operand)%8)
 		if len(c.output) > 0 {
 			c.output = fmt.Sprintf("%s,%v", c.output, c.comboOperand(operand)%8)
 		} else {
