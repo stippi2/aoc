@@ -43,3 +43,8 @@ func Test_part1(t *testing.T) {
 	computers := parseInput(example)
 	assert.Equal(t, 7, countSetsOfThreeStartingWithT(computers))
 }
+
+func Test_part2(t *testing.T) {
+	computers := parseInput(example)
+	assert.Equal(t, "co,de,ka,ta", getPartyPassword(computers))
+}
