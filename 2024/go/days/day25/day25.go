@@ -1,4 +1,4 @@
-package dayXX
+package day25
 
 func Part1() any {
 	return "Not implemented"
