@@ -40,5 +40,5 @@ ABBAAA
 ABBAAA
 AAAAAA`, true))
 
-	//assert.Equal(t, 1206, calculateRegionPrice(example, true))
+	assert.Equal(t, 1206, calculateRegionPrice(example, true))
 }

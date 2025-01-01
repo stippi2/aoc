@@ -7,7 +7,7 @@ import (
 )
 
 type Perimeter interface {
-	extend(line Line, direction string)
+	extend(line Line)
 	getLength() int
 }
 
@@ -15,7 +15,7 @@ type RealPerimeter struct {
 	length int
 }
 
-func (p *RealPerimeter) extend(_ Line, _ string) {
+func (p *RealPerimeter) extend(_ Line) {
 	p.length++
 }
 
@@ -28,28 +28,95 @@ type Line struct {
 	b lib.Vec2
 }
 
-type DiscountedPerimeter struct {
-	left  []Line
-	right []Line
-	up    []Line
-	down  []Line
-}
-
-func (p *DiscountedPerimeter) extend(line Line, direction string) {
-	switch direction {
-	case "left":
-		p.left = append(p.left, line)
-	case "right":
-		p.right = append(p.right, line)
-	case "up":
-		p.up = append(p.up, line)
-	case "down":
-		p.down = append(p.down, line)
+func (l *Line) direction() string {
+	if l.a.Y == l.b.Y {
+		if l.a.X < l.b.X {
+			return "left"
+		} else {
+			return "right"
+		}
+	} else {
+		if l.a.Y < l.b.Y {
+			return "up"
+		} else {
+			return "down"
+		}
 	}
 }
 
+type DiscountedPerimeter struct {
+	lines []Line
+}
+
+func (p *DiscountedPerimeter) extend(line Line) {
+	p.lines = append(p.lines, line)
+}
+
 func (p *DiscountedPerimeter) getLength() int {
-	return 0
+	if len(p.lines) == 0 {
+		return 0
+	}
+
+	mergeLines := func(a, b Line) *Line {
+		if a.direction() == b.direction() {
+			if a.a == b.b {
+				return &Line{a: b.a, b: a.b}
+			} else if b.a == a.b {
+				return &Line{a: a.a, b: b.b}
+			}
+		}
+		return nil
+	}
+
+	lines := make([]Line, len(p.lines))
+	copy(lines, p.lines)
+
+	for {
+		hasMerged := false
+		var newLines []Line
+		used := make(map[int]bool)
+
+		// Try to merge every line with every other
+		for i := 0; i < len(lines); i++ {
+			if used[i] {
+				continue
+			}
+
+			currentLine := lines[i]
+			mergedThisLine := false
+
+			for j := i + 1; j < len(lines); j++ {
+				if used[j] {
+					continue
+				}
+
+				if merged := mergeLines(currentLine, lines[j]); merged != nil {
+					// Merge found, mark indices as used
+					used[i] = true
+					used[j] = true
+					// Keep the merge result for the next iteration
+					newLines = append(newLines, *merged)
+					hasMerged = true
+					mergedThisLine = true
+					break
+				}
+			}
+
+			// If this line has not been merged, keep it unchanged
+			if !mergedThisLine {
+				newLines = append(newLines, currentLine)
+			}
+		}
+
+		lines = newLines
+
+		// If no merges were found, we are done
+		if !hasMerged {
+			break
+		}
+	}
+
+	return len(lines)
 }
 
 func calculateRegionPrice(input string, withDiscount bool) int {
@@ -90,38 +157,33 @@ func calculateRegionPrice(input string, withDiscount bool) int {
 			area++
 
 			type Neighbor struct {
-				pos       lib.Vec2
-				line      Line
-				direction string
+				pos  lib.Vec2
+				line Line
 			}
 
 			neighbors := []Neighbor{
 				{
-					pos:       lib.Vec2{X: pos.X - 1, Y: pos.Y},
-					line:      Line{a: lib.Vec2{X: pos.X, Y: pos.Y}, b: lib.Vec2{X: pos.X, Y: pos.Y + 1}},
-					direction: "down",
+					pos:  lib.Vec2{X: pos.X - 1, Y: pos.Y},
+					line: Line{a: lib.Vec2{X: pos.X, Y: pos.Y}, b: lib.Vec2{X: pos.X, Y: pos.Y + 1}},
 				},
 				{
-					pos:       lib.Vec2{X: pos.X + 1, Y: pos.Y},
-					line:      Line{a: lib.Vec2{X: pos.X + 1, Y: pos.Y + 1}, b: lib.Vec2{X: pos.X + 1, Y: pos.Y}},
-					direction: "up",
+					pos:  lib.Vec2{X: pos.X + 1, Y: pos.Y},
+					line: Line{a: lib.Vec2{X: pos.X + 1, Y: pos.Y + 1}, b: lib.Vec2{X: pos.X + 1, Y: pos.Y}},
 				},
 				{
-					pos:       lib.Vec2{X: pos.X, Y: pos.Y - 1},
-					line:      Line{a: lib.Vec2{X: pos.X + 1, Y: pos.Y}, b: lib.Vec2{X: pos.X, Y: pos.Y}},
-					direction: "left",
+					pos:  lib.Vec2{X: pos.X, Y: pos.Y - 1},
+					line: Line{a: lib.Vec2{X: pos.X + 1, Y: pos.Y}, b: lib.Vec2{X: pos.X, Y: pos.Y}},
 				},
 				{
-					pos:       lib.Vec2{X: pos.X, Y: pos.Y + 1},
-					line:      Line{a: lib.Vec2{X: pos.X, Y: pos.Y + 1}, b: lib.Vec2{X: pos.X + 1, Y: pos.Y + 1}},
-					direction: "right",
+					pos:  lib.Vec2{X: pos.X, Y: pos.Y + 1},
+					line: Line{a: lib.Vec2{X: pos.X, Y: pos.Y + 1}, b: lib.Vec2{X: pos.X + 1, Y: pos.Y + 1}},
 				},
 			}
 			for _, neighbor := range neighbors {
 				if garden.Contains(neighbor.pos.X, neighbor.pos.Y) {
 					neighborPlant := garden.Get(neighbor.pos.X, neighbor.pos.Y)
 					if neighborPlant != plant {
-						perimeter.extend(neighbor.line, neighbor.direction)
+						perimeter.extend(neighbor.line)
 					} else {
 						if !visited[neighbor.pos] {
 							queue = append(queue, neighbor.pos)
@@ -130,7 +192,7 @@ func calculateRegionPrice(input string, withDiscount bool) int {
 						}
 					}
 				} else {
-					perimeter.extend(neighbor.line, neighbor.direction)
+					perimeter.extend(neighbor.line)
 				}
 			}
 		}
