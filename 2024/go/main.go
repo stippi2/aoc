@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"aoc/2024/go/days/day06"
 	"aoc/2024/go/days/day07"
 	"aoc/2024/go/days/day08"
 	"aoc/2024/go/days/day09"
@@ -39,6 +40,9 @@ func main() {
 
 	fmt.Printf("Day %02d\n", *day)
 	switch *day {
+	case 6:
+		fmt.Printf("Part 1: %v\n", day06.Part1())
+		fmt.Printf("Part 2: %v\n", day06.Part2())
 	case 7:
 		fmt.Printf("Part 1: %v\n", day07.Part1())
 		fmt.Printf("Part 2: %v\n", day07.Part2())
