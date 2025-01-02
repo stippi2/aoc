@@ -2,7 +2,6 @@ package day21
 
 import (
 	"aoc/2024/go/lib"
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -161,45 +160,105 @@ func (k *Keypad) findShortestPath(targetButton rune) string {
 		}
 	}
 
-	if bestPath == "" {
-		panic("no path found")
-	}
 	return bestPath
 }
 
-func findShortestSequence(keyCode string) int {
-	outerPad := newDirectionalKeypad()
-	middlePad := newDirectionalKeypad()
-	innerPad := newNumberKeypad()
+// getAllPaths returns all possible paths to reach the target button
+func (k *Keypad) getAllPaths(targetButton rune, maxLength int) []string {
+	queue := []State{{
+		position: k.position,
+		sequence: "",
+		cost:     0,
+	}}
 
-	shortestSequence := ""
+	var paths []string
 
-	fmt.Printf("Key code %v\n", keyCode)
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
 
-	for _, targetButton := range keyCode {
-		// Find path to number/letter on numeric keypad
-		numericPath := innerPad.findShortestPath(targetButton)
-		innerPad.executeSequence(numericPath)
-		fmt.Printf("  innerPad sequence %v\n", numericPath)
+		// Skip too long paths
+		if len(current.sequence) > maxLength {
+			continue
+		}
 
-		// For each action needed on numeric keypad
-		for _, press := range numericPath {
-			middlePath := middlePad.findShortestPath(press)
-			middlePad.executeSequence(middlePath)
-			fmt.Printf("  %c: middlePad sequence %v\n", press, middlePath)
+		// Found target - add to possible paths
+		if k.positions[current.position] == targetButton {
+			paths = append(paths, current.sequence+"A")
+			continue
+		}
 
-			for _, middlePress := range middlePath {
-				outerPath := outerPad.findShortestPath(middlePress)
-				outerPad.executeSequence(outerPath)
-				fmt.Printf("    %c: outerPad sequence %v\n", middlePress, outerPath)
-				shortestSequence += outerPath
-			}
+		// Try all possible next positions
+		for _, nextPos := range k.getPossibleMoves(current.position) {
+			// Don't try to filter visited positions
+			// We want ALL possible paths
+			queue = append(queue, State{
+				position: nextPos,
+				sequence: current.sequence + getDirection(current.position, nextPos),
+				cost:     0,
+			})
 		}
 	}
 
-	fmt.Printf("Key code %v: %s\n", keyCode, shortestSequence)
+	return paths
+}
+
+// findShortestSequence now tries all possible paths
+func findShortestSequence(keyCode string) int {
+	shortestSequence := ""
+
+	// Initialize robots
+	innerPad := newNumberKeypad()
+	middlePad := newDirectionalKeypad()
+	outerPad := newDirectionalKeypad()
+
+	for _, targetButton := range keyCode {
+		// Find all possible paths on inner pad
+		paths := innerPad.getAllPaths(targetButton, 5)
+
+		// Try each path and find the one that leads to shortest outer sequence
+		shortestLen := math.MaxInt32
+		var bestOuterSeq string
+		var bestInnerPath string
+
+		for _, innerPath := range paths {
+			// Reset pads to initial position for each try
+			middlePad.position = lib.Vec2{X: 2, Y: 0}
+			outerPad.position = lib.Vec2{X: 2, Y: 0}
+
+			seq := getCompleteOuterSequence(innerPath)
+			if len(seq) < shortestLen {
+				shortestLen = len(seq)
+				bestOuterSeq = seq
+				bestInnerPath = innerPath
+			}
+		}
+
+		// Execute the best path on all pads
+		innerPad.executeSequence(bestInnerPath)
+		shortestSequence += bestOuterSeq
+	}
 
 	return len(shortestSequence)
+}
+
+func getCompleteOuterSequence(innerPath string) string {
+	middlePad := newDirectionalKeypad()
+	outerPad := newDirectionalKeypad()
+	sequence := ""
+
+	for _, press := range innerPath {
+		middlePath := middlePad.findShortestPath(press)
+		middlePad.executeSequence(middlePath)
+
+		for _, middlePress := range middlePath {
+			outerPath := outerPad.findShortestPath(middlePress)
+			outerPad.executeSequence(outerPath)
+			sequence += outerPath
+		}
+	}
+
+	return sequence
 }
 
 func calculateComplexity(input string) int {
