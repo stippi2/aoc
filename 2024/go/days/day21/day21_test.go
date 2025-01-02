@@ -6,8 +6,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const example = ""
+const example = `029A
+980A
+179A
+456A
+379A`
 
 func Test_part1(t *testing.T) {
-	assert.Equal(t, "", example)
+	assert.Equal(t, 126384, calculateComplexity(example))
 }
