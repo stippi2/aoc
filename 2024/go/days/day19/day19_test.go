@@ -18,5 +18,9 @@ brgr
 bbrgwb`
 
 func Test_part1(t *testing.T) {
-	assert.Equal(t, "", example)
+	assert.Equal(t, 6, countPossibleDesigns(parseInput(example)))
+}
+
+func Test_part2(t *testing.T) {
+	assert.Equal(t, 16, countPossibleArrangements(parseInput(example)))
 }
