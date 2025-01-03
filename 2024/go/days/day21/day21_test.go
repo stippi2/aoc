@@ -13,5 +13,5 @@ const example = `029A
 379A`
 
 func Test_part1(t *testing.T) {
-	assert.Equal(t, 126384, calculateComplexity(example))
+	assert.Equal(t, 126384, calculateComplexity(example, 2))
 }

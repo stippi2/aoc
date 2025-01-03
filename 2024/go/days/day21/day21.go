@@ -203,14 +203,34 @@ func (k *Keypad) getAllPaths(targetButton rune, maxLength int) []string {
 	return paths
 }
 
+func getCompleteOuterSequence(innerPath string, padCount int) string {
+	// Create a slice of pads, initialized to A position
+	pads := make([]*Keypad, padCount)
+	for i := range pads {
+		pads[i] = newDirectionalKeypad()
+	}
+
+	sequence := innerPath
+	// For each pad level, translate the sequence
+	for i := 0; i < padCount; i++ {
+		var nextSequence string
+		for _, press := range sequence {
+			path := pads[i].findShortestPath(press)
+			pads[i].executeSequence(path)
+			nextSequence += path
+		}
+		sequence = nextSequence
+	}
+
+	return sequence
+}
+
 // findShortestSequence now tries all possible paths
-func findShortestSequence(keyCode string) int {
+func findShortestSequence(keyCode string, padCount int) int {
 	shortestSequence := ""
 
 	// Initialize robots
 	innerPad := newNumberKeypad()
-	middlePad := newDirectionalKeypad()
-	outerPad := newDirectionalKeypad()
 
 	for _, targetButton := range keyCode {
 		// Find all possible paths on inner pad
@@ -222,11 +242,7 @@ func findShortestSequence(keyCode string) int {
 		var bestInnerPath string
 
 		for _, innerPath := range paths {
-			// Reset pads to initial position for each try
-			middlePad.position = lib.Vec2{X: 2, Y: 0}
-			outerPad.position = lib.Vec2{X: 2, Y: 0}
-
-			seq := getCompleteOuterSequence(innerPath)
+			seq := getCompleteOuterSequence(innerPath, padCount)
 			if len(seq) < shortestLen {
 				shortestLen = len(seq)
 				bestOuterSeq = seq
@@ -234,7 +250,7 @@ func findShortestSequence(keyCode string) int {
 			}
 		}
 
-		// Execute the best path on all pads
+		// Execute the best path
 		innerPad.executeSequence(bestInnerPath)
 		shortestSequence += bestOuterSeq
 	}
@@ -242,42 +258,23 @@ func findShortestSequence(keyCode string) int {
 	return len(shortestSequence)
 }
 
-func getCompleteOuterSequence(innerPath string) string {
-	middlePad := newDirectionalKeypad()
-	outerPad := newDirectionalKeypad()
-	sequence := ""
-
-	for _, press := range innerPath {
-		middlePath := middlePad.findShortestPath(press)
-		middlePad.executeSequence(middlePath)
-
-		for _, middlePress := range middlePath {
-			outerPath := outerPad.findShortestPath(middlePress)
-			outerPad.executeSequence(outerPath)
-			sequence += outerPath
-		}
-	}
-
-	return sequence
-}
-
-func calculateComplexity(input string) int {
+func calculateComplexity(input string, numberOfPads int) int {
 	keyCodes := strings.Split(input, "\n")
 	sum := 0
 	for _, keyCode := range keyCodes {
-		sequenceLength := findShortestSequence(keyCode)
+		sequenceLength := findShortestSequence(keyCode, numberOfPads)
 		numeric, _ := strconv.Atoi(strings.TrimSuffix(keyCode, "A"))
 		sum += sequenceLength * numeric
 	}
-
 	return sum
 }
 
 func Part1() any {
 	input, _ := lib.ReadInput(21)
-	return calculateComplexity(input)
+	return calculateComplexity(input, 2)
 }
 
 func Part2() any {
-	return "Not implemented"
+	input, _ := lib.ReadInput(21)
+	return calculateComplexity(input, 25)
 }
