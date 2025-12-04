@@ -2,7 +2,7 @@ package day21
 
 import (
 	"aoc/2024/go/lib"
-	"math"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -48,26 +48,6 @@ func newDirectionalKeypad() *Keypad {
 	}
 }
 
-func (k *Keypad) pressButton() rune {
-	return k.positions[k.position]
-}
-
-func (k *Keypad) getPossibleMoves(position lib.Vec2) []lib.Vec2 {
-	moves := []lib.Vec2{
-		{X: position.X - 1, Y: position.Y},
-		{X: position.X + 1, Y: position.Y},
-		{X: position.X, Y: position.Y - 1},
-		{X: position.X, Y: position.Y + 1},
-	}
-	var possibleMoves []lib.Vec2
-	for _, move := range moves {
-		if _, exists := k.positions[move]; exists {
-			possibleMoves = append(possibleMoves, move)
-		}
-	}
-	return possibleMoves
-}
-
 func (k *Keypad) move(direction rune) {
 	switch direction {
 	case '<':
@@ -81,181 +61,105 @@ func (k *Keypad) move(direction rune) {
 	}
 }
 
-func (k *Keypad) executeSequence(sequence string) {
-	for _, action := range sequence {
-		if action == 'A' {
-			k.pressButton()
+func getControlSequence(sequence string, numControlPads int, optimalPaths map[string]string) string {
+	var result strings.Builder
+	currentPos := 'A' // Always start at A
+
+	for _, move := range sequence {
+		// Skip A since we're already there
+		if move == 'A' {
+			result.WriteString("A")
+			continue
+		}
+
+		// Get path to the direction button
+		key := fmt.Sprintf("%c-%c", currentPos, move)
+		path, exists := optimalPaths[key]
+		if !exists {
+			panic(fmt.Sprintf("No optimal path for %s", key))
+		}
+		result.WriteString(path)
+		result.WriteString("A") // Press the direction button
+
+		// After pressing any button, we're back at A
+		currentPos = 'A'
+	}
+
+	// For multiple control pads, we need to compute the control sequence
+	// for the resulting sequence again, numControlPads-1 times
+	if numControlPads > 1 {
+		return getControlSequence(result.String(), numControlPads-1, optimalPaths)
+	}
+
+	return result.String()
+}
+
+func findBetterSequence(seq1, seq2 string, optimalPaths map[string]string) string {
+	// Get the control sequence needed for both options
+	controlSeq1 := getControlSequence(seq1, 1, optimalPaths) // We only need to check one control pad
+	controlSeq2 := getControlSequence(seq2, 1, optimalPaths)
+
+	if len(controlSeq1) < len(controlSeq2) {
+		return seq1
+	}
+	return seq2
+}
+
+func buildOptimalPathMap() map[string]string {
+	// Map for all possible paths between buttons
+	//     +---+---+
+	//     | ^ | A |
+	// +---+---+---+
+	// | < | v | > |
+	// +---+---+---+
+	candidatePaths := map[string][]string{
+		// From ^
+		"^-A": {">"},        // ^ to A
+		"^-v": {"v"},        // ^ to v
+		"^-<": {"<v"},       // ^ to <
+		"^->": {">v", "v>"}, // ^ to >
+
+		// From A
+		"A-^": {"<"},        // A to ^
+		"A-v": {"v<", "<v"}, // A to v
+		"A-<": {"v<<"},      // A to <
+		"A->": {"v"},        // A to >
+
+		// From
+		"<-^": {">^"},  // < to ^
+		"<-A": {">>^"}, // < to A
+		"<-v": {">"},   // < to v
+		"<->": {">>"},  // < to >
+
+		// From v
+		"v-^": {"^"},        // v to ^
+		"v-A": {"^>", ">^"}, // v to A
+		"v-<": {"<"},        // v to <
+		"v->": {">"},        // v to >
+
+		// From >
+		">-^": {"^<", "<^"}, // > to ^
+		">-A": {"^"},        // > to A
+		">-v": {"<"},        // > to v
+		">-<": {"<<"},       // > to <
+	}
+
+	optimalPaths := make(map[string]string)
+
+	// For each connection, either take the single sequence or find the better one
+	for conn, sequences := range candidatePaths {
+		if len(sequences) == 1 {
+			optimalPaths[conn] = sequences[0]
 		} else {
-			k.move(action)
+			optimalPaths[conn] = findBetterSequence(sequences[0], sequences[1], optimalPaths)
 		}
 	}
+
+	return optimalPaths
 }
 
-// getDirection returns the button press needed to move from pos1 to pos2
-func getDirection(pos1, pos2 lib.Vec2) string {
-	if pos2.Y < pos1.Y {
-		return "^"
-	}
-	if pos2.Y > pos1.Y {
-		return "v"
-	}
-	if pos2.X < pos1.X {
-		return "<"
-	}
-	return ">"
-}
-
-// State represents a position in our search space
-type State struct {
-	position lib.Vec2
-	sequence string
-	cost     int // Track the total cost considering directional keypads
-}
-
-// findShortestPath finds shortest sequence including the button press (A)
-func (k *Keypad) findShortestPath(targetButton rune) string {
-	visited := make(map[lib.Vec2]int) // map[position]lowestCostSeen
-	queue := []State{{
-		position: k.position,
-		sequence: "",
-		cost:     0,
-	}}
-
-	bestPath := ""
-	lowestCost := math.MaxInt32
-
-	for len(queue) > 0 {
-		current := queue[0]
-		queue = queue[1:]
-
-		// If we've seen this position with a lower cost, skip it
-		if prevCost, seen := visited[current.position]; seen && prevCost < current.cost {
-			continue
-		}
-		visited[current.position] = current.cost
-
-		// Found target - update if it's cheaper
-		if k.positions[current.position] == targetButton {
-			if current.cost < lowestCost {
-				lowestCost = current.cost
-				bestPath = current.sequence + "A"
-			}
-			continue
-		}
-
-		// Add neighbors with updated costs
-		for _, nextPos := range k.getPossibleMoves(current.position) {
-			newCost := current.cost + 1 // Basic movement cost
-			// If we're changing direction, add extra cost
-			if len(current.sequence) > 0 &&
-				getDirection(current.position, nextPos)[0] != current.sequence[len(current.sequence)-1] {
-				newCost += 2 // Penalty for changing direction
-			}
-
-			queue = append(queue, State{
-				position: nextPos,
-				sequence: current.sequence + getDirection(current.position, nextPos),
-				cost:     newCost,
-			})
-		}
-	}
-
-	return bestPath
-}
-
-// getAllPaths returns all possible paths to reach the target button
-func (k *Keypad) getAllPaths(targetButton rune, maxLength int) []string {
-	queue := []State{{
-		position: k.position,
-		sequence: "",
-		cost:     0,
-	}}
-
-	var paths []string
-
-	for len(queue) > 0 {
-		current := queue[0]
-		queue = queue[1:]
-
-		// Skip too long paths
-		if len(current.sequence) > maxLength {
-			continue
-		}
-
-		// Found target - add to possible paths
-		if k.positions[current.position] == targetButton {
-			paths = append(paths, current.sequence+"A")
-			continue
-		}
-
-		// Try all possible next positions
-		for _, nextPos := range k.getPossibleMoves(current.position) {
-			// Don't try to filter visited positions
-			// We want ALL possible paths
-			queue = append(queue, State{
-				position: nextPos,
-				sequence: current.sequence + getDirection(current.position, nextPos),
-				cost:     0,
-			})
-		}
-	}
-
-	return paths
-}
-
-func getCompleteOuterSequence(innerPath string, padCount int) string {
-	// Create a slice of pads, initialized to A position
-	pads := make([]*Keypad, padCount)
-	for i := range pads {
-		pads[i] = newDirectionalKeypad()
-	}
-
-	sequence := innerPath
-	// For each pad level, translate the sequence
-	for i := 0; i < padCount; i++ {
-		var nextSequence string
-		for _, press := range sequence {
-			path := pads[i].findShortestPath(press)
-			pads[i].executeSequence(path)
-			nextSequence += path
-		}
-		sequence = nextSequence
-	}
-
-	return sequence
-}
-
-// findShortestSequence now tries all possible paths
 func findShortestSequence(keyCode string, padCount int) int {
-	shortestSequence := ""
-
-	// Initialize robots
-	innerPad := newNumberKeypad()
-
-	for _, targetButton := range keyCode {
-		// Find all possible paths on inner pad
-		paths := innerPad.getAllPaths(targetButton, 5)
-
-		// Try each path and find the one that leads to shortest outer sequence
-		shortestLen := math.MaxInt32
-		var bestOuterSeq string
-		var bestInnerPath string
-
-		for _, innerPath := range paths {
-			seq := getCompleteOuterSequence(innerPath, padCount)
-			if len(seq) < shortestLen {
-				shortestLen = len(seq)
-				bestOuterSeq = seq
-				bestInnerPath = innerPath
-			}
-		}
-
-		// Execute the best path
-		innerPad.executeSequence(bestInnerPath)
-		shortestSequence += bestOuterSeq
-	}
-
-	return len(shortestSequence)
+	return 0
 }
 
 func calculateComplexity(input string, numberOfPads int) int {
