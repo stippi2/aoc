@@ -191,12 +191,12 @@ func (pq *PriorityQueue[T]) Swap(i, j int) {
 	(*pq)[i], (*pq)[j] = (*pq)[j], (*pq)[i]
 }
 
-func (pq *PriorityQueue[T]) Push(x interface{}) {
+func (pq *PriorityQueue[T]) Push(x any) {
 	item := x.(T)
 	*pq = append(*pq, item)
 }
 
-func (pq *PriorityQueue[T]) Pop() interface{} {
+func (pq *PriorityQueue[T]) Pop() any {
 	old := *pq
 	n := len(old)
 	item := old[n-1]
