@@ -6,12 +6,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const example = ``
+const example = `..@@.@@@@.
+@@@.@.@.@@
+@@@@@.@.@@
+@.@@@@..@.
+@@.@@@@.@@
+.@@@@@@@.@
+.@.@.@.@@@
+@.@@@.@@@@
+.@@@@@@@@.
+@.@.@@@.@.`
 
 func Test_Part1(t *testing.T) {
-	assert.Equal(t, "", example)
+	assert.Equal(t, 13, countAccessiblePaperRolls(example))
 }
 
 func Test_Part2(t *testing.T) {
-	assert.True(t, true)
+	assert.Equal(t, 43, countRemovablePaperRolls(example))
 }
