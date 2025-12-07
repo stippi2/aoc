@@ -6,10 +6,9 @@ import (
 
 func Part1() any {
 	input, _ := lib.ReadInput(7)
-	return input
+	return 0
 }
 
 func Part2() any {
-	input, _ := lib.ReadInput(7)
-	return input
+	return 0
 }
