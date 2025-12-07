@@ -101,7 +101,7 @@ func NewGrid(input string) *Grid {
 		data:   make([]byte, width*height),
 	}
 	for y, line := range lines {
-		for x := 0; x < width; x++ {
+		for x := range width {
 			if x < len(line) {
 				grid.Set(x, y, line[x])
 			} else {
