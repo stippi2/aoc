@@ -41,30 +41,28 @@ func Part1() any {
 
 func countTachyonTimelines(input string) int {
 	grid := lib.NewGrid(input)
+
 	timelines := map[int]int{}
+	for x := 0; x < grid.Width(); x++ {
+		if grid.Get(x, 0) == 'S' {
+			timelines[x] = 1
+			break
+		}
+	}
+
 	for y := 1; y < grid.Height(); y++ {
 		newTimelines := map[int]int{}
-		for x := 0; x < grid.Width(); x++ {
-			above := grid.Get(x, y-1)
-			if above == '.' {
-				continue
-			}
-			timelinesAbove := timelines[x]
+		for x, count := range timelines {
 			cell := grid.Get(x, y)
-			if above == 'S' || above == '|' {
-				switch cell {
-				case '.', '|':
-					grid.Set(x, y, '|')
-					newTimelines[x] += lib.Max(1, timelinesAbove)
-				case '^':
-					if x > 0 && grid.Get(x-1, y) != '^' {
-						grid.Set(x-1, y, '|')
-						newTimelines[x-1] += timelinesAbove
-					}
-					if x < grid.Width()-1 && grid.Get(x+1, y) != '^' {
-						grid.Set(x+1, y, '|')
-						newTimelines[x+1] += timelinesAbove
-					}
+			switch cell {
+			case '.':
+				newTimelines[x] += count
+			case '^':
+				if x > 0 {
+					newTimelines[x-1] += count
+				}
+				if x < grid.Width()-1 {
+					newTimelines[x+1] += count
 				}
 			}
 		}
@@ -75,7 +73,6 @@ func countTachyonTimelines(input string) int {
 	for _, value := range timelines {
 		sum += value
 	}
-
 	return sum
 }
 
