@@ -1,4 +1,4 @@
-use advent_of_code_2024::*;
+use advent_of_code_2025::*;
 use std::time::Instant;
 
 pub mod day01;
