@@ -7,11 +7,11 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 fn solve(input: &str) -> i64 {
     let mut result = 0;
-    
+
     for line in input.lines() {
         // ...
     }
-    
+
     result
 }
 ```
@@ -105,6 +105,7 @@ let digit = c.to_digit(10).unwrap();  // -> u32
 ```rust
 let mut v: Vec<i32> = Vec::new();
 let mut v = vec![1, 2, 3];           // Mit Werten initialisieren
+let mut v = vec![0; 100];            // 100 Elemente, alle 0 (Go: make([]int, 100))
 
 v.push(4);                           // append
 v.pop();                             // Letztes Element entfernen
