@@ -32,5 +32,5 @@ func Test_Part1(t *testing.T) {
 }
 
 func Test_Part2(t *testing.T) {
-	assert.True(t, true)
+	assert.Equal(t, 25272, distanceToWall(example))
 }

@@ -3,6 +3,7 @@ package day08
 import (
 	"aoc/2025/go/lib"
 	"cmp"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -38,7 +39,7 @@ type Connection struct {
 	distance float64
 }
 
-func multiplyBiggestCircuits(input string, maxConnections int) int {
+func connectCircuits(input string, maxConnections int) ([]*JunctionBox, *Connection) {
 	boxes := parseInput(input)
 
 	var connections []Connection
@@ -56,21 +57,36 @@ func multiplyBiggestCircuits(input string, maxConnections int) int {
 		return cmp.Compare(c1.distance, c2.distance)
 	})
 
+	var lastMerge *Connection
 	for i := range maxConnections {
 		a := connections[i].a
 		b := connections[i].b
 
-		if a.circuit != b.circuit {
-			oldCircuit := b.circuit
-			a.circuit.junctionBoxes += oldCircuit.junctionBoxes
+		if a.circuit == b.circuit {
+			continue
+		}
 
-			for _, box := range boxes {
-				if box.circuit == oldCircuit {
-					box.circuit = a.circuit
-				}
+		lastMerge = &connections[i]
+
+		oldCircuit := b.circuit
+		a.circuit.junctionBoxes += oldCircuit.junctionBoxes
+
+		for _, box := range boxes {
+			if box.circuit == oldCircuit {
+				box.circuit = a.circuit
 			}
 		}
+
+		if a.circuit.junctionBoxes == len(boxes) {
+			break
+		}
 	}
+
+	return boxes, lastMerge
+}
+
+func multiplyBiggestCircuits(input string, maxConnections int) int {
+	boxes, _ := connectCircuits(input, maxConnections)
 
 	seenCircuits := map[*Circuit]bool{}
 	var circuits []*Circuit
@@ -97,6 +113,12 @@ func Part1() any {
 	return multiplyBiggestCircuits(input, 1000)
 }
 
+func distanceToWall(input string) int {
+	_, lastConn := connectCircuits(input, math.MaxInt)
+	return lastConn.a.X * lastConn.b.X
+}
+
 func Part2() any {
-	return 0
+	input, _ := lib.ReadInput(8)
+	return distanceToWall(input)
 }
