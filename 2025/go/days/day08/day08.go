@@ -2,6 +2,7 @@ package day08
 
 import (
 	"aoc/2025/go/lib"
+	"cmp"
 	"slices"
 	"strconv"
 	"strings"
@@ -52,19 +53,31 @@ func multiplyBiggestCircuits(input string, maxConnections int) int {
 	}
 
 	slices.SortFunc(connections, func(c1, c2 Connection) int {
-		return int(c2.distance - c1.distance)
+		return cmp.Compare(c1.distance, c2.distance)
 	})
+
+	for i := range maxConnections {
+		a := connections[i].a
+		b := connections[i].b
+
+		if a.circuit != b.circuit {
+			oldCircuit := b.circuit
+			a.circuit.junctionBoxes += oldCircuit.junctionBoxes
+
+			for _, box := range boxes {
+				if box.circuit == oldCircuit {
+					box.circuit = a.circuit
+				}
+			}
+		}
+	}
 
 	seenCircuits := map[*Circuit]bool{}
 	var circuits []*Circuit
-
-	for i := range maxConnections {
-		circuit := connections[i].a.circuit
-		circuit.junctionBoxes++
-		connections[i].b.circuit = circuit
-		if !seenCircuits[circuit] {
-			seenCircuits[circuit] = true
-			circuits = append(circuits, circuit)
+	for _, box := range boxes {
+		if !seenCircuits[box.circuit] {
+			seenCircuits[box.circuit] = true
+			circuits = append(circuits, box.circuit)
 		}
 	}
 
@@ -73,11 +86,9 @@ func multiplyBiggestCircuits(input string, maxConnections int) int {
 	})
 
 	result := 1
-
 	for i := range 3 {
 		result *= circuits[i].junctionBoxes
 	}
-
 	return result
 }
 
