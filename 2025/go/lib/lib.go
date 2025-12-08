@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strings"
 )
@@ -83,6 +84,23 @@ func (v *Vec2) String() string {
 
 func (v *Vec2) Add(o Vec2) Vec2 {
 	return Vec2{X: v.X + o.X, Y: v.Y + o.Y}
+}
+
+type Vec3 struct {
+	X int
+	Y int
+	Z int
+}
+
+func (v *Vec3) String() string {
+	return fmt.Sprintf("(%d, %d, %d)", v.X, v.Y, v.Z)
+}
+
+func (v *Vec3) Distance(o Vec3) float64 {
+	dx := o.X - v.X
+	dy := o.Y - v.Y
+	dz := o.Z - v.Z
+	return math.Sqrt(float64(dx*dx + dy*dy + dz*dz))
 }
 
 type Grid struct {
